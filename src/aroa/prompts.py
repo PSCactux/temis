@@ -77,6 +77,9 @@ GRADE = """Decide which of the numbered fragments help answer the question. Retu
 Keep a fragment if it answers part of the question; drop it if it is merely on the same topic."""
 
 ANSWER_DOCUMENTS = """Answer the question using only the fragments, in the user's language.
+Be direct: lead with the answer and keep it to a few sentences, only what was asked, never a summary
+of the documents. If the question has several parts, answer each one explicitly and in order; a yes/no
+part starts with yes or no. Refer to people and things as the fragments do, not by document titles.
 Cite every fact as [n] with the fragment number, and give one verbatim quote per cited fragment
 (copy the sentence exactly, placeholders included). If the fragments only answer part of the question,
 say what is missing (coverage partial). If they do not answer it, say so (coverage none)."""

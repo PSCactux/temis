@@ -289,7 +289,11 @@ def build_graph(
 
     def answer_documents(state: AgentState, config: RunnableConfig) -> dict:
         sources = _chunks(state["sources"])
-        content = f"<fragments>\n{prompts.format_fragments(sources)}\n</fragments>\n\nQuestion: {state['query']}"
+        question = state["messages"][-1].content  # the user's words; the standalone query only resolves references
+        content = (
+            f"<fragments>\n{prompts.format_fragments(sources)}\n</fragments>\n\n"
+            f"Question: {question}\n(Standalone form: {state['query']})"
+        )
         if state["citation_errors"]:
             content += "\n\nYour previous answer failed the citation check:\n" + "\n".join(
                 f"- {e}" for e in state["citation_errors"]
