@@ -124,7 +124,8 @@ uv run aroa chat --matter 2026-014
 uv run aroa serve               # http://127.0.0.1:8000
 ```
 
-Your documents go in `data/docs/`, matter folders in `data/projects/<matter>/`, the persona in
+Your documents go in `data/docs/` (or drop `.md`, `.txt` and `.pdf` files on the web UI, which saves
+them there and indexes them pseudonymised), matter folders in `data/projects/<matter>/`, the persona in
 `data/persona/*.md`. None of those are tracked by git except the samples.
 
 Tracing: run a collector (for example `uv run phoenix serve` from the `arize-phoenix` package) and set

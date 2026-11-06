@@ -7,19 +7,21 @@ import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 
 from .app import Assistant
 from .config import get_settings
+from .memory.loaders import EXTENSIONS
 from .telemetry.audit import turn_audit
 from .telemetry.metrics import now_iso, prometheus_text, report
 from .tools import alarms
 
 WEB = Path(__file__).parent / "web"
 ALARM_TICK_SECONDS = 20
+MAX_UPLOAD_BYTES = 25 * 1024 * 1024
 
 
 class Message(BaseModel):
@@ -54,6 +56,10 @@ class Runtime:
     def matter_of(self, thread_id: str) -> str:
         row = self.assistant.conn.execute("SELECT matter FROM threads WHERE thread_id = ?", (thread_id,)).fetchone()
         return row["matter"] if row else ""
+
+    def ingest(self) -> dict:
+        with self.lock:
+            return self.assistant.ingest()
 
     def fire_due_alarms(self) -> int:
         fired = 0
@@ -195,3 +201,34 @@ def daily_report(days: int = 1):
 @app.get("/metrics", response_class=PlainTextResponse)
 def metrics():
     return prometheus_text(runtime.assistant.conn)
+
+
+@app.get("/api/documents")
+def list_documents():
+    sources = runtime.assistant.memory.indexed_sources()
+    return sorted(({"source": name, **info} for name, info in sources.items()), key=lambda d: d["title"].lower())
+
+
+@app.post("/api/documents")
+async def upload_document(name: str, request: Request):
+    """Raw body upload: the file is saved in docs_dir, pseudonymised and indexed before the call returns."""
+    safe = Path(name).name.lstrip(".")
+    if not safe or Path(safe).suffix.lower() not in EXTENSIONS:
+        raise HTTPException(400, f"only {', '.join(sorted(EXTENSIONS))} files")
+    body = await request.body()
+    if not body or len(body) > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, "empty file or larger than 25 MB")
+    docs = runtime.assistant.settings.docs_dir
+    docs.mkdir(parents=True, exist_ok=True)
+    (docs / safe).write_bytes(body)
+    result = await run_in_threadpool(runtime.ingest)
+    return {"source": safe, **result}
+
+
+@app.delete("/api/documents/{source}")
+async def delete_document(source: str):
+    path = runtime.assistant.settings.docs_dir / Path(source).name
+    if not path.exists():
+        raise HTTPException(404, "unknown document")
+    path.unlink()
+    return await run_in_threadpool(runtime.ingest)

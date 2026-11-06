@@ -425,6 +425,9 @@ def build_graph(
         reply: AIMessage = state["messages"][-1]
         history = turn_messages(state["messages"])
         if not state["evidence"]:
+            if config.get("configurable", {}).get("source") == "alarm":
+                # The turn that announces a due alarm has nothing to do but say so.
+                return _verdict(state, reply, config, 0, [], False)
             # A tool route that never called a tool did nothing, whatever the reply says: the one case
             # that needs no model call to judge. Announcements and questions asked in prose land here.
             checked, failures = 1, [prompts.NO_TOOL_USED]

@@ -100,6 +100,8 @@ recall filters to the current matter plus general memory on every prefetch. The 
 - **Audit**: tool calls (arguments, outcome, result hash, seconds) and memory writes (fact, stored or
   duplicate) per turn.
 - **Feedback**: thumbs per reply, tied to the turn.
+- **Documents**: `GET/POST/DELETE /api/documents`; an upload is saved in `docs_dir` and indexed before
+  the call returns, so the web UI never shows a document the assistant cannot see.
 - **Evals**: `evals/dataset.jsonl` with kinds identity, memory, wall, privacy, policy, chat,
   documents, alarms, project. `aroa eval` runs them in a separate data folder and stores results.
 - **Report**: `aroa report` / `GET /api/report`, computed in code.
