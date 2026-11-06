@@ -32,7 +32,7 @@ from .config import Settings
 from .memory.chunking import Chunk
 from .memory.store import MemoryStore
 from .privacy import Anonymizer
-from .schemas import Claims, DocumentAnswer, Facts, Grading, Routing
+from .schemas import Claims, DocumentAnswer, Facts, Grading, PolicyReview, Routing
 from .telemetry.audit import log_memory_write, log_tool_call
 from .tools.base import ToolContext, ToolError
 from .tools.project import agents_md
@@ -61,7 +61,6 @@ class AgentState(TypedDict, total=False):
     evidence: list[dict]
     tool_turns: int
     repeats: dict[str, int]
-    nudged: bool
     verify_feedback: list[str]
     verify_attempts: int
     verification: dict
@@ -121,6 +120,7 @@ def build_graph(
     grader = fast_llm.with_structured_output(Grading, method="json_schema")
     writer = llm.with_structured_output(DocumentAnswer, method="json_schema")
     claimer = fast_llm.with_structured_output(Claims, method="json_schema")
+    reviewer = fast_llm.with_structured_output(PolicyReview, method="json_schema")
     extractor = fast_llm.with_structured_output(Facts, method="json_schema")
 
     def ctx_of(state: AgentState, config: RunnableConfig) -> ToolContext:
@@ -168,7 +168,11 @@ def build_graph(
                 # Same id: add_messages replaces the message, so the original text never reaches a model or a store.
                 messages = [HumanMessage(question, id=incoming.id)]
         memories = memory.recall(question, exclude_thread=conf.get("thread_id"), matter=conf.get("matter", ""))
-        hints = [c.label() for c in memory.search_documents(question, k=3)] if memory.document_titles() else []
+        hints = (
+            [f"{c.label()}: {c.text[:220]}" for c in memory.search_documents(question, k=3)]
+            if memory.document_titles()
+            else []
+        )
         return {
             "messages": messages,
             "doc_hints": hints,
@@ -184,7 +188,6 @@ def build_graph(
             "evidence": [],
             "tool_turns": 0,
             "repeats": {},
-            "nudged": False,
             "verify_feedback": [],
             "verify_attempts": 0,
             "verification": {},
@@ -197,22 +200,33 @@ def build_graph(
         facts = "; ".join(f["text"] for f in state["memories"].get("facts", [])) or "(none)"
         system = prompts.ROUTE.format(
             titles=", ".join(memory.document_titles()) or "(none)",
-            hints="; ".join(state.get("doc_hints") or []) or "(none)",
+            hints="\n".join(f"- {h}" for h in state.get("doc_hints") or []) or "- (none)",
             facts=facts,
             projects=", ".join(projects()) or "(none)",
             policy=prompts.POLICY,
         )
         result: Routing = router.invoke([SystemMessage(system), *history])
         if result.policy == "blocked":
-            reason = result.policy_reason.strip() or "it is outside what the firm allows."
-            return {
-                "route": "blocked",
-                "trace": [*state["trace"], steps.blocked(reason)],
-                "messages": [_final(AIMessage(prompts.BLOCKED_REPLY.format(reason=reason)), config, kind="blocked")],
-            }
+            # Blocking is rare and costly when wrong (a lawyer refused for asking a question), so a block
+            # is confirmed by a second, narrower call before it stands.
+            review: PolicyReview = reviewer.invoke(
+                [SystemMessage(prompts.POLICY_REVIEW.format(policy=prompts.POLICY)), state["messages"][-1]]
+            )
+            if review.verdict == "blocked":
+                reason = review.reason.strip() or result.policy_reason.strip() or "it is outside what the firm allows."
+                return {
+                    "route": "blocked",
+                    "trace": [*state["trace"], steps.blocked(reason)],
+                    "messages": [
+                        _final(AIMessage(prompts.BLOCKED_REPLY.format(reason=reason)), config, kind="blocked")
+                    ],
+                }
         chosen = result.route
         project = result.project.strip() if chosen == "project" else ""
-        if chosen == "project" and project not in projects():
+        mentioned = project_in(state["messages"][-1].content, projects())
+        if mentioned and chosen in ("chat", "project"):
+            chosen, project = "project", mentioned  # a message that names a matter folder is work in that folder
+        elif chosen == "project" and project not in projects():
             chosen, project = "chat", ""  # an unknown project is answered in conversation, not with tools
         if chosen == "documents" and not memory.document_titles():
             chosen = "chat"
@@ -278,8 +292,7 @@ def build_graph(
             content += "\n\nYour previous answer failed the citation check:\n" + "\n".join(
                 f"- {e}" for e in state["citation_errors"]
             )
-        system = prompts.ANSWER_DOCUMENTS.format(memories=prompts.format_memories(state.get("memories") or {}))
-        result: DocumentAnswer = writer.invoke([SystemMessage(system), HumanMessage(content)])
+        result: DocumentAnswer = writer.invoke([SystemMessage(prompts.ANSWER_DOCUMENTS), HumanMessage(content)])
         attempt = state["generations"] + 1
         return {
             "answer": result.model_dump(),
@@ -335,23 +348,15 @@ def build_graph(
             )
         model = llm if exhausted else llm.bind_tools(tools)
         history = window(state["messages"], settings.history_messages)
-        if state.get("nudged"):
-            note += "\n" + prompts.NUDGE
         reply = model.invoke([system_prompt(state, tools_note=note), *history])
         calls = reply.tool_calls if not exhausted else []
-        if not calls and not state["evidence"] and not state.get("nudged") and not exhausted:
-            # A tool route that ends without a single tool call is almost always an announcement
-            # ("creating the file...") or a question asked in prose. One nudge, then the reply stands.
-            return {"nudged": True, "trace": [*state["trace"], steps.nudged()]}
         if not calls:
             reply = _final(reply, config, kind=state["route"])
         return {"messages": [reply], "trace": [*state["trace"], steps.thought(calls, concluded=not calls)]}
 
-    def after_act(state: AgentState) -> Literal["act", "tools", "verify"]:
+    def after_act(state: AgentState) -> Literal["tools", "verify"]:
         last = state["messages"][-1]
-        if isinstance(last, AIMessage) and last.tool_calls:
-            return "tools"
-        return "act" if state.get("nudged") and not isinstance(last, AIMessage) else "verify"
+        return "tools" if isinstance(last, AIMessage) and last.tool_calls else "verify"
 
     def tools(state: AgentState, config: RunnableConfig) -> dict:
         ctx = ctx_of(state, config)
@@ -418,6 +423,12 @@ def build_graph(
         ctx = ctx_of(state, config)
         reply: AIMessage = state["messages"][-1]
         history = turn_messages(state["messages"])
+        if not state["evidence"]:
+            # A tool route that never called a tool did nothing, whatever the reply says: the one case
+            # that needs no model call to judge. Announcements and questions asked in prose land here.
+            checked, failures = 1, [prompts.NO_TOOL_USED]
+            retrying = state["verify_attempts"] < MAX_VERIFY_RETRIES
+            return _verdict(state, reply, config, checked, failures, retrying)
         result: Claims = claimer.invoke(
             [SystemMessage(prompts.CLAIMS), HumanMessage(f"User asked: {history[0].content}\n\nReply: {reply.content}")]
         )
@@ -426,6 +437,9 @@ def build_graph(
             result.claims, state["evidence"], project_root=root, conn=conn, thread_id=ctx.thread_id
         )
         retrying = bool(failures) and state["verify_attempts"] < MAX_VERIFY_RETRIES
+        return _verdict(state, reply, config, checked, failures, retrying)
+
+    def _verdict(state, reply, config, checked, failures, retrying) -> dict:
         update = {
             "verification": {"checked": checked, "failed": len(failures), "failures": failures},
             "verify_attempts": state["verify_attempts"] + (1 if failures else 0),
@@ -435,13 +449,9 @@ def build_graph(
         if retrying:
             update["messages"] = [RemoveMessage(id=reply.id)]  # the unproven reply never reaches the user
         elif failures:
+            marked = AIMessage(reply.content + "\n\n_Unverified: " + "; ".join(failures) + "._")
             update["messages"] = [
-                _final(
-                    AIMessage(reply.content + "\n\n_Unverified: " + "; ".join(failures) + "._"),
-                    config,
-                    kind=state["route"],
-                    verified=False,
-                ),
+                _final(marked, config, kind=state["route"], verified=False),
                 RemoveMessage(id=reply.id),
             ]
         return update
@@ -500,6 +510,15 @@ def build_graph(
     graph.add_conditional_edges("verify", after_verify)
     graph.add_edge("memorize", END)
     return graph.compile(checkpointer=checkpointer)
+
+
+def project_in(text: str, names: list[str]) -> str:
+    """The matter folder the text names, if any ("2026-014" also matches "2026/014"); longest name wins."""
+    flat = text.lower().replace("/", "-")
+    for name in sorted(names, key=len, reverse=True):
+        if name.lower() in flat:
+            return name
+    return ""
 
 
 def _final(message: AIMessage, config: RunnableConfig, **meta) -> AIMessage:

@@ -71,10 +71,6 @@ def thought(tool_calls: list[dict], concluded: bool) -> dict:
     return entry("act", f"Decided to call {len(tool_calls)} tool(s).", [c["name"] for c in tool_calls])
 
 
-def nudged() -> dict:
-    return entry("act", "Announced the work without using a tool; asked once to act.")
-
-
 def acted(results: list[dict]) -> dict:
     items = [f"{'ok' if r['ok'] else 'FAILED'} · {r['tool']} {r['summary']}" for r in results]
     failed = sum(1 for r in results if not r["ok"])

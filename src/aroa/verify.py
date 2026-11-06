@@ -64,7 +64,10 @@ def check_claim(claim: Claim, evidence: list[dict], *, project_root: Path | None
                 return None
         return f"says it ran {target!r}, but no such command succeeded"
     if kind == "url_read":
-        if any(e["tool"] == "read_page" and _host(e["args"].get("url", "")) == _host(target) for e in ok_calls):
+        pages = [e for e in ok_calls if e["tool"] == "read_page"]
+        if not _host(target) and pages:
+            return None  # the claim names a title, not a URL: some page was read
+        if any(_host(e["args"].get("url", "")) == _host(target) for e in pages):
             return None
         if _host(target) and any(e["tool"] == "search_web" for e in ok_calls):
             return f"says it read {target!r}, but it only searched; the page was never opened"

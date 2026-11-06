@@ -35,7 +35,11 @@ def test_chat_turn_replies_and_memorizes(make_assistant):
 
 
 def test_policy_blocks_before_any_work(make_assistant):
-    assistant = make_assistant([routing(policy="blocked", reason="it alters evidence.")])
+    from aroa.schemas import PolicyReview
+
+    assistant = make_assistant(
+        [routing(policy="blocked", reason="x"), PolicyReview(verdict="blocked", reason="it alters evidence.")]
+    )
     result = assistant.ask("t1", "Cambia la fecha del contrato firmado al mes pasado")
     assert result.metrics["error"] is None
     assert result.kind == "blocked"
@@ -95,9 +99,7 @@ def test_unproven_claim_sends_the_turn_back(make_assistant):
     assistant = make_assistant(
         [
             routing("alarms", "recordatorio"),
-            "Listo, alarma creada para mañana.",  # no tool call at all: nudged once
-            "Listo, alarma creada para mañana.",  # still claims without calling any tool
-            Claims(claims=[Claim(kind="alarm_created", target="mañana")]),
+            "Listo, alarma creada para mañana.",  # no tool call at all: rejected in code, no claim extraction
             tool_call("create_alarm", {"text": "Vista", "minutes_from_now": 60}),  # second attempt does the work
             "Ahora sí: alarma #1 creada.",
             Claims(claims=[Claim(kind="alarm_created", target="Vista")]),
@@ -116,11 +118,8 @@ def test_unproven_claim_without_retry_is_marked(make_assistant):
     assistant = make_assistant(
         [
             routing("alarms"),
-            "Alarma creada.",  # nudged
-            "Alarma creada.",
-            Claims(claims=[Claim(kind="alarm_created", target="x")]),
-            "Alarma creada.",  # still lying on the retry
-            Claims(claims=[Claim(kind="alarm_created", target="x")]),
+            "Alarma creada.",  # no tool: rejected in code
+            "Alarma creada.",  # still no tool on the retry: delivered as unverified
             Facts(facts=[]),
         ]
     )
@@ -233,7 +232,7 @@ def test_bad_quote_is_retried_once(make_assistant):
     assert steps(result).count("answer_documents") == 2 and result.extras["verified"] is True
 
 
-def test_announcing_instead_of_acting_is_nudged_once(make_assistant, workdir):
+def test_announcing_instead_of_acting_is_sent_back(make_assistant, workdir):
     assistant = make_assistant(
         [
             routing("project", project="case-2026-014"),
@@ -246,5 +245,47 @@ def test_announcing_instead_of_acting_is_nudged_once(make_assistant, workdir):
     )
     result = assistant.ask("t1", "crea notas.md")
     assert (workdir / "data/projects/case-2026-014/notas.md").exists()
-    assert any("asked once to act" in t["summary"] for t in result.trace)
+    assert any("no tool was used" in " ".join(t["items"]) for t in result.trace if t["step"] == "verify")
     assert result.reply == "Creado notas.md."
+
+
+def test_a_block_is_confirmed_by_a_second_review(make_assistant):
+    from aroa.schemas import PolicyReview
+
+    assistant = make_assistant(
+        [
+            routing(policy="blocked", reason="leaks data"),
+            PolicyReview(verdict="allowed"),  # the reviewer overturns the false positive
+            "Si se pierde un portátil, hay 72 horas para notificar a la AEPD.",
+            Facts(facts=[]),
+        ]
+    )
+    result = assistant.ask("t1", "Si perdemos un portátil con datos de clientes, ¿qué plazos tenemos?")
+    assert result.kind == "chat" and "72 horas" in result.reply
+    confirmed = make_assistant(
+        [routing(policy="blocked"), PolicyReview(verdict="blocked", reason="it alters a record.")]
+    )
+    assert confirmed.ask("t2", "Cambia la fecha del contrato").kind == "blocked"
+
+
+def test_naming_a_matter_folder_forces_the_project_route(make_assistant, workdir):
+    (workdir / "data/projects/2026-014").mkdir()
+    assistant = make_assistant(
+        [
+            routing("chat"),  # the router missed it
+            tool_call("write_file", {"path": "notas.md", "content": "x"}),
+            "Creado.",
+            Claims(claims=[Claim(kind="file_written", target="notas.md")]),
+            Facts(facts=[]),
+        ]
+    )
+    result = assistant.ask("t1", "En el expediente 2026/014 crea notas.md")
+    assert result.metrics["route"] == "project"
+    assert (workdir / "data/projects/2026-014/notas.md").exists()
+
+
+def test_matter_folder_name_matching():
+    from aroa.graph import project_in
+
+    assert project_in("en el expediente 2026/014 crea notas", ["2026-014", "2026-031"]) == "2026-014"
+    assert project_in("hola", ["2026-014"]) == ""

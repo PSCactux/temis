@@ -9,7 +9,8 @@ the page never opened. Asking the model to be honest does not work reliably; che
 
 ## Decision
 
-After any tool route, a fast structured call lists the actions the reply states as done (kind +
+After any tool route, if no tool was called at all the reply is rejected in code: nothing can have
+been done. Otherwise a fast structured call lists the actions the reply states as done (kind +
 target). Code checks each one against the turn's evidence: successful tool calls with matching
 arguments, and the artefact where there is one (the file exists, the alarm row exists). Unproven
 claims remove the reply and send the turn back to `act` once with the list of failures; if the retry

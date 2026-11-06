@@ -52,11 +52,11 @@ START → recall → route ──(blocked)────────────�
 | Node | Model | Does |
 |---|---|---|
 | `recall` | embeddings | Pseudonymises the message (replacing it in the checkpoint), then searches facts and episodes of this matter and general memory. |
-| `route` | fast | One structured call: policy verdict, route (`chat`, `documents`, `alarms`, `web`, `project`), standalone query, matter folder. Sees the last turns. |
+| `route` | fast | One structured call: policy verdict, route (`chat`, `documents`, `alarms`, `web`, `project`), standalone query, matter folder. Sees the last turns, the recalled facts and the three document fragments closest to the message. A block is confirmed by a second, narrower call before it stands (false refusals cost more than one extra call). A message that names a matter folder is routed to `project` in code. |
 | `chat` | main | Replies from persona + memories + history. One main-model call. |
 | `retrieve` / `grade` / `answer_documents` / `check_citations` | — / fast / main / code | Corrective RAG over the firm's documents: hybrid search with the rewritten query and the user's words, keep what helps, answer with `[n]` citations and verbatim quotes, verify both in code, one retry. |
 | `act` / `tools` | main | Tool loop bound to the route's tools. Guards: turn cap, identical-call detection, forced conclusion. Tool outputs are pseudonymised. `ask_user` raises an interrupt. |
-| `verify` | fast + code | Extracts the reply's action claims; code checks each against the evidence. Failures remove the reply and send the turn back once; a second failure delivers the reply marked unverified. |
+| `verify` | fast + code | A tool route that never called a tool is rejected in code without a model call. Otherwise extracts the reply's action claims; code checks each against the evidence. Failures remove the reply and send the turn back once; a second failure delivers the reply marked unverified. |
 | `memorize` | fast | Extracts durable facts (deduplicated by similarity, tagged with the matter), stores the episode. Runs after the reply is streamed. Alarm turns are not memorised. |
 
 Latency budget: a chat turn costs one main-model call, one fast routing call and one fast facts call

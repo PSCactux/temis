@@ -61,3 +61,8 @@ class Facts(BaseModel):
         description="Durable facts about the user, their preferences, people, projects or decisions, "
         "one short sentence each in the user's language. Empty if the turn contains none."
     )
+
+
+class PolicyReview(BaseModel):
+    verdict: Literal["allowed", "blocked"] = Field(description="Final verdict after reading the policy again.")
+    reason: str = Field(default="", description="One sentence naming the forbidden action when blocked.")
