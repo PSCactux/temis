@@ -70,6 +70,7 @@ def make_assistant(workdir):
             docs_dir=workdir / "data/docs",
             samples_dir=workdir / "data/samples",
             privacy_mode=privacy_mode,
+            assistant_language="en",  # the Assistant loads .env into the environment; tests stay in English
             _env_file=None,
         )
         model = FakeChatModel(script=script)

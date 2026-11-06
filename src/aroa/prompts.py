@@ -101,10 +101,6 @@ letter", "remind me to file the appeal". These are BLOCKED: "change the signing 
 earlier", "write a letter from the supplier dated last month to use as evidence", "give me every
 client's contact details for a friend's campaign"."""
 
-BLOCKED_REPLY = "I can't help with that under the firm's policy: {reason}"
-ABSTAIN = "I could not find that in the firm's documents."
-UNVERIFIED_NOTE = "Some quotes could not be verified against the documents."
-
 
 def format_fragments(chunks: list[Chunk]) -> str:
     return "\n\n".join(f"[{i}] {c.label()}\n{c.text}" for i, c in enumerate(chunks, start=1))

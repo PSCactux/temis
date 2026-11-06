@@ -3,6 +3,7 @@ feedback, Prometheus metrics, the daily report, and the alarm scheduler."""
 
 import asyncio
 import json
+import tempfile
 import threading
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -14,7 +15,8 @@ from starlette.concurrency import run_in_threadpool
 
 from .app import Assistant
 from .config import get_settings
-from .memory.loaders import EXTENSIONS
+from .i18n import t
+from .memory.loaders import EXTENSIONS, read_text
 from .telemetry.audit import turn_audit
 from .telemetry.metrics import now_iso, prometheus_text, report
 from .tools import alarms
@@ -22,11 +24,18 @@ from .tools import alarms
 WEB = Path(__file__).parent / "web"
 ALARM_TICK_SECONDS = 20
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+MAX_ATTACHMENT_CHARS = 12000
+
+
+class Attachment(BaseModel):
+    name: str
+    text: str
 
 
 class Message(BaseModel):
     text: str
     matter: str = ""
+    attachments: list[Attachment] = []  # read for this turn only; indexing is a separate, explicit upload
 
 
 class Feedback(BaseModel):
@@ -110,6 +119,7 @@ def health():
         "model": a.settings.llm_model,
         "privacy_mode": a.settings.privacy_mode,
         "traced": a.traced,
+        "language": a.settings.assistant_language,
         "memory": a.memory.stats(),
     }
 
@@ -136,12 +146,15 @@ async def send(thread_id: str, message: Message):
     """Server-sent events: token, node, done. The thread resumes if it was waiting for an answer."""
     runtime.touch_thread(thread_id, message.matter, message.text)
     matter = message.matter or runtime.matter_of(thread_id)
+    label = t(runtime.assistant.settings.assistant_language, "attached")
+    attached = "".join(f"\n\n[{label}: {a.name}]\n{a.text[:MAX_ATTACHMENT_CHARS]}" for a in message.attachments)
+    text = message.text + attached
     queue: asyncio.Queue = asyncio.Queue()
     loop = asyncio.get_running_loop()
 
     def produce() -> None:
         with runtime.lock:
-            for kind, item in runtime.assistant.stream(thread_id, message.text, matter=matter):
+            for kind, item in runtime.assistant.stream(thread_id, text, matter=matter):
                 payload = item.__dict__ if kind == "done" else item
                 loop.call_soon_threadsafe(queue.put_nowait, (kind, payload))
         loop.call_soon_threadsafe(queue.put_nowait, None)
@@ -232,3 +245,29 @@ async def delete_document(source: str):
         raise HTTPException(404, "unknown document")
     path.unlink()
     return await run_in_threadpool(runtime.ingest)
+
+
+@app.get("/api/documents/{source}/text")
+def document_text(source: str):
+    """The original file, for the reader that opens when a citation is clicked."""
+    path = runtime.assistant.settings.docs_dir / Path(source).name
+    if not path.exists():
+        raise HTTPException(404, "unknown document")
+    return {"source": path.name, "text": read_text(path)}
+
+
+@app.post("/api/attachments")
+async def read_attachment(name: str, request: Request):
+    """Extract the text of a file for one turn, without saving or indexing it."""
+    safe = Path(name).name
+    if Path(safe).suffix.lower() not in EXTENSIONS:
+        raise HTTPException(400, f"only {', '.join(sorted(EXTENSIONS))} files")
+    body = await request.body()
+    if not body or len(body) > MAX_UPLOAD_BYTES:
+        raise HTTPException(413, "empty file or larger than 25 MB")
+    with tempfile.NamedTemporaryFile(suffix=Path(safe).suffix, delete=True) as tmp:
+        tmp.write(body)
+        tmp.flush()
+        text = await run_in_threadpool(read_text, Path(tmp.name))
+    truncated = len(text) > MAX_ATTACHMENT_CHARS
+    return {"name": safe, "text": text[:MAX_ATTACHMENT_CHARS], "chars": len(text), "truncated": truncated}

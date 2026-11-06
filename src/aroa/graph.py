@@ -26,9 +26,9 @@ from langgraph.graph.message import add_messages
 from langgraph.types import Checkpointer, interrupt
 
 from . import prompts
-from . import trace as steps
 from .citations import check_answer, cited_numbers, tidy_markers
 from .config import Settings
+from .i18n import t
 from .memory.chunking import Chunk
 from .memory.store import MemoryStore
 from .privacy import Anonymizer
@@ -38,6 +38,7 @@ from .tools.base import ToolContext, ToolError
 from .tools.project import agents_md
 from .tools.registry import TOOL_ROUTES, tools_for
 from .tools.web import fetch_text
+from .trace import Steps
 from .verify import check_claims, unread_urls
 
 MAX_DOCUMENT_ANSWERS = 2
@@ -123,6 +124,8 @@ def build_graph(
     claimer = fast_llm.with_structured_output(Claims, method="json_schema")
     reviewer = fast_llm.with_structured_output(PolicyReview, method="json_schema")
     extractor = fast_llm.with_structured_output(Facts, method="json_schema")
+    lang = settings.assistant_language
+    steps = Steps(lang)
 
     def ctx_of(state: AgentState, config: RunnableConfig) -> ToolContext:
         conf = config.get("configurable", {})
@@ -218,9 +221,7 @@ def build_graph(
                 return {
                     "route": "blocked",
                     "trace": [*state["trace"], steps.blocked(reason)],
-                    "messages": [
-                        _final(AIMessage(prompts.BLOCKED_REPLY.format(reason=reason)), config, kind="blocked")
-                    ],
+                    "messages": [_final(AIMessage(t(lang, "blocked_reply", reason=reason)), config, kind="blocked")],
                 }
         chosen = result.route
         project = result.project.strip() if chosen == "project" else ""
@@ -315,7 +316,8 @@ def build_graph(
         answer = DocumentAnswer(**state["answer"])
         sources = _chunks(state["sources"])
         if answer.coverage == "none":
-            text = prompts.ABSTAIN + "\n\nDocuments reviewed: " + "; ".join(sorted({c.title for c in sources})) + "."
+            reviewed = "; ".join(sorted({c.title for c in sources}))
+            text = f"{t(lang, 'abstain')}\n\n{t(lang, 'documents_reviewed')}: {reviewed}."
             return {"messages": [_final(AIMessage(text), config, kind="abstain", sources=[])]}
         quotes = {q.source: q.text for q in answer.quotes}
         cited = [
@@ -323,13 +325,13 @@ def build_graph(
             for n in sorted(cited_numbers(answer.answer))
             if 1 <= n <= len(sources)
         ]
-        lines = [tidy_markers(answer.answer.strip()), "", "**Sources**", ""]
+        lines = [tidy_markers(answer.answer.strip()), "", f"**{t(lang, 'sources')}**", ""]
         for s in cited:
             lines.append(f"- [{s['n']}] {s['label']} (`{s['file']}`)")
             if s["quote"]:
                 lines.append(f"  > «{s['quote']}»")
         if state["citation_errors"]:
-            lines += ["", f"_{prompts.UNVERIFIED_NOTE}_"]
+            lines += ["", f"_{t(lang, 'unverified_note')}_"]
         message = _final(
             AIMessage("\n".join(lines)), config, kind="documents", sources=cited, verified=not state["citation_errors"]
         )
@@ -485,7 +487,7 @@ def build_graph(
         if retrying:
             update["messages"] = [RemoveMessage(id=reply.id)]  # the unproven reply never reaches the user
         elif failures:
-            marked = AIMessage(reply.content + "\n\n_Unverified: " + "; ".join(failures) + "._")
+            marked = AIMessage(reply.content + "\n\n_" + t(lang, "unverified", failures="; ".join(failures)) + "_")
             update["messages"] = [
                 _final(marked, config, kind=state["route"], verified=False),
                 RemoveMessage(id=reply.id),

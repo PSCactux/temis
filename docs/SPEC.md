@@ -102,6 +102,11 @@ recall filters to the current matter plus general memory on every prefetch. The 
 - **Feedback**: thumbs per reply, tied to the turn.
 - **Documents**: `GET/POST/DELETE /api/documents`; an upload is saved in `docs_dir` and indexed before
   the call returns, so the web UI never shows a document the assistant cannot see.
+  `GET /api/documents/{source}/text` serves the original for the reader opened from a citation.
+  `POST /api/attachments` extracts the text of a file for one turn (appended to the message, capped at
+  12,000 characters) without saving or indexing it.
+- **Language**: `ASSISTANT_LANGUAGE` (en | es) selects the texts the code writes (`i18n.py`): the fixed
+  replies and the path of a turn. Prompts stay in English; the model answers in the user's language.
 - **Evals**: `evals/dataset.jsonl` with kinds identity, memory, wall, privacy, policy, chat,
   documents, alarms, project. `aroa eval` runs them in a separate data folder and stores results.
 - **Report**: `aroa report` / `GET /api/report`, computed in code.

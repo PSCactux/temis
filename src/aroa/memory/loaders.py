@@ -18,6 +18,16 @@ def title_of(text: str, path: Path) -> str:
     return match.group(1).strip() if match else path.stem.replace("_", " ").replace("-", " ").strip()
 
 
+def read_text(path: Path) -> str:
+    """The plain text of a document; PDF pages are separated by a page marker line."""
+    if path.suffix.lower() == ".pdf":
+        from pypdf import PdfReader
+
+        pages = [page.extract_text() or "" for page in PdfReader(str(path)).pages]
+        return "\n\n".join(f"[p. {i}]\n{text}" for i, text in enumerate(pages, start=1))
+    return path.read_text(encoding="utf-8", errors="replace")
+
+
 def load_file(path: Path, max_chars: int) -> list[Chunk]:
     chunks: list[Chunk] = []
     if path.suffix.lower() == ".pdf":

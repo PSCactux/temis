@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     llm_reasoning: bool = False  # let thinking models think (slower; breaks structured output on small ones)
 
     assistant_name: str = "Aroa"
+    assistant_language: Literal["en", "es"] = "en"  # the texts the code writes and the path of a turn
     persona_dir: Path = Path("data/persona")
     # off: nothing is pseudonymised; identifiers: patterns in code only; full: also names via the fast model
     privacy_mode: Literal["off", "identifiers", "full"] = "full"

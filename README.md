@@ -126,7 +126,10 @@ uv run aroa serve               # http://127.0.0.1:8000
 
 Your documents go in `data/docs/` (or drop `.md`, `.txt` and `.pdf` files on the web UI, which saves
 them there and indexes them pseudonymised), matter folders in `data/projects/<matter>/`, the persona in
-`data/persona/*.md`. None of those are tracked by git except the samples.
+`data/persona/*.md`. None of those are tracked by git except the samples. A file attached to a message is
+read for that turn only unless you tick "keep in documents"; clicking a citation opens the source with the
+quote highlighted. `ASSISTANT_LANGUAGE=es` puts the texts the code writes (sources, blocked replies, the
+path of a turn) in Spanish; the UI has its own ES/EN switch.
 
 Tracing: run a collector (for example `uv run phoenix serve` from the `arize-phoenix` package) and set
 `OTLP_ENDPOINT=http://localhost:6006/v1/traces`. LangGraph Studio: `uv run langgraph dev`.
