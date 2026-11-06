@@ -289,3 +289,38 @@ def test_matter_folder_name_matching():
 
     assert project_in("en el expediente 2026/014 crea notas", ["2026-014", "2026-031"]) == "2026-014"
     assert project_in("hola", ["2026-014"]) == ""
+
+
+def test_a_page_claimed_but_not_read_is_fetched_by_the_code(make_assistant, monkeypatch):
+    import aroa.graph as graph_module
+    import aroa.tools.web as web
+
+    monkeypatch.setattr(
+        web, "search_duckduckgo", lambda q, n: [{"title": "BOE", "url": "https://boe.es/x", "snippet": "..."}]
+    )
+    monkeypatch.setattr(
+        graph_module, "fetch_text", lambda url, n: "Artículo 1. España se constituye en un Estado social."
+    )
+    assistant = make_assistant(
+        [
+            routing("web", "constitución"),
+            tool_call("search_web", {"query": "constitución"}),
+            "Según https://boe.es/x, España es un Estado social.",  # cites the page without opening it
+            Claims(
+                claims=[
+                    Claim(kind="search_done", target="constitución"),
+                    Claim(kind="url_read", target="https://boe.es/x"),
+                ]
+            ),
+            "Leído en https://boe.es/x: España se constituye en un Estado social.",
+            Claims(claims=[Claim(kind="url_read", target="https://boe.es/x")]),
+            Facts(facts=[]),
+        ]
+    )
+    result = assistant.ask("t1", "¿Qué dice el artículo 1 de la Constitución? Dame la URL")
+    assert result.reply.startswith("Leído en") and result.extras.get("verified") is not False
+    assert result.metrics["claims_failed"] == 0
+    tools = [r["tool"] for r in assistant.conn.execute("SELECT tool FROM tool_calls ORDER BY id")]
+    assert tools == ["search_web", "read_page"]
+    retry_prompt = assistant.model.calls[-3][0].content  # the second act call saw the page content
+    assert "Content of https://boe.es/x" in retry_prompt

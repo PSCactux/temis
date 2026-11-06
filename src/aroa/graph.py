@@ -37,7 +37,8 @@ from .telemetry.audit import log_memory_write, log_tool_call
 from .tools.base import ToolContext, ToolError
 from .tools.project import agents_md
 from .tools.registry import TOOL_ROUTES, tools_for
-from .verify import check_claims
+from .tools.web import fetch_text
+from .verify import check_claims, unread_urls
 
 MAX_DOCUMENT_ANSWERS = 2
 REPEAT_WARN = 2  # the same tool call with the same arguments is answered from memory from here on
@@ -433,11 +434,43 @@ def build_graph(
             [SystemMessage(prompts.CLAIMS), HumanMessage(f"User asked: {history[0].content}\n\nReply: {reply.content}")]
         )
         root = (settings.projects_dir / state["project"]).resolve() if state.get("project") else None
-        checked, failures = check_claims(
-            result.claims, state["evidence"], project_root=root, conn=conn, thread_id=ctx.thread_id
-        )
+        evidence = list(state["evidence"])
+        fetched = []
+        if state["route"] == "web" and state["verify_attempts"] < MAX_VERIFY_RETRIES:
+            # The one unproven claim the code can settle itself: a page the reply says it read. Reading it
+            # here turns the retry into "answer from this", instead of hoping the model calls read_page.
+            for url in unread_urls(result.claims, evidence)[:2]:
+                started = time.perf_counter()
+                try:
+                    text = (
+                        anonymizer.anonymize(fetch_text(url, settings.web_max_chars))
+                        if anonymizer
+                        else fetch_text(url, settings.web_max_chars)
+                    )
+                    ok = True
+                except ToolError as exc:
+                    text, ok = f"Error: {exc}", False
+                log_tool_call(conn, ctx.turn_id, "read_page", {"url": url}, ok, text, time.perf_counter() - started)
+                evidence.append(
+                    {
+                        "tool": "read_page",
+                        "args": {"url": url},
+                        "ok": ok,
+                        "summary": f"url={url!r}",
+                        "output": text[:500],
+                    }
+                )
+                if ok:
+                    fetched.append(f"Content of {url} (read for you; answer from it and cite it):\n{text[:6000]}")
+        checked, failures = check_claims(result.claims, evidence, project_root=root, conn=conn, thread_id=ctx.thread_id)
+        if fetched:
+            failures = [*failures, *fetched]  # the retry sees the page; the claim it supports now holds
         retrying = bool(failures) and state["verify_attempts"] < MAX_VERIFY_RETRIES
-        return _verdict(state, reply, config, checked, failures, retrying)
+        update = _verdict(state, reply, config, checked, failures, retrying)
+        update["evidence"] = evidence
+        if fetched:
+            update["trace"][-1] = steps.verified(checked, [f[:120] for f in failures], retrying)
+        return update
 
     def _verdict(state, reply, config, checked, failures, retrying) -> dict:
         update = {

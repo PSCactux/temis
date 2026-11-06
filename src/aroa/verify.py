@@ -104,3 +104,9 @@ def check_claim(claim: Claim, evidence: list[dict], *, project_root: Path | None
 def check_claims(claims: list[Claim], evidence: list[dict], **context) -> tuple[int, list[str]]:
     failures = [f for c in claims if (f := check_claim(c, evidence, **context))]
     return len(claims), failures
+
+
+def unread_urls(claims: list[Claim], evidence: list[dict]) -> list[str]:
+    """URLs the reply claims to have read while no page from their site was fetched this turn."""
+    fetched = {_host(e["args"].get("url", "")) for e in evidence if e["ok"] and e["tool"] == "read_page"}
+    return [c.target for c in claims if c.kind == "url_read" and _host(c.target) and _host(c.target) not in fetched]

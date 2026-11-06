@@ -109,10 +109,10 @@ Model `ollama:qwen3:8b` (fast: `ollama:qwen3:8b`), privacy mode `full`, 20261106
 All model calls run at temperature 0, yet an 8B model still varies between runs: five full runs on
 the same day scored between 74 % and 86 %. The failures move around the same places: the router
 choosing `chat` or `documents` when memory holds the answer, retrieval picking a neighbouring section,
-a quote that is not verbatim, and the web case, where the model cites a URL from the search results
-without opening it and the verifier marks the reply as unverified. A larger model improves the
-`documents` and `memory` rows; the privacy, policy, wall and verification rows depend on code and
-hold with any model.
+and a quote that is not verbatim. The web row in the table predates a verifier change: when the reply
+cites a page it never opened, the code now reads that page itself and hands it to the retry, and the
+case passes. A larger model improves the `documents` and `memory` rows; the privacy, policy, wall and
+verification rows depend on code and hold with any model.
 
 ## Run it
 
