@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Aroa Assistant</title>
+<style>
+  :root { --bg:#f6f5f1; --panel:#fff; --ink:#1d1d1b; --muted:#6b6a66; --line:#e3e1da; --accent:#2f5d50; --warn:#9a5b00; --bad:#9b2c2c; --ok:#2f7a47; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#161614; --panel:#1f1f1c; --ink:#ecebe6; --muted:#a09e97; --line:#33322e; --accent:#7fb8a4; --warn:#e0a24a; --bad:#e07a7a; --ok:#7fc58f; } }
+  * { box-sizing: border-box; }
+  body { margin:0; font: 15px/1.5 system-ui, -apple-system, sans-serif; background:var(--bg); color:var(--ink); display:grid; grid-template-columns: 260px 1fr; height:100vh; }
+  aside { border-right:1px solid var(--line); padding:16px; overflow:auto; background:var(--panel); }
+  main { display:flex; flex-direction:column; min-width:0; }
+  h1 { font-size:18px; margin:0 0 4px; }
+  .sub { color:var(--muted); font-size:12px; margin-bottom:12px; }
+  button { font:inherit; border:1px solid var(--line); background:var(--panel); color:var(--ink); border-radius:8px; padding:6px 10px; cursor:pointer; }
+  button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+  .threads { list-style:none; padding:0; margin:12px 0; }
+  .threads li { padding:8px; border-radius:8px; cursor:pointer; font-size:13px; }
+  .threads li.active, .threads li:hover { background:var(--bg); }
+  .threads .m { color:var(--muted); font-size:11px; }
+  #log { flex:1; overflow:auto; padding:24px; display:flex; flex-direction:column; gap:14px; }
+  .msg { max-width:760px; padding:12px 14px; border-radius:12px; background:var(--panel); border:1px solid var(--line); white-space:pre-wrap; }
+  .msg.user { align-self:flex-end; background:var(--accent); color:#fff; border-color:var(--accent); }
+  .msg.question { border-color:var(--warn); }
+  .msg.blocked { border-color:var(--bad); }
+  .meta { font-size:12px; color:var(--muted); margin-top:8px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; }
+  .meta button { padding:2px 8px; font-size:12px; }
+  .path { margin-top:8px; border-top:1px solid var(--line); padding-top:8px; font-size:13px; display:none; }
+  .path .step { margin:4px 0; }
+  .path .step b { color:var(--accent); }
+  .path .items { color:var(--muted); font-size:12px; margin:2px 0 4px 12px; }
+  .path .fail { color:var(--bad); }
+  form { display:flex; gap:8px; padding:16px 24px; border-top:1px solid var(--line); background:var(--panel); }
+  input, textarea { font:inherit; border:1px solid var(--line); border-radius:8px; padding:8px 10px; background:var(--bg); color:var(--ink); }
+  textarea { flex:1; resize:none; height:44px; }
+  #matter { width:140px; }
+  .stats { font-size:12px; color:var(--muted); padding:8px 24px; border-top:1px solid var(--line); display:flex; gap:16px; flex-wrap:wrap; }
+  .stats b { color:var(--ink); }
+  @media (max-width: 760px) { body { grid-template-columns:1fr; } aside { display:none; } #log { padding:16px; } form { padding:12px 16px; } }
+</style>
+</head>
+<body>
+<aside>
+  <h1>Aroa</h1>
+  <div class="sub" id="health">…</div>
+  <button class="primary" id="new">New conversation</button>
+  <ul class="threads" id="threads"></ul>
+  <div class="sub"><a href="/metrics">/metrics</a> · <a href="/api/report">/api/report</a> · <a href="/api/alarms">alarms</a></div>
+</aside>
+<main>
+  <div id="log"></div>
+  <div class="stats" id="stats"></div>
+  <form id="form">
+    <input id="matter" placeholder="matter (e.g. 2026-014)" title="Memory wall: what you say here is recalled only in this matter">
+    <textarea id="text" placeholder="Write to Aroa… (Enter to send, Shift+Enter for a new line)"></textarea>
+    <button class="primary" type="submit" id="send">Send</button>
+  </form>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+let thread = null, busy = false;
+const log = $('#log');
+
+function id() { return Math.random().toString(36).slice(2, 10); }
+function esc(s) { return (s || '').replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function md(s) { return esc(s).replace(/\*\*(.+?)\*\*/g, '<b>$1</b>').replace(/`(.+?)`/g, '<code>$1</code>').replace(/^- (.*)$/gm, '• $1').replace(/^> (.*)$/gm, '<i>$1</i>'); }
+
+function bubble(role, text, extra = {}) {
+  const el = document.createElement('div');
+  el.className = 'msg ' + role + (extra.kind ? ' ' + extra.kind : '');
+  el.innerHTML = '<div class="body">' + md(text) + '</div>';
+  if (role === 'assistant' && extra.turn_id) {
+    el.innerHTML += `<div class="meta"><span>${esc(extra.kind || '')}</span>` +
+      (extra.verified === false ? '<span class="fail">unverified</span>' : '') +
+      `<button data-path="${extra.turn_id}">path</button><button data-fb="1" data-turn="${extra.turn_id}">👍</button><button data-fb="-1" data-turn="${extra.turn_id}">👎</button></div><div class="path" id="path-${extra.turn_id}"></div>`;
+  }
+  log.appendChild(el); log.scrollTop = log.scrollHeight; return el;
+}
+
+function renderPath(turn) {
+  const m = turn;
+  const nodes = Object.entries(m.nodes || {}).map(([k, v]) => `${k} ${v}s`).join(' · ');
+  let html = `<div class="step"><b>${m.route || ''}</b> · ${m.seconds}s · ${m.llm_calls} model calls · ${m.input_tokens}+${m.output_tokens} tokens · ${m.tool_calls} tools · claims ${m.claims - m.claims_failed}/${m.claims} · facts ${m.facts_written}</div>`;
+  html += `<div class="items">${esc(nodes)}</div>`;
+  for (const s of m.trace || []) {
+    html += `<div class="step"><b>${esc(s.title)}</b>${s.seconds ? ' (' + s.seconds + 's)' : ''}: ${esc(s.summary)}` +
+      (s.items && s.items.length ? '<div class="items">' + s.items.map(i => '– ' + esc(i)).join('<br>') + '</div>' : '') + '</div>';
+  }
+  if (m.audit && m.audit.tool_calls.length) {
+    html += '<div class="step"><b>Audit</b><div class="items">' + m.audit.tool_calls.map(t => `${t.ok ? 'ok' : 'FAILED'} · ${esc(t.tool)} ${esc(t.arguments)} · ${t.seconds}s · ${t.result_hash}`).join('<br>') + '</div></div>';
+  }
+  if (m.audit && m.audit.memory_writes.length) {
+    html += '<div class="step"><b>Memory writes</b><div class="items">' + m.audit.memory_writes.map(w => `${w.stored ? 'stored' : 'duplicate'} · ${esc(w.text)}`).join('<br>') + '</div></div>';
+  }
+  return html;
+}
+
+log.addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.path) {
+    const box = $('#path-' + b.dataset.path);
+    if (box.style.display === 'block') { box.style.display = 'none'; return; }
+    const turn = await (await fetch('/api/turns/' + b.dataset.path)).json();
+    box.innerHTML = renderPath(turn); box.style.display = 'block';
+  }
+  if (b.dataset.fb) {
+    await fetch(`/api/turns/${b.dataset.turn}/feedback`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ score: +b.dataset.fb }) });
+    b.parentElement.querySelectorAll('[data-fb]').forEach(x => x.disabled = true);
+  }
+});
+
+async function loadThreads() {
+  const rows = await (await fetch('/api/threads')).json();
+  $('#threads').innerHTML = rows.map(r => `<li data-id="${r.thread_id}" class="${r.thread_id === thread ? 'active' : ''}">${esc(r.title || r.thread_id)}<div class="m">${esc(r.matter || 'no matter')} · ${r.updated_ts.slice(0, 16).replace('T', ' ')}</div></li>`).join('');
+}
+$('#threads').addEventListener('click', e => { const li = e.target.closest('li'); if (li) open(li.dataset.id); });
+
+async function open(t) {
+  thread = t; log.innerHTML = '';
+  const data = await (await fetch('/api/threads/' + t)).json();
+  $('#matter').value = data.matter || '';
+  for (const m of data.messages) bubble(m.role, m.text, m);
+  if (data.waiting) bubble('assistant', data.waiting, { kind: 'question' });
+  loadThreads();
+}
+
+$('#new').onclick = () => { thread = id(); log.innerHTML = ''; $('#matter').value = ''; loadThreads(); };
+
+async function send(text) {
+  if (!thread) thread = id();
+  busy = true; $('#send').disabled = true;
+  bubble('user', text);
+  const live = bubble('assistant', '…');
+  const res = await fetch(`/api/threads/${thread}/messages`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text, matter: $('#matter').value.trim() }) });
+  const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '', tokens = '', steps = [];
+  while (true) {
+    const { value, done } = await reader.read(); if (done) break;
+    buf += dec.decode(value, { stream: true });
+    let i; while ((i = buf.indexOf('\n\n')) >= 0) {
+      const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
+      const ev = /event: (\w+)/.exec(chunk)?.[1]; const data = JSON.parse(chunk.slice(chunk.indexOf('data: ') + 6));
+      if (ev === 'token') { tokens += data; live.querySelector('.body').innerHTML = md(tokens); }
+      if (ev === 'node') { steps.push(data.title); live.querySelector('.body').innerHTML = md(tokens || '…') + `<div class="meta">${esc(steps.join(' → '))}</div>`; }
+      if (ev === 'done') { live.remove(); bubble('assistant', data.reply, { kind: data.kind, turn_id: data.turn_id, verified: data.extras && data.extras.verified }); }
+      log.scrollTop = log.scrollHeight;
+    }
+  }
+  busy = false; $('#send').disabled = false; loadThreads(); loadStats();
+}
+
+$('#form').onsubmit = e => { e.preventDefault(); const t = $('#text').value.trim(); if (!t || busy) return; $('#text').value = ''; send(t); };
+$('#text').addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#form').requestSubmit(); } });
+
+async function loadStats() {
+  const r = await (await fetch('/api/report?days=1')).json();
+  $('#stats').innerHTML = `<span>today: <b>${r.turns}</b> turns</span><span>p50 <b>${r.latency_p50}s</b> · p95 <b>${r.latency_p95}s</b></span><span>model calls <b>${r.llm_calls}</b></span><span>tokens <b>${r.input_tokens + r.output_tokens}</b></span><span>claims failed <b>${r.claims_failed}</b>/${r.claims_checked}</span><span>facts <b>${r.facts_written}</b></span><span>👍 ${r.feedback.up} 👎 ${r.feedback.down}</span>`;
+}
+async function loadHealth() {
+  const h = await (await fetch('/api/health')).json();
+  $('#health').textContent = `${h.model} · privacy ${h.privacy_mode} · ${h.traced ? 'traced' : 'no tracing'} · ${h.memory.facts} facts, ${h.memory.documents} chunks`;
+}
+setInterval(() => { if (thread && !busy) open(thread); }, 20000); // alarms post into the thread on their own
+loadThreads(); loadStats(); loadHealth();
+</script>
+</body>
+</html>

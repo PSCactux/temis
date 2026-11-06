@@ -1,0 +1,7 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "aroa": "./src/aroa/studio.py:graph"
+  },
+  "env": ".env"
+}

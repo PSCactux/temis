@@ -1,0 +1,15 @@
+__pycache__/
+*.py[oc]
+build/
+dist/
+*.egg-info
+.venv
+.env
+.data/
+evals/results/
+.langgraph_api/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+data/docs/
+data/projects/

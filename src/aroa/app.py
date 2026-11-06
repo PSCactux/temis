@@ -1,0 +1,180 @@
+"""Wire settings, models, memory, privacy, telemetry and the graph into one object the CLI and server share."""
+
+import sqlite3
+import time
+import uuid
+from dataclasses import dataclass, field
+from datetime import datetime
+from typing import Any
+
+from dotenv import load_dotenv
+from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
+from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.types import Command
+
+from .config import Settings
+from .graph import build_graph, load_persona
+from .memory.store import MemoryStore
+from .models import make_chat_model
+from .privacy import NAMES_PROMPT, Anonymizer, Names
+from .telemetry.db import connect
+from .telemetry.metrics import TurnCollector, record_turn, turn_metrics
+from .telemetry.tracing import setup_tracing
+
+
+@dataclass
+class TurnResult:
+    turn_id: str
+    thread_id: str
+    reply: str  # revealed: placeholders replaced by the real values for the user
+    kind: str
+    trace: list[dict]
+    metrics: dict
+    interrupted: str | None = None  # the question the assistant is waiting for
+    extras: dict = field(default_factory=dict)
+
+
+class Assistant:
+    def __init__(self, settings: Settings, *, llm=None, fast_llm=None, memory: MemoryStore | None = None):
+        load_dotenv()
+        self.settings = settings
+        self.traced = setup_tracing(settings)
+        self.conn = connect(settings.db_path)
+        self.llm = llm or make_chat_model(settings.llm_model, settings.llm_max_tokens, reasoning=settings.llm_reasoning)
+        self.fast_llm = fast_llm or make_chat_model(settings.llm_fast_model, settings.llm_fast_max_tokens)
+        self.memory = memory or MemoryStore(settings)
+        self.anonymizer = self._make_anonymizer()
+        settings.data_dir.mkdir(parents=True, exist_ok=True)
+        self.checkpointer = SqliteSaver(sqlite3.connect(str(settings.checkpoint_db), check_same_thread=False))
+        self.graph = build_graph(
+            self.llm,
+            self.fast_llm,
+            self.memory,
+            settings,
+            self.conn,
+            persona=load_persona(settings.persona_dir, settings.assistant_name),
+            anonymizer=self.anonymizer,
+            checkpointer=self.checkpointer,
+        )
+
+    def _make_anonymizer(self) -> Anonymizer | None:
+        mode = self.settings.privacy_mode
+        if mode == "off":
+            return None
+        extractor = None
+        if mode == "full":
+            names_model = self.fast_llm.with_structured_output(Names, method="json_schema")
+
+            def extractor(text: str) -> Names:
+                return names_model.invoke([SystemMessage(NAMES_PROMPT), HumanMessage(text[:8000])])
+
+        return Anonymizer(self.conn, extractor)
+
+    # ── documents ──────────────────────────────────────────────────────
+    def ingest(self) -> dict:
+        anonymize = self.anonymizer.anonymize if self.anonymizer else None
+        return self.memory.sync_documents(anonymize)
+
+    # ── turns ──────────────────────────────────────────────────────────
+    def config(self, thread_id: str, turn_id: str, source: str, matter: str, collector) -> dict:
+        return {
+            "configurable": {"thread_id": thread_id, "turn_id": turn_id, "source": source, "matter": matter},
+            "callbacks": [collector],
+            "metadata": {"turn_id": turn_id, "thread_id": thread_id, "matter": matter, "source": source},
+            "recursion_limit": 60,
+        }
+
+    def waiting_for(self, thread_id: str) -> str | None:
+        """The question the thread is paused on, if any."""
+        state = self.graph.get_state({"configurable": {"thread_id": thread_id}})
+        for task in state.tasks:
+            for item in task.interrupts:
+                return (item.value or {}).get("question", "")
+        return None
+
+    def stream(self, thread_id: str, text: str, *, source: str = "user", matter: str = ""):
+        """Yield ("token", str) | ("node", dict) | ("done", TurnResult). Resumes the thread if it was waiting."""
+        turn_id = uuid.uuid4().hex[:12]
+        collector = TurnCollector()
+        config = self.config(thread_id, turn_id, source, matter, collector)
+        payload: Any = Command(resume=text) if self.waiting_for(thread_id) else {"messages": [HumanMessage(text)]}
+        started = time.perf_counter()
+        state: dict = {}
+        error: str | None = None
+        try:
+            for mode, chunk in self.graph.stream(payload, config, stream_mode=["messages", "updates"]):
+                if mode == "messages":
+                    message, meta = chunk
+                    if (
+                        isinstance(message, AIMessage)
+                        and message.content
+                        and meta.get("langgraph_node") in ("chat", "act")
+                    ):
+                        yield "token", self.reveal(message.content)
+                elif mode == "updates":
+                    for node, update in chunk.items():
+                        if node == "__interrupt__":
+                            continue
+                        if update and update.get("trace"):
+                            yield "node", update["trace"][-1]
+        except Exception as exc:  # noqa: BLE001 — the turn is recorded as failed and the error shown
+            error = f"{type(exc).__name__}: {exc}"
+        snapshot = self.graph.get_state({"configurable": {"thread_id": thread_id}})
+        state = snapshot.values
+        waiting = self.waiting_for(thread_id)
+        seconds = time.perf_counter() - started
+        metrics = turn_metrics(state, collector, seconds=seconds)
+        metrics["interrupted"] = int(bool(waiting))
+        metrics["error"] = error
+        metrics["trace"] = __import__("json").dumps(state.get("trace") or [])
+        record_turn(self.conn, turn_id, thread_id, source, metrics)
+        reply = waiting or error or self._last_reply(state)
+        last = state["messages"][-1] if state.get("messages") else None
+        kind = (
+            "error"
+            if error
+            else "question"
+            if waiting
+            else (getattr(last, "additional_kwargs", {}) or {}).get("kind", "")
+        )
+        yield (
+            "done",
+            TurnResult(
+                turn_id=turn_id,
+                thread_id=thread_id,
+                reply=self.reveal(reply),
+                kind=kind,
+                trace=state.get("trace") or [],
+                metrics=metrics,
+                interrupted=self.reveal(waiting) if waiting else None,
+                extras={k: v for k, v in (getattr(last, "additional_kwargs", {}) or {}).items() if k != "turn_id"},
+            ),
+        )
+
+    def ask(self, thread_id: str, text: str, **kwargs) -> TurnResult:
+        for kind, item in self.stream(thread_id, text, **kwargs):
+            if kind == "done":
+                return item
+        raise RuntimeError("stream ended without a result")
+
+    def _last_reply(self, state: dict) -> str:
+        for message in reversed(state.get("messages") or []):
+            if isinstance(message, AIMessage) and not message.tool_calls:
+                return message.content
+        return ""
+
+    def reveal(self, text: str) -> str:
+        return self.anonymizer.reveal(text) if self.anonymizer and text else text
+
+    def history(self, thread_id: str) -> list[dict]:
+        state = self.graph.get_state({"configurable": {"thread_id": thread_id}}).values
+        rows = []
+        for message in state.get("messages") or []:
+            if isinstance(message, HumanMessage):
+                rows.append({"role": "user", "text": self.reveal(message.content)})
+            elif isinstance(message, AIMessage) and not message.tool_calls:
+                rows.append({"role": "assistant", "text": self.reveal(message.content), **message.additional_kwargs})
+        return rows
+
+    def now(self) -> str:
+        return datetime.now().astimezone().isoformat(timespec="minutes")

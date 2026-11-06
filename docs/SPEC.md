@@ -1,0 +1,110 @@
+# Aroa Assistant — specification
+
+An assistant for a small law firm that runs entirely on the firm's own hardware, built as an explicit
+LangGraph state machine instead of a hand-written agent loop. It remembers through retrieval (hybrid
+RAG over facts, past conversations and the firm's documents) with a wall between matters, it
+pseudonymises personal data before any model sees it, it refuses what the firm's policy forbids, it
+can set deadline reminders, read the web and work inside matter folders (including redacting
+documents), and every claim it makes about an action is checked in code before the lawyer reads it.
+Everything it does is traced, measured, audited and evaluable.
+
+## Goals
+
+1. **Explicit control flow.** Routing, acting, verifying and memorising are graph nodes with typed
+   state. The model decides *what* to say and *which* tool to call; the code decides retries, limits,
+   when to give up, what is a name and what counts as proven.
+2. **Confidentiality by construction.** Identifiers and names are replaced by stable placeholders
+   before a message, a document or a tool result reaches a model, a store, a checkpoint or a trace.
+   Only the interface reveals them. Memory of one matter is never recalled in another.
+3. **Policy gate.** Requests to fabricate or alter evidence, deceive, cross matters, leak data or
+   conceal a crime are blocked in the routing step, before any work.
+4. **Memory that does not depend on the model remembering to save.** Facts are extracted from every
+   turn and stored with deduplication; recall is hybrid (dense + BM25, RRF) over facts, episodes and
+   documents.
+5. **Verified claims.** After a tool route, the reply's claims are checked against the turn's
+   evidence; document answers carry citations with verbatim quotes checked in code.
+6. **Observable by default.** OpenTelemetry traces, per-turn metrics in SQLite and Prometheus, an
+   audit log, a plain-language path per turn, feedback, offline evals and a daily report.
+7. **Resumable.** A SQLite checkpointer keeps every thread; questions to the user are interrupts.
+
+## Non-goals (v1)
+
+Self-modification, multi-user authentication, cloud deployment, PDF redaction (text files only),
+providers other than Anthropic, OpenAI-compatible gateways and Ollama.
+
+## The graph
+
+```
+START → recall → route ──(blocked)──────────────────────────────────────────→ END
+                   │
+                   ├─ chat ─────────────────────────────────────────────┐
+                   ├─ documents → retrieve → grade → answer_documents → check_citations → finalize ┐
+                   └─ alarms | web | project → act ⇄ tools ─────┐       (retry once)               │
+                                                (ask_user → interrupt)                              │
+                                                              verify ◄──┘                           │
+                                                                │ (unproven → act, once)             │
+                                                                ▼                                    │
+                                                            memorize ◄───────────────────────────────┘
+                                                                │
+                                                               END
+```
+
+| Node | Model | Does |
+|---|---|---|
+| `recall` | embeddings | Pseudonymises the message (replacing it in the checkpoint), then searches facts and episodes of this matter and general memory. |
+| `route` | fast | One structured call: policy verdict, route (`chat`, `documents`, `alarms`, `web`, `project`), standalone query, matter folder. Sees the last turns. |
+| `chat` | main | Replies from persona + memories + history. One main-model call. |
+| `retrieve` / `grade` / `answer_documents` / `check_citations` | — / fast / main / code | Corrective RAG over the firm's documents: hybrid search with the rewritten query and the user's words, keep what helps, answer with `[n]` citations and verbatim quotes, verify both in code, one retry. |
+| `act` / `tools` | main | Tool loop bound to the route's tools. Guards: turn cap, identical-call detection, forced conclusion. Tool outputs are pseudonymised. `ask_user` raises an interrupt. |
+| `verify` | fast + code | Extracts the reply's action claims; code checks each against the evidence. Failures remove the reply and send the turn back once; a second failure delivers the reply marked unverified. |
+| `memorize` | fast | Extracts durable facts (deduplicated by similarity, tagged with the matter), stores the episode. Runs after the reply is streamed. Alarm turns are not memorised. |
+
+Latency budget: a chat turn costs one main-model call, one fast routing call and one fast facts call
+(after the reply); in `full` privacy mode, one more fast call for names. Tool turns add the loop and
+one verification call. Recall never calls a model.
+
+## Privacy
+
+`privacy.py`. Modes: `off`, `identifiers` (patterns in code: email, IBAN, card, DNI, NIE, social
+security, phone, plate), `full` (also people and organisations proposed by the fast model and accepted
+by `plausible_name`, which rejects role words and public bodies). Mapping in SQLite, one placeholder
+per original, shared by conversations and documents. `reveal` at the interface only; `redact` for
+documents that leave the firm (black boxes, irreversible).
+
+## Memory
+
+Qdrant (embedded, or a server via `QDRANT_URL`) with fastembed vectors computed locally. Collections
+`facts`, `episodes` (recency half-life), `documents` (files in `data/docs`, chunked by headings,
+indexed incrementally by file hash, pseudonymised at ingest). Facts and episodes carry a `matter`;
+recall filters to the current matter plus general memory on every prefetch. The persona
+(`data/persona/*.md`) is always in the prompt, never retrieved.
+
+## Tools
+
+| Route | Tools |
+|---|---|
+| alarms | `create_alarm`, `list_alarms`, `delete_alarm` — SQLite; the server's scheduler wakes the thread when one is due |
+| web | `search_web` (SearXNG-style JSON endpoint, or DuckDuckGo lite without configuration), `read_page` (HTML and PDF to text, size-capped, private addresses refused) |
+| project | `list_files`, `read_file`, `grep`, `write_file`, `edit_file`, `run_command`, `redact_file` — confined to `data/projects/<matter>`; the folder's `AGENTS.md` is in the prompt |
+| all tool routes | `ask_user` (interrupt), `remember` (explicit fact) |
+
+## Observability
+
+- **Traces**: OpenInference spans over OTLP/HTTP to any collector; contents hidden unless
+  `TRACE_CONTENT=true`, and pseudonymised even then. `turn_id` in the metadata.
+- **Metrics**: one row per turn (route, seconds, per-node seconds, model calls, tokens, tool calls and
+  errors, retrieved/kept, claims checked/failed, facts written, interrupted, error) and `/metrics`
+  in Prometheus text.
+- **Path**: the plain-language trace of the turn, stored with it, shown by the UI, the CLI (`-v`) and
+  `GET /api/turns/{id}`.
+- **Audit**: tool calls (arguments, outcome, result hash, seconds) and memory writes (fact, stored or
+  duplicate) per turn.
+- **Feedback**: thumbs per reply, tied to the turn.
+- **Evals**: `evals/dataset.jsonl` with kinds identity, memory, wall, privacy, policy, chat,
+  documents, alarms, project. `aroa eval` runs them in a separate data folder and stores results.
+- **Report**: `aroa report` / `GET /api/report`, computed in code.
+
+## Configuration
+
+`.env` (see `.env.example`): models as `<provider>:<model>`, reasoning toggle, privacy mode, embedding
+model, data paths, search endpoint, OTLP endpoint. Nothing in the repository refers to a machine.

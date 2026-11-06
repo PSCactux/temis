@@ -1,0 +1,57 @@
+[project]
+name = "aroa-assistant"
+version = "0.1.0"
+description = "A local-first personal assistant built as a LangGraph state machine with RAG memory, verified claims and built-in observability."
+readme = "README.md"
+license = "MIT"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.162.0",
+    "fastembed>=0.9.1",
+    "httpx>=0.28.0",
+    "langchain-anthropic>=1.7.7",
+    "langchain-core>=1.7.1",
+    "langchain-ollama>=1.1.0",
+    "langchain-openai>=1.7.3",
+    "langgraph>=1.2.18",
+    "langgraph-checkpoint-sqlite>=3.1.2",
+    "pydantic-settings>=2.16.2",
+    "pypdf>=6.21.4",
+    "python-dotenv>=1.2.4",
+    "qdrant-client>=1.20.0",
+    "rich>=15.0.0",
+    "uvicorn>=0.54.0",
+]
+
+[project.scripts]
+aroa = "aroa.cli:main"
+
+[tool.uv.build-backend]
+module-name = "aroa"
+
+[build-system]
+requires = ["uv_build>=0.10.9,<0.11.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "langgraph-cli[inmem]>=0.4.40",
+    "pytest>=9.2.0",
+    "ruff>=0.17.3",
+]
+
+[project.optional-dependencies]
+tracing = [
+    "opentelemetry-sdk>=1.30.0",
+    "opentelemetry-exporter-otlp-proto-http>=1.30.0",
+    "openinference-instrumentation-langchain>=0.1.40",
+]
+
+[tool.ruff]
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
