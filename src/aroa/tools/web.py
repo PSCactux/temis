@@ -5,7 +5,7 @@ import html
 import ipaddress
 import re
 import socket
-from urllib.parse import quote_plus, urlsplit
+from urllib.parse import parse_qs, quote_plus, unquote, urlsplit
 
 import httpx
 from langchain_core.tools import tool
@@ -38,6 +38,7 @@ def html_to_text(page: str) -> str:
     page = re.sub(r"(?i)<br\s*/?>|</(p|div|li|h[1-6]|tr|section|article)>", "\n", page)
     text = html.unescape(re.sub(r"<[^>]+>", " ", page))
     text = re.sub(r"[ \t\r\f\v]+", " ", text)
+    text = "\n".join(line.strip() for line in text.splitlines())
     return re.sub(r"\n\s*\n+", "\n\n", text).strip()
 
 
@@ -102,8 +103,19 @@ def search_duckduckgo(query: str, limit: int) -> list[dict]:
     results = []
     for i, (url, title) in enumerate(links[:limit]):
         snippet = snippets[i] if i < len(snippets) else ""
-        results.append({"title": html_to_text(title), "url": html.unescape(url), "snippet": html_to_text(snippet)})
+        results.append(
+            {"title": html_to_text(title), "url": _unwrap(html.unescape(url)), "snippet": html_to_text(snippet)}
+        )
     return results
+
+
+def _unwrap(url: str) -> str:
+    """DuckDuckGo links go through a redirect (//duckduckgo.com/l/?uddg=<real url>); return the real one."""
+    parts = urlsplit(url if url.startswith("http") else "https:" + url)
+    if parts.hostname and parts.hostname.endswith("duckduckgo.com") and parts.path == "/l/":
+        real = parse_qs(parts.query).get("uddg", [""])[0]
+        return unquote(real) if real else url
+    return url
 
 
 def make_tools(ctx: ToolContext) -> list:

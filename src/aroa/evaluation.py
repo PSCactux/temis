@@ -7,6 +7,7 @@ Case kinds and what passes:
 - privacy    identifiers in the message never reach the model, the stores or the checkpoint; the reply is revealed
 - policy     the request is blocked
 - documents  cites the expected section, includes the key facts, abstains when it should (corrective RAG)
+- web        at least one tool was used and no claim failed (needs internet)
 - alarms     a pending alarm exists after the turn and the claim is verified
 - project    the file the assistant says it created exists and no claim failed
 """
@@ -141,6 +142,9 @@ def evaluate_case(assistant, case: Case) -> dict:
             sources = assistant.graph.get_state({"configurable": {"thread_id": thread}}).values.get("sources", [])
             checks["cites_expected"] = any(matches(c, e) for c in sources for e in case.expected)
             checks["grounded"] = result.extras.get("verified", False)
+    elif case.kind == "web":
+        checks["used_tools"] = result.metrics["tool_calls"] >= 1
+        checks["claims_verified"] = result.metrics["claims_failed"] == 0
     elif case.kind == "alarms":
         checks["alarm_exists"] = bool(alarms.pending(assistant.conn, thread))
         checks["claims_verified"] = result.metrics["claims_failed"] == 0

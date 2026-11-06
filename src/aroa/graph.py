@@ -52,6 +52,7 @@ class AgentState(TypedDict, total=False):
     query: str
     project: str
     memories: dict
+    doc_hints: list[str]
     retrieved: list[dict]
     sources: list[dict]
     answer: dict | None
@@ -60,6 +61,7 @@ class AgentState(TypedDict, total=False):
     evidence: list[dict]
     tool_turns: int
     repeats: dict[str, int]
+    nudged: bool
     verify_feedback: list[str]
     verify_attempts: int
     verification: dict
@@ -166,8 +168,10 @@ def build_graph(
                 # Same id: add_messages replaces the message, so the original text never reaches a model or a store.
                 messages = [HumanMessage(question, id=incoming.id)]
         memories = memory.recall(question, exclude_thread=conf.get("thread_id"), matter=conf.get("matter", ""))
+        hints = [c.label() for c in memory.search_documents(question, k=3)] if memory.document_titles() else []
         return {
             "messages": messages,
+            "doc_hints": hints,
             "route": "",
             "query": question,
             "project": "",
@@ -180,6 +184,7 @@ def build_graph(
             "evidence": [],
             "tool_turns": 0,
             "repeats": {},
+            "nudged": False,
             "verify_feedback": [],
             "verify_attempts": 0,
             "verification": {},
@@ -189,8 +194,11 @@ def build_graph(
 
     def route(state: AgentState, config: RunnableConfig) -> dict:
         history = window(state["messages"], settings.history_messages)
+        facts = "; ".join(f["text"] for f in state["memories"].get("facts", [])) or "(none)"
         system = prompts.ROUTE.format(
             titles=", ".join(memory.document_titles()) or "(none)",
+            hints="; ".join(state.get("doc_hints") or []) or "(none)",
+            facts=facts,
             projects=", ".join(projects()) or "(none)",
             policy=prompts.POLICY,
         )
@@ -270,7 +278,8 @@ def build_graph(
             content += "\n\nYour previous answer failed the citation check:\n" + "\n".join(
                 f"- {e}" for e in state["citation_errors"]
             )
-        result: DocumentAnswer = writer.invoke([SystemMessage(prompts.ANSWER_DOCUMENTS), HumanMessage(content)])
+        system = prompts.ANSWER_DOCUMENTS.format(memories=prompts.format_memories(state.get("memories") or {}))
+        result: DocumentAnswer = writer.invoke([SystemMessage(system), HumanMessage(content)])
         attempt = state["generations"] + 1
         return {
             "answer": result.model_dump(),
@@ -326,15 +335,23 @@ def build_graph(
             )
         model = llm if exhausted else llm.bind_tools(tools)
         history = window(state["messages"], settings.history_messages)
+        if state.get("nudged"):
+            note += "\n" + prompts.NUDGE
         reply = model.invoke([system_prompt(state, tools_note=note), *history])
         calls = reply.tool_calls if not exhausted else []
+        if not calls and not state["evidence"] and not state.get("nudged") and not exhausted:
+            # A tool route that ends without a single tool call is almost always an announcement
+            # ("creating the file...") or a question asked in prose. One nudge, then the reply stands.
+            return {"nudged": True, "trace": [*state["trace"], steps.nudged()]}
         if not calls:
             reply = _final(reply, config, kind=state["route"])
         return {"messages": [reply], "trace": [*state["trace"], steps.thought(calls, concluded=not calls)]}
 
-    def after_act(state: AgentState) -> Literal["tools", "verify"]:
+    def after_act(state: AgentState) -> Literal["act", "tools", "verify"]:
         last = state["messages"][-1]
-        return "tools" if isinstance(last, AIMessage) and last.tool_calls else "verify"
+        if isinstance(last, AIMessage) and last.tool_calls:
+            return "tools"
+        return "act" if state.get("nudged") and not isinstance(last, AIMessage) else "verify"
 
     def tools(state: AgentState, config: RunnableConfig) -> dict:
         ctx = ctx_of(state, config)
@@ -443,16 +460,14 @@ def build_graph(
         result: Facts = extractor.invoke(
             [SystemMessage(prompts.FACTS), HumanMessage(f"Known facts:\n{known}\n\nUser: {user}\n\nAssistant: {reply}")]
         )
-        stored, skipped = memory.add_facts(
-            result.facts, thread_id=conf.get("thread_id", "default"), turn_id=conf.get("turn_id", "no-turn")
-        )
+        thread_id, turn_id = conf.get("thread_id", "default"), conf.get("turn_id", "no-turn")
+        matter = conf.get("matter", "")
+        stored, skipped = memory.add_facts(result.facts, thread_id=thread_id, turn_id=turn_id, matter=matter)
         for fact in stored:
-            log_memory_write(conn, conf.get("turn_id", "no-turn"), "fact", fact, True)
+            log_memory_write(conn, turn_id, "fact", fact, True)
         for fact in skipped:
-            log_memory_write(conn, conf.get("turn_id", "no-turn"), "fact", fact, False)
-        memory.add_episode(
-            user, reply, thread_id=conf.get("thread_id", "default"), turn_id=conf.get("turn_id", "no-turn")
-        )
+            log_memory_write(conn, turn_id, "fact", fact, False)
+        memory.add_episode(user, reply, thread_id=thread_id, turn_id=turn_id, matter=matter)
         return {"facts_written": stored, "trace": [*state["trace"], steps.memorized(stored, skipped)]}
 
     graph = StateGraph(AgentState)

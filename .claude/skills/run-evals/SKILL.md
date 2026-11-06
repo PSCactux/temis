@@ -13,4 +13,5 @@ description: Run the whole-turn evaluation dataset against the configured models
   `reply` shows what the model said. Decide whether the case, the prompt or the code is wrong,
   in that order of suspicion.
 - Never "fix" a failing case by loosening its checks unless the check was wrong.
-- When numbers change, update the table in `README.md` (model, pass rate by kind, date).
+- When numbers change, regenerate the table with `uv run python scripts/eval_table.py` and paste it into
+  `README.md` → Evaluation.

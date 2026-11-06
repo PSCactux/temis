@@ -2,14 +2,15 @@
 
 from .memory.chunking import Chunk
 
-POLICY = """Firm policy. Block a request when it asks to:
+POLICY = """Firm policy. Block ONLY when the user asks the assistant to actually do one of these:
 - fabricate, backdate or alter evidence, signatures, dates or records
 - deceive a court, a client, a counterparty or an authority
-- obtain or reveal information about a client or matter the user is not working on
-- disclose the firm's internal data to third parties, or re-identify pseudonymised persons
+- hand over information about clients or matters the user is not working on, or bulk client data
+- send the firm's internal data to third parties, or re-identify pseudonymised persons
 - help commit or conceal a crime or evade a legal obligation
-Everything else about the firm's legal work is allowed, including questions about procedure, deadlines,
-documents, drafting and research."""
+Questions ABOUT the policy, about data protection, about what is allowed, about the assistant itself,
+and all ordinary legal work (procedure, deadlines, documents, drafting, research, reminders) are allowed.
+When in doubt, allow. If you block, policy_reason names the forbidden action in one sentence."""
 
 ROUTE = """You route messages for a law firm's assistant and apply the firm's policy. Choose exactly one route:
 - chat: conversation, legal questions the assistant can answer from memory or general knowledge, drafting
@@ -19,7 +20,11 @@ ROUTE = """You route messages for a law firm's assistant and apply the firm's po
 - project: the user wants to read, create, change or redact files, or run commands, in a matter folder (names below)
 Write a standalone search query in the user's language that resolves pronouns and references to earlier turns.
 Names and identifiers appear as placeholders like [PERSON_1]; keep them as they are.
+If the facts remembered below already answer the question, route to chat.
+If a document fragment below matches the question, route to documents.
 Indexed documents: {titles}
+Document fragments that match the message: {hints}
+Facts remembered for this message: {facts}
 Matter folders: {projects}
 
 {policy}"""
@@ -54,6 +59,9 @@ Read before editing. Keep each write small; long files are built in parts. To pr
 document that can leave the firm, use redact_file: it blacks out every identifier and name.
 {agents_md}"""
 
+NUDGE = """[You described or announced the work instead of doing it. Use the tools now: act, or call
+ask_user if you really need something from the user. Reply only when the work is done.]"""
+
 VERIFY_FEEDBACK = """[Verification failed. The reply states actions that the turn's evidence does not support:
 {failures}
 Do the missing work with the tools, or rewrite the reply so it only states what was actually done.]"""
@@ -61,10 +69,13 @@ Do the missing work with the tools, or rewrite the reply so it only states what 
 GRADE = """Decide which of the numbered fragments help answer the question. Return only their numbers.
 Keep a fragment if it answers part of the question; drop it if it is merely on the same topic."""
 
-ANSWER_DOCUMENTS = """Answer the question using only the fragments, in the user's language.
-Cite every fact as [n] with the fragment number, and give one verbatim quote per cited fragment
-(copy the sentence exactly, placeholders included). If the fragments only answer part of the question,
-say what is missing (coverage partial). If they do not answer it, say so (coverage none)."""
+ANSWER_DOCUMENTS = """Answer the question from the fragments, in the user's language.
+Cite every fact taken from a fragment as [n] with the fragment number, and give one verbatim quote per
+cited fragment (copy the sentence exactly, placeholders included). You may add what you remember
+(below) without a citation when it completes the answer. If the fragments only answer part of the
+question, say what is missing (coverage partial). If they do not answer it at all, say so (coverage none).
+
+{memories}"""
 
 CLAIMS = """List every action the reply states as already done by the assistant in this turn: files written,
 edited or redacted, files read, commands run, web pages read, searches made, alarms created or deleted. Use kind

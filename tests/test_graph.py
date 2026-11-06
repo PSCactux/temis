@@ -65,6 +65,13 @@ def test_memory_is_walled_by_matter(make_assistant):
     assert "closes in August" in system and "wants to settle" not in system
 
 
+def test_facts_and_episodes_are_stored_with_their_matter(make_assistant):
+    memory = FakeMemory()
+    assistant = make_assistant([routing("chat"), "ok", Facts(facts=["The witness lives in Girona"])], memory=memory)
+    assistant.ask("t1", "El testigo vive en Girona", matter="matter-a")
+    assert memory.facts[-1]["matter"] == "matter-a" and memory.episodes[-1]["matter"] == "matter-a"
+
+
 def test_alarm_tool_turn_is_verified_against_evidence(make_assistant):
     assistant = make_assistant(
         [
@@ -88,7 +95,8 @@ def test_unproven_claim_sends_the_turn_back(make_assistant):
     assistant = make_assistant(
         [
             routing("alarms", "recordatorio"),
-            "Listo, alarma creada para mañana.",  # claims without calling any tool
+            "Listo, alarma creada para mañana.",  # no tool call at all: nudged once
+            "Listo, alarma creada para mañana.",  # still claims without calling any tool
             Claims(claims=[Claim(kind="alarm_created", target="mañana")]),
             tool_call("create_alarm", {"text": "Vista", "minutes_from_now": 60}),  # second attempt does the work
             "Ahora sí: alarma #1 creada.",
@@ -108,6 +116,7 @@ def test_unproven_claim_without_retry_is_marked(make_assistant):
     assistant = make_assistant(
         [
             routing("alarms"),
+            "Alarma creada.",  # nudged
             "Alarma creada.",
             Claims(claims=[Claim(kind="alarm_created", target="x")]),
             "Alarma creada.",  # still lying on the retry
@@ -222,3 +231,20 @@ def test_bad_quote_is_retried_once(make_assistant):
     result = assistant.ask("t1", "¿plazo?")
     assert result.reply.startswith("Veinte días")
     assert steps(result).count("answer_documents") == 2 and result.extras["verified"] is True
+
+
+def test_announcing_instead_of_acting_is_nudged_once(make_assistant, workdir):
+    assistant = make_assistant(
+        [
+            routing("project", project="case-2026-014"),
+            "Creando el archivo notas.md con los puntos pendientes...",  # announcement, no tool call
+            tool_call("write_file", {"path": "notas.md", "content": "- punto 1\n"}),
+            "Creado notas.md.",
+            Claims(claims=[Claim(kind="file_written", target="notas.md")]),
+            Facts(facts=[]),
+        ]
+    )
+    result = assistant.ask("t1", "crea notas.md")
+    assert (workdir / "data/projects/case-2026-014/notas.md").exists()
+    assert any("asked once to act" in t["summary"] for t in result.trace)
+    assert result.reply == "Creado notas.md."
