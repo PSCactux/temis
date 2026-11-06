@@ -22,17 +22,18 @@ def make_chat_model(spec: str, max_tokens: int, *, reasoning: bool = False) -> B
     if provider == "anthropic":
         from langchain_anthropic import ChatAnthropic
 
-        return ChatAnthropic(model=name, max_tokens=max_tokens)
+        return ChatAnthropic(model=name, max_tokens=max_tokens, temperature=0)
     if provider == "openai":
         from langchain_openai import ChatOpenAI
 
-        return ChatOpenAI(model=name, max_tokens=max_tokens)
+        return ChatOpenAI(model=name, max_tokens=max_tokens, temperature=0)
     if provider == "ollama":
         from langchain_ollama import ChatOllama
 
         # Thinking models (qwen3...) spend the output budget on reasoning and then return empty structured
         # output; off by default, LLM_REASONING=true turns it on.
-        return ChatOllama(model=name, num_predict=max_tokens, reasoning=reasoning)
+        # Temperature 0 everywhere: routing, grading and claims must be reproducible, and the eval numbers too.
+        return ChatOllama(model=name, num_predict=max_tokens, reasoning=reasoning, temperature=0)
     raise ValueError(f"Unknown provider in {spec!r}: use anthropic:, openai: or ollama:")
 
 
