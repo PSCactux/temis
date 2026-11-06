@@ -78,3 +78,10 @@ def test_other_claims_need_some_successful_tool():
         )[1]
         == []
     )
+
+
+def test_redacted_file_counts_as_written(tmp_path):
+    (tmp_path / "declaracion.redacted.md").write_text("x")
+    claim = Claim(kind="file_written", target="declaracion.redacted.md")
+    evidence = [ev("redact_file", path="declaracion.md")]
+    assert check_claims([claim], evidence, project_root=tmp_path, conn=conn(), thread_id="t") == (1, [])

@@ -13,7 +13,7 @@ from urllib.parse import urlsplit
 from .schemas import Claim
 from .tools import alarms
 
-WRITE_TOOLS = {"write_file", "edit_file"}
+WRITE_TOOLS = {"write_file", "edit_file", "redact_file"}
 READ_TOOLS = {"read_file", "grep", "list_files"}
 
 
@@ -31,6 +31,15 @@ def _path_matches(target: str, path: str) -> bool:
     )
 
 
+def _written_path(evidence: dict) -> str:
+    """The file a write produced: redact_file writes <name>.redacted<ext> next to its input."""
+    path = evidence["args"].get("path", "")
+    if evidence["tool"] == "redact_file" and path:
+        p = Path(path)
+        return str(p.with_name(f"{p.stem}.redacted{p.suffix}"))
+    return path
+
+
 def _host(url: str) -> str:
     return (urlsplit(url).hostname or "").lower().removeprefix("www.")
 
@@ -45,10 +54,12 @@ def check_claim(claim: Claim, evidence: list[dict], *, project_root: Path | None
     kind, target = claim.kind, claim.target
 
     if kind == "file_written":
-        hits = [e for e in ok_calls if e["tool"] in WRITE_TOOLS and _path_matches(target, e["args"].get("path", ""))]
+        hits = [e for e in ok_calls if e["tool"] in WRITE_TOOLS and _path_matches(target, _written_path(e))]
         if not hits:
-            return f"says it wrote {target!r}, but no successful write_file/edit_file call touched that file"
-        if project_root and not any((project_root / e["args"]["path"]).is_file() for e in hits):
+            return (
+                f"says it wrote {target!r}, but no successful write_file/edit_file/redact_file call touched that file"
+            )
+        if project_root and not any((project_root / _written_path(e)).is_file() for e in hits):
             return f"says it wrote {target!r}, but the file does not exist"
         return None
     if kind == "file_read":
