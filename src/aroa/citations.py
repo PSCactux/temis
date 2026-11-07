@@ -9,7 +9,7 @@ from .memory.chunking import Chunk
 from .schemas import DocumentAnswer
 
 # Small models sometimes write [n1] for [1]; both are accepted and the rendered answer uses [1].
-MARKER = re.compile(r"\[n?(\d+(?:\s*,\s*n?\d+)*)\]")
+MARKER = re.compile(r"\[(?:n\s*=?\s*)?(\d+(?:\s*,\s*(?:n\s*=?\s*)?\d+)*)\]")  # [1], [1, 2], [n1], [n=1]
 ELLIPSIS = re.compile(r"\.\.\.|…|\[\.\.\.\]")
 INJECTION = re.compile(
     r"\b(ignora|ignore|olvida|disregard|forget)\b.{0,40}\b(instrucciones|instructions|indicaciones)\b"
@@ -21,11 +21,15 @@ INJECTION = re.compile(
 
 
 def cited_numbers(text: str) -> set[int]:
-    return {int(n.strip().lstrip("n")) for group in MARKER.findall(text) for n in group.split(",")}
+    return {int(_digits(n)) for group in MARKER.findall(text) for n in group.split(",")}
 
 
 def tidy_markers(text: str) -> str:
-    return MARKER.sub(lambda m: "[" + ", ".join(n.strip().lstrip("n") for n in m.group(1).split(",")) + "]", text)
+    return MARKER.sub(lambda m: "[" + ", ".join(_digits(n) for n in m.group(1).split(",")) + "]", text)
+
+
+def _digits(marker: str) -> str:
+    return re.sub(r"\D", "", marker)
 
 
 def normalize(text: str) -> str:

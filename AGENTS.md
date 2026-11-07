@@ -60,6 +60,8 @@ uv run langgraph dev           # LangGraph Studio
 9. Commits: atomic, English, imperative, describing the technical change only.
 
 ## When something looks wrong
+- Content the firm did not write reaches a prompt as plain text: wrap it with `prompts.data_block`
+  and keep it out of system prompts (ADR 6). `tests/test_untrusted.py` shows what is expected.
 
 - A small model returns empty structured output: check `LLM_REASONING` (thinking eats the budget).
 - Names not pseudonymised: `plausible_name` rejected them (role words, public bodies) or the extractor

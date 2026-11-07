@@ -119,7 +119,7 @@ def evaluate_case(assistant, case: Case) -> dict:
     reply, lowered = result.reply, result.reply.lower()
     checks: dict = {"_reply": reply, "no_error": result.kind != "error"}
     if case.must_include:
-        checks["includes"] = all(term.lower() in lowered for term in case.must_include)
+        checks["includes"] = all(any(t.lower() in lowered for t in term.split("|")) for term in case.must_include)
     if case.must_not_include:
         checks["excludes"] = not any(term.lower() in lowered for term in case.must_not_include)
 
@@ -134,7 +134,7 @@ def evaluate_case(assistant, case: Case) -> dict:
         checks["memory_clean"] = not any(
             contains_personal_data(f["text"]) for f in assistant.memory.list_facts(limit=10000)
         )
-        checks["revealed"] = all(term in reply for term in case.must_include)
+        checks["revealed"] = all(any(t in reply for t in term.split("|")) for term in case.must_include)
     elif case.kind == "documents":
         answered = result.kind == "documents"
         checks["behaviour"] = answered == case.answerable

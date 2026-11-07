@@ -49,6 +49,7 @@ class Settings(BaseSettings):
     # Tools
     max_tool_turns: int = 12
     command_timeout_seconds: int = 60
+    allowed_commands: str = "ls cat head tail wc grep find sort uniq diff cut tr stat file"  # run_command, no shell
     search_url: str | None = None  # SearXNG-style endpoint returning JSON, e.g. http://localhost:8888
     web_max_chars: int = 12000
 

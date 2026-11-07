@@ -136,9 +136,12 @@ class MemoryStore:
         return point.payload["text"], float(point.score)
 
     def add_facts(
-        self, facts: list[str], *, thread_id: str, turn_id: str, matter: str = ""
+        self, facts: list[str], *, thread_id: str, turn_id: str, matter: str = "", origin: str = ""
     ) -> tuple[list[str], list[str]]:
-        """Store the facts that are not near-duplicates. Returns (stored, skipped)."""
+        """Store the facts that are not near-duplicates. Returns (stored, skipped).
+
+        `origin` records the route and whether the fact came from the user's words alone ("documents:user")
+        or from the whole exchange ("chat:exchange"), so a fact can be traced and purged by source."""
         stored, skipped = [], []
         for fact in (f.strip() for f in facts):
             if not fact:
@@ -150,7 +153,16 @@ class MemoryStore:
             self._upsert(
                 FACTS,
                 [fact],
-                [{"text": fact, "ts": _now(), "thread_id": thread_id, "turn_id": turn_id, "matter": matter}],
+                [
+                    {
+                        "text": fact,
+                        "ts": _now(),
+                        "thread_id": thread_id,
+                        "turn_id": turn_id,
+                        "matter": matter,
+                        "origin": origin,
+                    }
+                ],
                 [f"fact:{turn_id}:{len(stored)}"],
             )
             stored.append(fact)

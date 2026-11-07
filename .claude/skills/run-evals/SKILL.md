@@ -13,5 +13,10 @@ description: Run the whole-turn evaluation dataset against the configured models
   `reply` shows what the model said. Decide whether the case, the prompt or the code is wrong,
   in that order of suspicion.
 - Never "fix" a failing case by loosening its checks unless the check was wrong.
+- `must_include` terms may list alternatives with `|` ("24|veinticuatro") when the fact has more than
+  one honest spelling; that is a wrong check, not a loosened one.
+- The eval does not store the path of a turn. To see why a case went wrong, run the same question
+  against the eval data folder (`Settings` with `data_dir=.data/eval`, `docs_dir=.data/eval-docs`) and
+  print `result.trace`.
 - When numbers change, regenerate the table with `uv run python scripts/eval_table.py` and paste it into
   `README.md` → Evaluation.

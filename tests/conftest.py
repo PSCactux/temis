@@ -24,13 +24,13 @@ class FakeMemory:
         facts = [f for f in self.facts if f.get("matter", "") in ("", matter)]
         return {"facts": facts, "episodes": []}
 
-    def add_facts(self, facts, *, thread_id, turn_id, matter=""):
+    def add_facts(self, facts, *, thread_id, turn_id, matter="", origin=""):
         stored, skipped = [], []
         for fact in facts:
             if any(f["text"] == fact for f in self.facts):
                 skipped.append(fact)
             else:
-                self.facts.append({"text": fact, "ts": "2026-01-01T00:00:00+00:00", "matter": matter})
+                self.facts.append({"text": fact, "ts": "2026-01-01T00:00:00+00:00", "matter": matter, "origin": origin})
                 stored.append(fact)
         return stored, skipped
 

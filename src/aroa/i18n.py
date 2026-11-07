@@ -11,7 +11,6 @@ TEXTS: dict[str, dict[str, str]] = {
         "sources": "Sources",
         "unverified_note": "Some quotes could not be verified against the documents.",
         "unverified": "Unverified: {failures}.",
-        "attached": "Attached document",
         # path steps
         "recall": "Recall",
         "route": "Route",
@@ -63,7 +62,6 @@ TEXTS: dict[str, dict[str, str]] = {
         "unverified_note": "Algunas citas no se han podido comprobar contra los documentos.",
         "unverified": "Sin verificar: la respuesta afirma acciones que no constan en la evidencia de esta vuelta "
         "(detalle en el camino).",
-        "attached": "Documento adjunto",
         "recall": "Recordar",
         "route": "Enrutar",
         "chat": "Responder",

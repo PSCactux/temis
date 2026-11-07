@@ -42,6 +42,7 @@ from .trace import Steps
 from .verify import check_claims, unread_urls
 
 MAX_DOCUMENT_ANSWERS = 2
+EXTERNAL_CONTENT_ROUTES = {"documents", "web", "project"}  # replies here carry text nobody at the firm wrote
 REPEAT_WARN = 2  # the same tool call with the same arguments is answered from memory from here on
 REPEAT_STOP = 5  # and from here on the loop is forced to conclude
 MAX_VERIFY_RETRIES = 1
@@ -201,15 +202,16 @@ def build_graph(
 
     def route(state: AgentState, config: RunnableConfig) -> dict:
         history = window(state["messages"], settings.history_messages)
-        facts = "; ".join(f["text"] for f in state["memories"].get("facts", [])) or "(none)"
         system = prompts.ROUTE.format(
             titles=", ".join(memory.document_titles()) or "(none)",
-            hints="\n".join(f"- {h}" for h in state.get("doc_hints") or []) or "- (none)",
-            facts=facts,
             projects=", ".join(projects()) or "(none)",
             policy=prompts.POLICY,
         )
-        result: Routing = router.invoke([SystemMessage(system), *history])
+        # Document fragments and memory are untrusted: they travel in the user turn, tagged, never in
+        # the system prompt that also decides the policy.
+        facts = [f["text"] for f in state["memories"].get("facts", [])]
+        context = HumanMessage(prompts.route_context(history[-1].content, state.get("doc_hints") or [], facts))
+        result: Routing = router.invoke([SystemMessage(system), *history[:-1], context])
         if result.policy == "blocked":
             # Blocking is rare and costly when wrong (a lawyer refused for asking a question), so a block
             # is confirmed by a second, narrower call before it stands.
@@ -290,10 +292,7 @@ def build_graph(
     def answer_documents(state: AgentState, config: RunnableConfig) -> dict:
         sources = _chunks(state["sources"])
         question = state["messages"][-1].content  # the user's words; the standalone query only resolves references
-        content = (
-            f"<fragments>\n{prompts.format_fragments(sources)}\n</fragments>\n\n"
-            f"Question: {question}\n(Standalone form: {state['query']})"
-        )
+        content = f"{prompts.format_fragments(sources)}\n\nQuestion: {question}\n(Standalone form: {state['query']})"
         if state["citation_errors"]:
             content += "\n\nYour previous answer failed the citation check:\n" + "\n".join(
                 f"- {e}" for e in state["citation_errors"]
@@ -417,7 +416,10 @@ def build_graph(
                 output = anonymizer.anonymize(output)  # what a tool brings in is pseudonymised like any input
             log_tool_call(conn, ctx.turn_id, name, args, ok, output, seconds)
             evidence.append({"tool": name, "args": args, "ok": ok, "summary": _summary(args), "output": output[:500]})
-            results.append(ToolMessage(output, tool_call_id=call["id"]))
+            where = {k: str(args[k]) for k in ("url", "path", "query") if args.get(k)}
+            results.append(
+                ToolMessage(prompts.data_block("tool_result", output, tool=name, **where), tool_call_id=call["id"])
+            )
         return {
             "messages": results,
             "evidence": [*state["evidence"], *evidence],
@@ -509,12 +511,19 @@ def build_graph(
         turn = turn_messages(state["messages"])
         user, reply = turn[0].content, state["messages"][-1].content
         known = "\n".join(f"- {f['text']}" for f in state["memories"].get("facts", [])) or "- (none)"
+        # On routes that read documents, pages or files, the reply carries their content: only the
+        # user's words are offered to the extractor, so a planted sentence cannot become a durable fact.
+        external = state["route"] in EXTERNAL_CONTENT_ROUTES
+        exchange = f"User: {user}" if external else f"User: {user}\n\nAssistant: {reply}"
         result: Facts = extractor.invoke(
-            [SystemMessage(prompts.FACTS), HumanMessage(f"Known facts:\n{known}\n\nUser: {user}\n\nAssistant: {reply}")]
+            [SystemMessage(prompts.FACTS), HumanMessage(f"Known facts:\n{known}\n\n{exchange}")]
         )
         thread_id, turn_id = conf.get("thread_id", "default"), conf.get("turn_id", "no-turn")
         matter = conf.get("matter", "")
-        stored, skipped = memory.add_facts(result.facts, thread_id=thread_id, turn_id=turn_id, matter=matter)
+        origin = f"{state['route']}:{'user' if external else 'exchange'}"
+        stored, skipped = memory.add_facts(
+            result.facts, thread_id=thread_id, turn_id=turn_id, matter=matter, origin=origin
+        )
         for fact in stored:
             log_memory_write(conn, turn_id, "fact", fact, True)
         for fact in skipped:

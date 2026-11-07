@@ -36,6 +36,7 @@ and are never recalled while working on another matter.
 |---|---|
 | **Converses and remembers** | Facts are extracted from every turn, deduplicated and stored with the matter they were learned in. Recall is hybrid (dense + BM25) over facts, past episodes and documents. |
 | **Answers from the firm's documents** | Corrective RAG with `[n]` citations and verbatim quotes, both verified in code; abstains when the documents do not answer. Prompt injection inside a document cannot become a cited fact. |
+| **Untrusted content is quarantined** | Documents, tool results, pages, attachments and memory reach the model inside tags that name their origin, never in a system prompt; facts are extracted from the user's words only when the reply carries external content; `run_command` runs one allowlisted command without a shell (ADR 6). |
 | **Keeps personal data out of models** | Identifiers by patterns, names by a model proposal filtered in code; stable placeholders; revealed only at the interface. `redact_file` produces black-box copies for sharing. |
 | **Applies the firm's policy** | Fabricating or altering evidence, deceiving, crossing matters, leaking data: blocked before any work, with the reason. |
 | **Sets deadline reminders** | Alarms in SQLite; a scheduler wakes the conversation when one is due. |
@@ -90,28 +91,27 @@ documents (citations, abstention, prompt injection inside a document), alarms, w
 work. `aroa eval` runs them against the configured models in a separate data folder and stores every
 reply and check in `evals/results/`.
 
-Model `ollama:qwen3:8b` (fast: `ollama:qwen3:8b`), privacy mode `full`, 20261106.
+Model `ollama:qwen3:8b` (fast: `ollama:qwen3:8b`), privacy mode `full`, 20261107.
 
 | Kind | Passed | Median seconds |
 |---|---|---|
-| alarms | 2/2 | 14.3 |
-| chat | 2/2 | 14.1 |
-| documents | 13/18 | 20.2 |
-| identity | 1/1 | 4.1 |
-| memory | 1/3 | 34.5 |
-| policy | 3/3 | 4.2 |
-| privacy | 2/2 | 9.9 |
-| project | 2/2 | 17.2 |
-| wall | 1/1 | 14.5 |
-| web | 0/1 | 32.5 |
-| **total** | **27/35** (77%) | |
+| alarms | 2/2 | 15.4 |
+| chat | 2/2 | 12.8 |
+| documents | 15/18 | 19.6 |
+| identity | 1/1 | 3.8 |
+| memory | 1/3 | 26.2 |
+| policy | 3/3 | 5.2 |
+| privacy | 2/2 | 17.8 |
+| project | 2/2 | 15.9 |
+| wall | 1/1 | 9.8 |
+| web | 0/1 | 35.9 |
+| **total** | **29/35** (83%) | |
 
-All model calls run at temperature 0, yet an 8B model still varies between runs: five full runs on
-the same day scored between 74 % and 86 %. The failures move around the same places: the router
+All model calls run at temperature 0, yet an 8B model still varies between runs: full runs on the
+same code have scored between 74 % and 86 %. The failures move around the same places: the router
 choosing `chat` or `documents` when memory holds the answer, retrieval picking a neighbouring section,
-and a quote that is not verbatim. The web row in the table predates a verifier change: when the reply
-cites a page it never opened, the code now reads that page itself and hands it to the retry, and the
-case passes. A larger model improves the `documents` and `memory` rows; the privacy, policy, wall and
+a quote that is not verbatim, and the web case, which passes or fails on how the model phrases what it
+read. A larger model improves the `documents`, `memory` and `web` rows; the privacy, policy, wall and
 verification rows depend on code and hold with any model.
 
 ## Run it

@@ -71,6 +71,16 @@ by `plausible_name`, which rejects role words and public bodies). Mapping in SQL
 per original, shared by conversations and documents. `reveal` at the interface only; `redact` for
 documents that leave the firm (black boxes, irreversible).
 
+## Untrusted content
+
+Everything the model reads that the firm did not write (document fragments, tool results, web pages,
+attachments, memory) goes through `prompts.data_block`: a tag naming its origin, closing tags inside
+defused. Retrieved content never enters a system prompt: the router gets `<message>`,
+`<document_hints>` and `<facts>` as a human turn, the writer gets `<fragments>`. On routes that read
+external content (`documents`, `web`, `project`) the fact extractor sees the user's words only, and
+every fact stores its `origin`. `run_command` runs one allowlisted command without a shell
+(`ALLOWED_COMMANDS`). See ADR 006.
+
 ## Memory
 
 Qdrant (embedded, or a server via `QDRANT_URL`) with fastembed vectors computed locally. Collections
@@ -85,7 +95,7 @@ recall filters to the current matter plus general memory on every prefetch. The 
 |---|---|
 | alarms | `create_alarm`, `list_alarms`, `delete_alarm` — SQLite; the server's scheduler wakes the thread when one is due |
 | web | `search_web` (SearXNG-style JSON endpoint, or DuckDuckGo lite without configuration), `read_page` (HTML and PDF to text, size-capped, private addresses refused) |
-| project | `list_files`, `read_file`, `grep`, `write_file`, `edit_file`, `run_command`, `redact_file` — confined to `data/projects/<matter>`; the folder's `AGENTS.md` is in the prompt |
+| project | `list_files`, `read_file`, `grep`, `write_file`, `edit_file`, `run_command` (allowlisted, no shell), `redact_file` — confined to `data/projects/<matter>`; the folder's `AGENTS.md` is in the prompt |
 | all tool routes | `ask_user` (interrupt), `remember` (explicit fact) |
 
 ## Observability

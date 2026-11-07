@@ -17,3 +17,7 @@ description: Verify that personal data cannot reach a model, a store or a trace 
   after an ingest for role words or public bodies that slipped through, and extend the lists.
 - Traces: `TRACE_CONTENT=false` hides inputs and outputs entirely; with it on, spans contain the
   pseudonymised text only. Never set it on against a collector outside the firm.
+- Instructions hidden in data: any new text the model reads that the firm did not write (a file, a
+  page, an attachment, a memory) must be wrapped with `prompts.data_block` and must not be placed in
+  a system prompt; a fact may only be extracted from the user's words when the reply carries external
+  content (see ADR 6 and `tests/test_untrusted.py`).

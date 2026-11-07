@@ -2,6 +2,7 @@
 
 import fnmatch
 import re
+import shlex
 import subprocess
 from pathlib import Path
 
@@ -38,6 +39,35 @@ def agents_md(root: Path) -> str:
         if candidate.is_file():
             return candidate.read_text(encoding="utf-8", errors="replace")[:12000]
     return ""
+
+
+SHELL_SYNTAX = re.compile(r"[;&|<>`$]|\(|\)")
+FIND_ACTIONS = {"-exec", "-execdir", "-ok", "-okdir", "-delete", "-fprint", "-fprintf", "-fls"}
+
+
+def check_command(command: str, allowed: str) -> list[str]:
+    """The argv of a command the folder tools may run, or a ToolError saying why not.
+
+    The first word must be on the allowlist, nothing may chain or redirect (the command never goes
+    through a shell), paths cannot climb out of the folder, and `find` cannot execute or delete."""
+    try:
+        argv = shlex.split(command)
+    except ValueError as exc:
+        raise ToolError(f"Cannot parse the command: {exc}") from exc
+    if not argv:
+        raise ToolError("Empty command.")
+    if argv[0] not in allowed.split():
+        raise ToolError(f"'{argv[0]}' is not an allowed command. Allowed: {allowed}.")
+    if SHELL_SYNTAX.search(command):
+        raise ToolError("Pipes, redirections, substitutions and chaining are not allowed: one plain command.")
+    for arg in argv[1:]:
+        if arg.startswith(("/", "~")) or ".." in arg.split("/"):
+            raise ToolError(f"Paths must stay inside the project folder: {arg!r}.")
+        if argv[0] == "find" and arg in FIND_ACTIONS:
+            raise ToolError(f"find {arg} is not allowed.")
+        if argv[0] == "sed" and arg.startswith("-i"):
+            raise ToolError("sed -i is not allowed; use edit_file to change a file.")
+    return argv
 
 
 def make_tools(ctx: ToolContext) -> list:
@@ -106,12 +136,13 @@ def make_tools(ctx: ToolContext) -> list:
 
     @tool
     def run_command(command: str) -> str:
-        """Run a shell command inside the project folder. Returns its output and exit code."""
+        """Run one read-only command inside the project folder (ls, cat, head, tail, wc, grep, find, sort,
+        uniq, diff, cut, tr, stat, file). No pipes, redirections or chaining; paths stay inside the folder."""
         root = ctx.project_root
+        argv = check_command(command, ctx.settings.allowed_commands)
         try:
             done = subprocess.run(
-                command,
-                shell=True,
+                argv,
                 cwd=root,
                 capture_output=True,
                 text=True,

@@ -383,7 +383,7 @@ function md(text) {
 
 /* ── rendering ─────────────────────────────────────────── */
 function scrollDown() { log.scrollTop = log.scrollHeight; }
-const ATTACHED = /\n\n\[(?:Attached document|Documento adjunto): ([^\]\n]+)\]\n/g;
+const ATTACHED = /\n\n<attachment name="([^"\n]+)">\n/g;
 
 function addUser(text) {
   const el = document.createElement('div');
@@ -537,7 +537,7 @@ async function send(text) {
   const ready = attachments.filter(a => a.text != null);
   const keep = ready.filter(a => a.keep);
   attachments = []; renderAttachments();
-  addUser(text + ready.map(a => `\n\n[Attached document: ${a.name}]\n`).join(''));
+  addUser(text + ready.map(a => `\n\n<attachment name="${a.name.replace(/"/g, "'")}">\n`).join(''));
   for (const a of keep) indexFile(a.file); // in parallel with the turn; the text already travels with the message
   const live = addLive(), crumbs = live.querySelector('.crumbs'), body = live.querySelector('.body');
   let tokens = '', steps = [];

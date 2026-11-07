@@ -13,9 +13,9 @@ from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 
+from . import prompts
 from .app import Assistant
 from .config import get_settings
-from .i18n import t
 from .memory.loaders import EXTENSIONS, read_text
 from .telemetry.audit import turn_audit
 from .telemetry.metrics import now_iso, prometheus_text, report
@@ -146,8 +146,10 @@ async def send(thread_id: str, message: Message):
     """Server-sent events: token, node, done. The thread resumes if it was waiting for an answer."""
     runtime.touch_thread(thread_id, message.matter, message.text)
     matter = message.matter or runtime.matter_of(thread_id)
-    label = t(runtime.assistant.settings.assistant_language, "attached")
-    attached = "".join(f"\n\n[{label}: {a.name}]\n{a.text[:MAX_ATTACHMENT_CHARS]}" for a in message.attachments)
+    attached = "".join(
+        "\n\n" + prompts.data_block("attachment", a.text[:MAX_ATTACHMENT_CHARS], name=a.name)
+        for a in message.attachments
+    )
     text = message.text + attached
     queue: asyncio.Queue = asyncio.Queue()
     loop = asyncio.get_running_loop()
