@@ -47,6 +47,7 @@ cover the question; the full eval runs on `claude-cli:sonnet` and its table is i
 to the local model's.
 
 ## Phase 6 — long documents, whole
+_Analysis job, merge and verified citations done 2026-11-08 (ADR 009); clippings pending._
 - Analysis of a document of any length: map over sections or pages (chunks of the indexed text)
   with a per-section extraction, then a reduce that merges findings, deduplicates them and keeps
   every finding tied to the sections it came from. No page limit: the budget is time, not context.

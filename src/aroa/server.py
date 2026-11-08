@@ -3,6 +3,7 @@ feedback, Prometheus metrics, the daily report, and the alarm scheduler."""
 
 import asyncio
 import json
+import queue
 import tempfile
 import threading
 from contextlib import asynccontextmanager
@@ -13,7 +14,7 @@ from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 
-from . import prompts
+from . import analysis, prompts
 from .app import Assistant
 from .config import get_settings
 from .memory.loaders import EXTENSIONS, read_text
@@ -44,12 +45,32 @@ class Feedback(BaseModel):
     comment: str = ""
 
 
+class AnalysisRequest(BaseModel):
+    goal: str = ""
+
+
 class Runtime:
     """One assistant, one lock: a local model answers one turn at a time, alarms included."""
 
     def __init__(self) -> None:
         self.assistant = Assistant(get_settings())
         self.lock = threading.Lock()
+        self.jobs: queue.Queue[str] = queue.Queue()
+        threading.Thread(target=self._work, daemon=True, name="aroa-jobs").start()
+
+    def enqueue_analysis(self, source: str, goal: str) -> str:
+        job_id = analysis.create_job(self.assistant.conn, "analysis", source, goal or analysis.DEFAULT_GOAL)
+        self.jobs.put(job_id)
+        return job_id
+
+    def _work(self) -> None:
+        """One analysis at a time; each model call takes the turn lock, so conversations keep flowing between them."""
+        a = self.assistant
+        while True:
+            job_id = self.jobs.get()
+            analysis.run_job(
+                a.conn, job_id, memory=a.memory, fast_llm=a.fast_llm, llm=a.llm, lock=self.lock, reveal=a.reveal
+            )
 
     def touch_thread(self, thread_id: str, matter: str, title: str) -> None:
         conn = self.assistant.conn
@@ -274,3 +295,24 @@ async def read_attachment(name: str, request: Request):
         text = await run_in_threadpool(read_text, Path(tmp.name))
     truncated = len(text) > MAX_ATTACHMENT_CHARS
     return {"name": safe, "text": text[:MAX_ATTACHMENT_CHARS], "chars": len(text), "truncated": truncated}
+
+
+@app.post("/api/documents/{source}/analyze")
+def analyze_document(source: str, body: AnalysisRequest):
+    """Queue a whole-document analysis; poll /api/jobs/{id} for progress and the result."""
+    if source not in runtime.assistant.memory.indexed_sources():
+        raise HTTPException(404, "unknown document")
+    return {"job_id": runtime.enqueue_analysis(source, body.goal.strip())}
+
+
+@app.get("/api/jobs")
+def jobs(source: str | None = None):
+    return analysis.list_jobs(runtime.assistant.conn, source)
+
+
+@app.get("/api/jobs/{job_id}")
+def job(job_id: str):
+    data = analysis.get_job(runtime.assistant.conn, job_id)
+    if data is None:
+        raise HTTPException(404, "unknown job")
+    return data

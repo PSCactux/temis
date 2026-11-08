@@ -98,6 +98,17 @@ recall filters to the current matter plus general memory on every prefetch. The 
 | project | `list_files`, `read_file`, `grep`, `write_file`, `edit_file`, `run_command` (allowlisted, no shell), `redact_file` — confined to `data/projects/<matter>`; the folder's `AGENTS.md` is in the prompt |
 | all tool routes | `ask_user` (interrupt), `remember` (explicit fact) |
 
+## Whole-document analysis
+
+`analysis.py`: a document of any length is analysed fragment by fragment (map, fast model, structured
+findings each with a verbatim quote), then reduced in code: quotes not verbatim in their fragment are
+dropped, findings that say the same thing are merged keeping every location, the result is numbered and
+an optional overview written by the large model is kept only if every sentence cites an existing
+finding. It runs as a job (`jobs` table: queued, running with done/total, done with the result, or
+failed) through `POST /api/documents/{source}/analyze` and `GET /api/jobs/{id}`, one at a time, each
+model call under the turn lock; the UI shows progress and opens the report with `[n]` citations that
+open the fragment. `aroa analizar SOURCE` does the same synchronously. See ADR 009.
+
 ## Observability
 
 - **Traces**: OpenInference spans over OTLP/HTTP to any collector; contents hidden unless

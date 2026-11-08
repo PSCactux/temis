@@ -40,6 +40,9 @@ class FakeMemory:
     def document_titles(self):
         return self.titles
 
+    def document_chunks(self, source):
+        return [c for c in self.chunks if c.source == source]
+
     def search_documents(self, query, k=None, sources=None):
         return [c for c in self.chunks if not sources or c.source in sources]
 

@@ -246,6 +246,22 @@ class MemoryStore:
             if offset is None:
                 return sources
 
+    def document_chunks(self, source: str) -> list[Chunk]:
+        """Every fragment of one document, in reading order (the chunk id ends with its index)."""
+        if not self.client.collection_exists(DOCUMENTS):
+            return []
+        flt = models.Filter(must=[models.FieldCondition(key="source", match=models.MatchValue(value=source))])
+        chunks: list[Chunk] = []
+        offset = None
+        while True:
+            points, offset = self.client.scroll(
+                DOCUMENTS, limit=256, offset=offset, scroll_filter=flt, with_payload=True
+            )
+            chunks += [Chunk(**p.payload) for p in points]
+            if offset is None:
+                break
+        return sorted(chunks, key=lambda c: int(c.id.rsplit(":", 1)[-1]) if c.id.rsplit(":", 1)[-1].isdigit() else 0)
+
     def delete_source(self, source: str) -> None:
         self._titles = None
         if not self.client.collection_exists(DOCUMENTS):

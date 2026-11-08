@@ -66,6 +66,15 @@
   .docs .x { color:var(--muted); padding:0 4px; border-radius:6px; visibility:hidden; }
   .docs li:hover .x { visibility:visible; }
   .docs .x:hover { color:var(--bad); background:var(--bad-soft); }
+  .docs .an { color:var(--muted); padding:0 4px; border-radius:6px; visibility:hidden; font-size:12px; }
+  .docs li:hover .an { visibility:visible; }
+  .docs .an:hover { color:var(--accent); background:var(--accent-soft); }
+  .reader .rb.report { white-space:normal; }
+  .reader .rb.report h1 { font-size:17px; margin:0 0 10px; }
+  .reader .rb.report h2 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--accent); margin:16px 0 6px; }
+  .reader .rb.report blockquote { margin:2px 0 8px; padding:4px 10px; border-left:3px solid var(--line-2); color:var(--ink-2); font-size:13px; }
+  .reader .rb.report .cite { font-family:var(--mono); font-size:12px; color:var(--accent); font-weight:600; padding:0 3px; border-radius:4px; }
+  .reader .rb.report .cite.link:hover { background:var(--accent-soft); text-decoration:underline; }
   .docs li.job { cursor:default; display:grid; gap:4px; }
   .docs .job .t { font-size:12.5px; }
   .bar { height:4px; border-radius:2px; background:var(--line); overflow:hidden; }
@@ -288,6 +297,7 @@ const L = {
     tag: 'Legal assistant · runs locally', new: 'New conversation', conversations: 'Conversations', no_threads: 'Nothing yet.',
     documents: 'Documents', add: '+ Add', add_title: 'Markdown, text or PDF', no_docs: 'Drop .md, .txt or .pdf files on the chat to index them.',
     selected: '{n} selected', selected_title: 'This conversation answers only from the selected documents', select_title: 'Work only on this document', clear: 'clear',
+    analyze: 'Analyse the whole document', goal_prompt: 'What should the analysis look for? (empty = obligations, deadlines, amounts, penalties, risks)', analyzing: 'analysing', analysis_done: 'Analysis ready', analysis_failed: 'Analysis failed', last_analysis: 'last analysis',
     alarms: 'Alarms', report: 'Report', matter: 'Matter', matter_ph: 'e.g. 2026-014', matter_title: 'Memory wall: what is said in a matter is recalled only inside that matter',
     new_title: 'New conversation', write: 'Write to Aroa…', hint: 'Enter to send · Shift+Enter for a new line · personal data is pseudonymised before the model sees it',
     attach_title: 'Attach a document to this message', keep: 'keep in documents', keep_title: 'Also index it, so Aroa can find it in later conversations',
@@ -313,6 +323,7 @@ const L = {
     tag: 'Asistente legal · funciona en local', new: 'Nueva conversación', conversations: 'Conversaciones', no_threads: 'Todavía nada.',
     documents: 'Documentos', add: '+ Añadir', add_title: 'Markdown, texto o PDF', no_docs: 'Arrastra archivos .md, .txt o .pdf sobre el chat para indexarlos.',
     selected: '{n} seleccionados', selected_title: 'Esta conversación responde solo desde los documentos seleccionados', select_title: 'Trabajar solo sobre este documento', clear: 'quitar',
+    analyze: 'Analizar el documento entero', goal_prompt: '¿Qué debe buscar el análisis? (vacío = obligaciones, plazos, importes, penalizaciones, riesgos)', analyzing: 'analizando', analysis_done: 'Análisis listo', analysis_failed: 'El análisis ha fallado', last_analysis: 'último análisis',
     alarms: 'Alarmas', report: 'Informe', matter: 'Expediente', matter_ph: 'p. ej. 2026-014', matter_title: 'Muralla de memoria: lo dicho en un expediente solo se recuerda dentro de ese expediente',
     new_title: 'Nueva conversación', write: 'Escribe a Aroa…', hint: 'Intro para enviar · Mayús+Intro para nueva línea · los datos personales se pseudonimizan antes de que el modelo los vea',
     attach_title: 'Adjuntar un documento a este mensaje', keep: 'guardar en documentos', keep_title: 'Además lo indexa, para que Aroa lo encuentre en conversaciones futuras',
@@ -484,11 +495,45 @@ async function openReader(source, quote) {
       target = true;
     }
   }
-  $('#reader-body').innerHTML = html;
+  $('#reader-body').className = 'rb'; $('#reader-body').innerHTML = html;
   reader.classList.add('open');
   if (target) setTimeout(() => $('#mark')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 220); else $('#reader-body').scrollTop = 0;
 }
 $('#reader-close').onclick = () => $('#reader').classList.remove('open');
+
+function showReport(job) {
+  const r = job.result, body = $('#reader-body');
+  $('#reader-title').innerHTML = `${esc(r.title)}<small>${esc(r.source)} · ${r.chunks} ${T('chunks')} · ${r.seconds} s</small>`;
+  body.className = 'rb report';
+  body.innerHTML = md(r.report);
+  body.dataset.sources = JSON.stringify(r.sources || []);
+  body.querySelectorAll('.cite').forEach(c => { if ((r.sources || []).some(s => s.n === +c.dataset.n)) c.classList.add('link'); });
+  $('#reader').classList.add('open'); body.scrollTop = 0;
+}
+$('#reader-body').addEventListener('click', e => {
+  const b = e.target.closest('.cite'); if (!b) return;
+  const s = JSON.parse($('#reader-body').dataset.sources || '[]').find(x => x.n === +b.dataset.n);
+  if (s) openReader(s.file, s.quote);
+});
+
+async function startAnalysis(source) {
+  const goal = prompt(T('goal_prompt'), ''); if (goal === null) return;
+  const r = await fetch('/api/documents/' + encodeURIComponent(source) + '/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ goal }) });
+  if (!r.ok) { toast(T('analysis_failed')); return; }
+  const { job_id } = await r.json();
+  const li = document.createElement('li'); li.className = 'job';
+  li.innerHTML = `<span class="t">${esc(source)} · <span class="st">${T('analyzing')}…</span></span><div class="bar busy"><i></i></div>`;
+  $('#jobs').appendChild(li);
+  const st = li.querySelector('.st'), bar = li.querySelector('.bar'), fill = li.querySelector('i');
+  const tick = async () => {
+    const job = await (await fetch('/api/jobs/' + job_id)).json();
+    if (job.total) { bar.classList.remove('busy'); fill.style.width = Math.round(job.done / job.total * 100) + '%'; st.textContent = `${T('analyzing')} ${job.done}/${job.total}`; }
+    if (job.status === 'done') { li.remove(); toast(T('analysis_done')); showReport(job); return; }
+    if (job.status === 'failed') { li.remove(); toast(`${T('analysis_failed')}: ${job.error || ''}`); return; }
+    setTimeout(tick, 1500);
+  };
+  tick();
+}
 
 /* ── events ────────────────────────────────────────────── */
 column.addEventListener('click', async e => {
@@ -610,7 +655,7 @@ async function loadDocs() {
   docsCache = await (await fetch('/api/documents')).json();
   $('#docs-empty').hidden = docsCache.length > 0;
   for (const s of selected) if (!docsCache.some(d => d.source === s)) selected.delete(s);
-  $('#docs').innerHTML = docsCache.map(d => `<li data-open="${esc(d.source)}" class="${selected.has(d.source) ? 'on' : ''}" title="${esc(d.source)}"><input type="checkbox" data-sel="${esc(d.source)}" ${selected.has(d.source) ? 'checked' : ''} title="${T('select_title')}"><span class="t">${esc(d.title)}</span><span class="n">${d.chunks}</span><button class="x" data-del="${esc(d.source)}" title="✕">✕</button></li>`).join('');
+  $('#docs').innerHTML = docsCache.map(d => `<li data-open="${esc(d.source)}" class="${selected.has(d.source) ? 'on' : ''}" title="${esc(d.source)}"><input type="checkbox" data-sel="${esc(d.source)}" ${selected.has(d.source) ? 'checked' : ''} title="${T('select_title')}"><span class="t">${esc(d.title)}</span><span class="n">${d.chunks}</span><button class="an" data-an="${esc(d.source)}" title="${T('analyze')}">⌕</button><button class="x" data-del="${esc(d.source)}" title="✕">✕</button></li>`).join('');
   renderSelection();
 }
 function renderSelection() {
@@ -632,6 +677,8 @@ $('#docs').addEventListener('change', e => {
 });
 $('#docs').addEventListener('click', async e => {
   if (e.target.closest('[data-sel]')) return;
+  const an = e.target.closest('[data-an]');
+  if (an) { startAnalysis(an.dataset.an); return; }
   const b = e.target.closest('[data-del]');
   if (!b) { const li = e.target.closest('[data-open]'); if (li) openReader(li.dataset.open); return; }
   if (!confirm(T('remove_q').replace('{n}', b.dataset.del))) return;

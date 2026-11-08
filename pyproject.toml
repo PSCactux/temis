@@ -61,3 +61,5 @@ testpaths = ["tests"]
 "src/aroa/tools/deadlines.py" = ["E501"]
 "src/aroa/lawcheck.py" = ["E501"]  # legal patterns and Spanish verdict texts
 "tests/test_lawcheck.py" = ["E501"]
+"src/aroa/analysis.py" = ["E501"]
+"tests/test_analysis.py" = ["E501"]

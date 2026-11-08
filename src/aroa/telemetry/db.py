@@ -59,6 +59,19 @@ CREATE TABLE IF NOT EXISTS threads (
     created_ts TEXT NOT NULL,
     updated_ts TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS jobs (
+    job_id TEXT PRIMARY KEY,
+    kind TEXT NOT NULL,               -- analysis
+    source TEXT NOT NULL,             -- document file name
+    goal TEXT,
+    status TEXT NOT NULL,             -- queued | running | done | failed
+    done INTEGER DEFAULT 0,
+    total INTEGER DEFAULT 0,
+    created_ts TEXT NOT NULL,
+    updated_ts TEXT NOT NULL,
+    result TEXT,                      -- JSON
+    error TEXT
+);
 CREATE TABLE IF NOT EXISTS alarms (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     thread_id TEXT NOT NULL,

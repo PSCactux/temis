@@ -66,3 +66,17 @@ class Facts(BaseModel):
 class PolicyReview(BaseModel):
     verdict: Literal["allowed", "blocked"] = Field(description="Final verdict after reading the policy again.")
     reason: str = Field(default="", description="One sentence naming the forbidden action when blocked.")
+
+
+class FindingItem(BaseModel):
+    kind: str = Field(description="One of the kinds listed in the instructions; 'otro' if none fits.")
+    statement: str = Field(
+        description="The finding in one sentence, in the user's language, with the figures it needs."
+    )
+    quote: str = Field(description="A verbatim quote from the fragment that proves the statement, copied exactly.")
+
+
+class Findings(BaseModel):
+    findings: list[FindingItem] = Field(
+        default_factory=list, description="Empty when the fragment has nothing for the goal."
+    )

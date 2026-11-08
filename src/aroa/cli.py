@@ -170,6 +170,23 @@ def cmd_citas(args) -> None:
     console.print(report)
 
 
+def cmd_analizar(args) -> None:
+    """Analyse one indexed document whole (every fragment), printing the verified findings."""
+    from .analysis import DEFAULT_GOAL, analyze
+    from .app import Assistant
+
+    assistant = Assistant(get_settings())
+    result = analyze(
+        memory=assistant.memory,
+        fast_llm=assistant.fast_llm,
+        llm=None if args.no_overview else assistant.llm,
+        source=args.source,
+        goal=args.goal or DEFAULT_GOAL,
+        progress=lambda done, total: console.print(f"[dim]{done}/{total} fragments[/dim]", end="\r"),
+    )
+    console.print(Markdown(assistant.reveal(result.as_dict()["report"])))
+
+
 def cmd_serve(args) -> None:
     import uvicorn
 
@@ -218,6 +235,16 @@ def main() -> None:
     p.add_argument("file")
 
     p.set_defaults(func=cmd_citas)
+
+    p = sub.add_parser("analizar", help="analyse one indexed document whole, with verified findings")
+
+    p.add_argument("source", help="file name as indexed (see aroa ingest)")
+
+    p.add_argument("--goal", default="")
+
+    p.add_argument("--no-overview", action="store_true", help="skip the model-written overview")
+
+    p.set_defaults(func=cmd_analizar)
 
     p = sub.add_parser("serve", help="web app and API")
     p.add_argument("--host", default="127.0.0.1")
