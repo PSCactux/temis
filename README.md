@@ -100,24 +100,27 @@ documents (citations, abstention, prompt injection inside a document), alarms, w
 work. `aroa eval` runs them against the configured models in a separate data folder and stores every
 reply and check in `evals/results/`.
 
-Two full runs on the same day and the same 37 cases, one on a local 8B model and one on Claude through
-the Claude Code CLI (`claude-cli:` provider, tool calls emulated):
+Two runs on the same code. The local 8B model ran the current 42 cases; Claude through the Claude Code CLI
+(`claude-cli:` provider, tool calls emulated) ran the 37 cases that existed that morning, before the
+deadline and citation-review kinds were added:
 
 Model `ollama:qwen3:8b` (fast: `ollama:qwen3:8b`), privacy mode `full`, 20261108.
 
 | Kind | Passed | Median seconds |
 |---|---|---|
-| alarms | 2/2 | 12.8 |
-| chat | 2/2 | 9.6 |
-| documents | 17/20 | 12.3 |
-| identity | 1/1 | 5.2 |
-| memory | 1/3 | 21.0 |
-| policy | 3/3 | 3.4 |
-| privacy | 2/2 | 15.7 |
-| project | 2/2 | 14.4 |
-| wall | 1/1 | 8.0 |
-| web | 0/1 | 30.9 |
-| **total** | **31/37** (84%) | |
+| alarms | 2/2 | 13.3 |
+| chat | 2/2 | 8.7 |
+| deadlines | 3/3 | 15.2 |
+| documents | 17/20 | 12.4 |
+| identity | 1/1 | 3.2 |
+| memory | 2/3 | 21.7 |
+| policy | 3/3 | 4.0 |
+| privacy | 2/2 | 15.1 |
+| project | 2/2 | 16.0 |
+| review | 2/2 | 17.7 |
+| wall | 1/1 | 7.6 |
+| web | 0/1 | 47.3 |
+| **total** | **37/42** (88%) | |
 
 Model `claude-cli:sonnet` (fast: `claude-cli:haiku`), privacy mode `full`, 20261108.
 
