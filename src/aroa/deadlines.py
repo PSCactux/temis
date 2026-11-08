@@ -21,8 +21,8 @@ JURISDICTIONS = {
         "christmas": True,
         "grace": True,
         "rules": [
-            "art. 130 LEC: inhábiles sábados, domingos, 24 y 31 de diciembre, festivos nacionales, autonómicos y locales",
-            "art. 183 LOPJ: inhábil el mes de agosto, y del 24 de diciembre al 6 de enero, salvo actuaciones urgentes",
+            "art. 130.2 LEC: inhábiles sábados, domingos, del 24 de diciembre al 6 de enero, los festivos nacionales, autonómicos y locales, y el mes de agosto",
+            "art. 133.2 LEC: en las actuaciones urgentes del art. 131.2 agosto es hábil y solo se excluyen sábados, domingos y festivos",
             "art. 133 LEC: los plazos de días se cuentan desde el día siguiente a la notificación, excluidos los inhábiles; "
             "los de meses o años, de fecha a fecha; si el último día es inhábil, se prorroga al siguiente hábil",
             "art. 135.5 LEC: los escritos sujetos a plazo pueden presentarse hasta las 15:00 del día hábil siguiente al vencimiento",
@@ -35,7 +35,7 @@ JURISDICTIONS = {
         "grace": True,
         "rules": [
             "art. 128 LJCA: plazos improrrogables; agosto inhábil salvo el procedimiento de protección de derechos fundamentales",
-            "art. 183 LOPJ y art. 130 LEC (supletoria): días inhábiles",
+            "art. 130.2 LEC (supletoria): días inhábiles, incluido el periodo del 24 de diciembre al 6 de enero",
             "art. 135.5 LEC (supletoria): presentación hasta las 15:00 del día hábil siguiente",
         ],
     },
@@ -45,9 +45,9 @@ JURISDICTIONS = {
         "christmas": True,
         "grace": True,
         "rules": [
-            "art. 43 LRJS: agosto inhábil salvo las modalidades que la ley declara urgentes (despido, extinción, movilidad, "
-            "modificación sustancial, vacaciones, conciliación, derechos fundamentales, entre otras)",
-            "art. 183 LOPJ y art. 130 LEC (supletoria): días inhábiles",
+            "art. 43.4 LRJS: agosto y del 24 de diciembre al 6 de enero inhábiles, salvo las modalidades procesales que enumera "
+            "(despido, extinción de los arts. 50 a 52 ET, movilidad geográfica, modificación sustancial, entre otras)",
+            "art. 130.2 LEC (supletoria): sábados, domingos y festivos",
             "art. 135.5 LEC (supletoria): presentación hasta las 15:00 del día hábil siguiente",
         ],
     },
@@ -57,8 +57,8 @@ JURISDICTIONS = {
         "christmas": False,
         "grace": True,
         "rules": [
-            "art. 201 LECrim: para la instrucción todos los días y horas son hábiles; en las demás fases rigen los días inhábiles "
-            "del art. 183 LOPJ. Confirmar la fase antes de fiarse de este cómputo",
+            "art. 201 LECrim: para la instrucción todos los días y horas del año son hábiles; en las demás fases rigen los "
+            "días inhábiles del art. 130.2 LEC. Confirmar la fase antes de fiarse de este cómputo",
             "art. 135.5 LEC (supletoria): presentación hasta las 15:00 del día hábil siguiente",
         ],
     },
@@ -169,8 +169,6 @@ def why_inhabil(day: date, jurisdiction: str, calendar: Calendar, region: str, *
             return "agosto inhábil"
         if spec["christmas"] and ((day.month == 12 and day.day >= 24) or (day.month == 1 and day.day <= 6)):
             return "periodo navideño inhábil (24 dic a 6 ene)"
-    if jurisdiction == "civil" and day.month == 12 and day.day == 31:
-        return "31 de diciembre inhábil (art. 130 LEC)"
     return None
 
 

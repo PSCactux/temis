@@ -48,6 +48,7 @@ ROUTE = """You route messages for a law firm's assistant and apply the firm's po
 - alarms: the user wants to set, list or remove a reminder, or asks when a procedural term ends (deadline computation)
 - web: the answer needs current information from the internet (legislation, case law, a specific website)
 - project: the user wants to read, create, change or redact files, or run commands, in a matter folder (names below)
+- review: the user asks to check, verify or review the legal citations or references of a draft, brief or document
 Write a standalone search query in the user's language that resolves pronouns and references to earlier turns.
 It rewrites what the user asked and nothing else: no document titles, no words taken from the hints.
 Names and identifiers appear as placeholders like [PERSON_1]; keep them as they are.

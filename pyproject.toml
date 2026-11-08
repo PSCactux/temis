@@ -59,3 +59,5 @@ testpaths = ["tests"]
 [tool.ruff.lint.per-file-ignores]
 "src/aroa/deadlines.py" = ["E501"]  # legal rules quoted in full
 "src/aroa/tools/deadlines.py" = ["E501"]
+"src/aroa/lawcheck.py" = ["E501"]  # legal patterns and Spanish verdict texts
+"tests/test_lawcheck.py" = ["E501"]

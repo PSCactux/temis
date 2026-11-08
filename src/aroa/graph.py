@@ -137,6 +137,7 @@ def build_graph(
             thread_id=conf.get("thread_id", "default"),
             turn_id=conf.get("turn_id", "no-turn"),
             project=state.get("project", ""),
+            message=next((m.content for m in reversed(state["messages"]) if isinstance(m, HumanMessage)), ""),
             memory=memory,
             anonymizer=anonymizer,
             matter=conf.get("matter", ""),

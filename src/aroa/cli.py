@@ -158,6 +158,18 @@ def _case_line(row: dict) -> str:
     return f"{mark} {row['id']} ({row['seconds']}s)" + (f" [red]{failed}[/red]" if failed else "")
 
 
+def cmd_citas(args) -> None:
+    """Check the legal citations of a file against the BOE archive, without a model."""
+    from .lawcheck import Aliases, BoeArchive, check_text
+
+    settings = get_settings()
+    if settings.boe_archive_dir is None:
+        sys.exit("BOE_ARCHIVE_DIR is not set (the data folder of the BOE archive)")
+    text = Path(args.file).read_text(encoding="utf-8", errors="replace")
+    _, report = check_text(text, BoeArchive(settings.boe_archive_dir), Aliases.load(settings.laws_path))
+    console.print(report)
+
+
 def cmd_serve(args) -> None:
     import uvicorn
 
@@ -200,6 +212,12 @@ def main() -> None:
     p.add_argument("--dataset", default="evals/dataset.jsonl")
     p.add_argument("--only", help="run only the cases of this kind or with this id prefix")
     p.set_defaults(func=cmd_eval)
+
+    p = sub.add_parser("citas", help="check the legal citations of a file against the BOE archive")
+
+    p.add_argument("file")
+
+    p.set_defaults(func=cmd_citas)
 
     p = sub.add_parser("serve", help="web app and API")
     p.add_argument("--host", default="127.0.0.1")

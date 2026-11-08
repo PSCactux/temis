@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-Route = Literal["chat", "documents", "alarms", "web", "project"]
+Route = Literal["chat", "documents", "alarms", "web", "project", "review"]
 
 
 class Routing(BaseModel):

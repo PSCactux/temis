@@ -21,6 +21,7 @@ class ToolContext:
     memory: object | None = None  # MemoryStore; typed loosely to keep tools importable without fastembed
     anonymizer: object | None = None  # privacy.Anonymizer
     matter: str = ""
+    message: str = ""  # the user's current message (pseudonymised, attachments included), for tools that read it
 
     @property
     def project_root(self) -> Path:

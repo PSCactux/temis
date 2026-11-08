@@ -71,6 +71,7 @@ def make_assistant(workdir):
             samples_dir=workdir / "data/samples",
             privacy_mode=privacy_mode,
             calendar_path=Path(__file__).parent.parent / "data/calendar/holidays.json",  # tests run in a temp folder
+            laws_path=Path(__file__).parent.parent / "data/laws.json",
             assistant_language="en",  # the Assistant loads .env into the environment; tests stay in English
             _env_file=None,
         )

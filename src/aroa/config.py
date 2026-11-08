@@ -53,6 +53,8 @@ class Settings(BaseSettings):
     calendar_path: Path = Path("data/calendar/holidays.json")  # national and regional holidays, by year
     court_region: str = ""  # region code in the calendar (CT, MD...) for procedural deadlines
     local_holidays: str = ""  # comma-separated YYYY-MM-DD local holidays of the court
+    boe_archive_dir: Path | None = None  # data folder of the BOE archive (sibling project) for citation checks
+    laws_path: Path = Path("data/laws.json")  # abbreviations of the norms lawyers cite
 
     def local_holidays_list(self) -> list[str]:
         return [d.strip() for d in self.local_holidays.split(",") if d.strip()]

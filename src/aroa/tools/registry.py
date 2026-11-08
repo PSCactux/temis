@@ -2,10 +2,10 @@
 
 from langchain_core.tools import tool
 
-from . import alarms, deadlines, project, web
+from . import alarms, deadlines, lawcheck, project, web
 from .base import ToolContext
 
-TOOL_ROUTES = ("alarms", "web", "project")
+TOOL_ROUTES = ("alarms", "web", "project", "review")
 
 
 def make_shared(ctx: ToolContext) -> list:
@@ -29,7 +29,9 @@ def tools_for(route: str, ctx: ToolContext) -> list:
     elif route == "web":
         specific = web.make_tools(ctx)
     elif route == "project":
-        specific = project.make_tools(ctx)
+        specific = project.make_tools(ctx) + lawcheck.make_tools(ctx)  # a draft in the matter folder can be checked too
+    elif route == "review":
+        specific = lawcheck.make_tools(ctx)
     else:
         return []
     return specific + make_shared(ctx)
