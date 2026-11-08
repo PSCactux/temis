@@ -16,7 +16,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 
-from . import analysis, clippings, documents, lawcheck, prompts, review
+from . import analysis, clippings, documents, lawcheck, procedures, prompts, review
 from .app import Assistant
 from .config import get_settings
 from .memory.loaders import EXTENSIONS, read_text
@@ -68,7 +68,18 @@ class ExportRequest(BaseModel):
     name: str = "documento"
 
 
+class ProcedureDraft(BaseModel):
+    data: dict[str, str] = {}
+    matter: str = ""
+
+
+class ProcedureSave(BaseModel):
+    name: str = ""
+    html: str
+
+
 class ReviewRequest(BaseModel):
+    procedure: str = ""  # slug of a procedure whose checklist the review also checks
     name: str = "borrador"
     text: str = ""  # the draft; or
     source: str = ""  # an indexed document reviewed as a draft (excluded from the documents it is checked against)
@@ -92,10 +103,56 @@ class Runtime:
 
     def enqueue_review(self, body: ReviewRequest, text: str) -> str:
         spec = {"text": text, "documents": body.documents, "exclude": body.source or None, "legal": body.legal}
+        if body.procedure:
+            proc = procedures.find(
+                self.assistant.settings.procedures_dir, body.procedure, self.assistant.settings.procedures_samples_dir
+            )
+            if proc is None:
+                raise HTTPException(404, "unknown procedure")
+            spec["checklist"] = proc.checklist
+            spec["procedure"] = proc.slug
         name = body.name or body.source or "borrador"
         job_id = analysis.create_job(self.assistant.conn, "review", name, json.dumps(spec))
         self.jobs.put(job_id)
         return job_id
+
+    def enqueue_draft(self, proc: procedures.Procedure, body: ProcedureDraft) -> str:
+        spec = {"slug": proc.slug, "data": body.data, "matter": body.matter}
+        job_id = analysis.create_job(self.assistant.conn, "draft", proc.name, json.dumps(spec, ensure_ascii=False))
+        self.jobs.put(job_id)
+        return job_id
+
+    def _run_draft(self, job_id: str) -> None:
+        """A procedure followed: data filled in code, marked blocks written by the model, data checked back."""
+        a, s = self.assistant, self.assistant.settings
+        job = analysis.get_job(a.conn, job_id)
+        analysis.update_job(a.conn, job_id, status="running")
+        log = analysis.JobLog(a.conn, job_id)
+        try:
+            spec = json.loads(job["goal"] or "{}")
+            proc = procedures.find(s.procedures_dir, spec.get("slug", ""), s.procedures_samples_dir)
+            if proc is None:
+                raise ValueError("unknown procedure")
+            template = proc.template_text
+            if proc.template_ref:
+                path = s.docs_dir / Path(proc.template_ref).name
+                if not path.is_file():
+                    raise ValueError(f"template {proc.template_ref} is not in the documents folder")
+                template = read_text(path)
+                log(f"Plantilla «{path.name}» leída de la biblioteca")
+            data = {k: v for k, v in (spec.get("data") or {}).items()}
+            if a.anonymizer:  # the model sees placeholders, the firm sees names: same rule as everywhere
+                with self.lock:
+                    data = {k: a.anonymizer.anonymize(v) for k, v in data.items()}
+                template = a.anonymizer.anonymize(template, names=False)
+            result = procedures.draft(proc, data, llm=a.llm, template_text=template, guard=self.lock, log=log)
+            result["text"] = a.reveal(result["text"])
+            result["html"] = documents.text_to_html(result["text"])
+            result["name"] = f"{proc.slug}-{spec.get('matter') or 'borrador'}"
+            result["procedure"] = proc.slug
+            analysis.update_job(a.conn, job_id, status="done", result=result, done=1, total=1)
+        except Exception as exc:  # noqa: BLE001 — the job records its failure; the server keeps serving
+            analysis.update_job(a.conn, job_id, status="failed", error=f"{type(exc).__name__}: {exc}")
 
     def _work(self) -> None:
         """One job at a time; each model call takes the turn lock, so conversations keep flowing between them."""
@@ -103,6 +160,9 @@ class Runtime:
         while True:
             job_id = self.jobs.get()
             job = analysis.get_job(a.conn, job_id)
+            if job and job["kind"] == "draft":
+                self._run_draft(job_id)
+                continue
             if job and job["kind"] == "review":
                 archive = a.settings.boe_archive_dir
                 review.run_review_job(
@@ -439,6 +499,71 @@ def analyze_document(source: str, body: AnalysisRequest):
     if source not in runtime.assistant.memory.indexed_sources():
         raise HTTPException(404, "unknown document")
     return {"job_id": runtime.enqueue_analysis(source, body.goal.strip())}
+
+
+@app.get("/api/procedures")
+def list_procedures():
+    s = runtime.assistant.settings
+    return [p.as_dict() for p in procedures.load_all(s.procedures_dir, s.procedures_samples_dir)]
+
+
+@app.get("/api/procedures/{slug}")
+def get_procedure(slug: str):
+    s = runtime.assistant.settings
+    proc = procedures.find(s.procedures_dir, slug, s.procedures_samples_dir)
+    if proc is None:
+        raise HTTPException(404, "unknown procedure")
+    path = s.procedures_dir / proc.source
+    raw = path.read_text(encoding="utf-8", errors="replace")
+    fmt = "html" if path.suffix.lower() in (".html", ".htm") else "markdown"
+    return {**proc.as_dict(), "format": fmt, "content": raw}
+
+
+@app.post("/api/procedures")
+def create_procedure(body: ProcedureSave):
+    """A procedure written in the editor (HTML); its sections are read back through the text converter."""
+    s = runtime.assistant.settings
+    try:
+        path = procedures.save(s.procedures_dir, body.name or "procedimiento", body.html)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    return procedures.read_procedure(path).as_dict()
+
+
+@app.put("/api/procedures/{slug}")
+def update_procedure(slug: str, body: ProcedureSave):
+    s = runtime.assistant.settings
+    proc = procedures.find(s.procedures_dir, slug, s.procedures_samples_dir)
+    if proc is None:
+        raise HTTPException(404, "unknown procedure")
+    old = s.procedures_dir / proc.source
+    if old.suffix.lower() in (".html", ".htm"):
+        old.write_text(body.html, encoding="utf-8")
+        path = old
+    else:  # a Markdown sample edited in the app becomes HTML; the sample file goes
+        path = procedures.save(s.procedures_dir, old.stem, body.html)
+        old.unlink()
+    return procedures.read_procedure(path).as_dict()
+
+
+@app.delete("/api/procedures/{slug}")
+def delete_procedure(slug: str):
+    s = runtime.assistant.settings
+    proc = procedures.find(s.procedures_dir, slug, s.procedures_samples_dir)
+    if proc is None:
+        raise HTTPException(404, "unknown procedure")
+    (s.procedures_dir / proc.source).unlink()
+    return {"removed": proc.slug}
+
+
+@app.post("/api/procedures/{slug}/draft")
+def draft_from_procedure(slug: str, body: ProcedureDraft):
+    """Queue the drafting: the result (a document for the editor) comes through /api/jobs/{id}."""
+    s = runtime.assistant.settings
+    proc = procedures.find(s.procedures_dir, slug, s.procedures_samples_dir)
+    if proc is None:
+        raise HTTPException(404, "unknown procedure")
+    return {"job_id": runtime.enqueue_draft(proc, body)}
 
 
 @app.post("/api/reviews")

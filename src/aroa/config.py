@@ -32,6 +32,8 @@ class Settings(BaseSettings):
     docs_dir: Path = Path("data/docs")
     samples_dir: Path = Path("data/samples")
     projects_dir: Path = Path("data/projects")
+    procedures_dir: Path = Path("data/procedures")  # the firm's small flows (template, data, writing, review)
+    procedures_samples_dir: Path = Path("data/procedures_samples")
     qdrant_url: str | None = None  # a Qdrant server instead of the embedded store
 
     # Memory

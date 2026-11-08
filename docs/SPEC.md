@@ -134,6 +134,15 @@ out (structural subset), and every save keeps the previous content as a version 
 `GET /api/documents/{source}/html`, `POST /api/documents/html`, `PUT /api/documents/{source}`,
 `GET …/versions`, `POST …/versions/{v}/restore`, `POST /api/export/docx`. See ADR 011.
 
+## Procedures
+
+`procedures.py`: the firm's small flows as documents (`data/procedures/`, samples copied on first run)
+with four sections: template (library document or inline), data (form fields), writing instructions and
+review checklist. `POST /api/procedures/{slug}/draft` queues a `draft` job: placeholders filled in code,
+`[[…]]` passages written by the model one by one, data checked back, result opened in the editor.
+`POST /api/reviews` with `procedure` adds the checklist to the review (met only with a verbatim quote).
+Procedures are created and edited in the app (`POST/PUT /api/procedures`). See ADR 012.
+
 ## Observability
 
 - **Traces**: OpenInference spans over OTLP/HTTP to any collector; contents hidden unless

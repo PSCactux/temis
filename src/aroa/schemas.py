@@ -87,5 +87,21 @@ class IssueItem(BaseModel):
     reason: str = Field(description="Why it is a problem, in one sentence, in the draft's language.")
 
 
+class ChecklistItem(BaseModel):
+    item: str = Field(description="The checklist item, copied as given.")
+    met: bool = Field(description="True only when a verbatim passage of the draft shows it.")
+    evidence: str = Field(
+        default="",
+        description="REQUIRED when met: the passage copied verbatim from the draft that shows it. Empty when not met.",
+    )
+    note: str = Field(
+        default="", description="Only when not met or partly met: one short sentence saying what is missing."
+    )
+
+
+class Checklist(BaseModel):
+    items: list[ChecklistItem] = Field(default_factory=list)
+
+
 class Issues(BaseModel):
     issues: list[IssueItem] = Field(default_factory=list, description="Empty when the draft has no concrete problem.")

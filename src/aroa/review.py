@@ -23,7 +23,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from . import lawcheck, prompts
 from .citations import from_injection, normalize, quote_in
 from .memory.chunking import Chunk
-from .schemas import Issues
+from .schemas import Checklist, Issues
 
 MIN_QUOTE_CHARS = 20
 MIN_QUOTE_WORDS = 4
@@ -46,6 +46,7 @@ KINDS = {
     "jurisprudencia_sin_verificar": "jurisprudencia sin verificar",
     "cita_legal_no_literal": "cita legal no literal",
     "cuestion_legal": "cuestión legal",
+    "lista_revision": "punto de la lista de revisión no cumplido",
 }
 
 
@@ -80,6 +81,7 @@ class Review:
     windows: int  # model calls for legal issues
     notes: list[str] = field(default_factory=list)
     seconds: float = 0.0
+    checklist: list[dict] = field(default_factory=list)  # the procedure's items: {item, met, quote, note}
 
     def errors(self) -> int:
         return sum(1 for i in self.issues if i.severity == "error")
@@ -385,6 +387,42 @@ def find_legal_issues(llm, text: str, paragraphs, guard, progress=None, log=None
     return issues, len(windows)
 
 
+def check_list(llm, text: str, paragraphs, items: list[str], guard, log=None) -> list[dict]:
+    """The procedure's checklist, item by item: met only with a verbatim quote of the draft, else not met."""
+    say = log or (lambda _l: None)
+    checker = llm.with_structured_output(Checklist, method="json_schema")
+    windows = windows_of(paragraphs)
+    verdicts: dict[str, dict] = {item: {"item": item, "met": False, "quote": "", "note": ""} for item in items}
+    listed = "\n".join(f"- {item}" for item in items)
+    for k, (_, window) in enumerate(windows, start=1):
+        with guard:
+            result: Checklist = checker.invoke(
+                [
+                    SystemMessage(prompts.CHECKLIST),
+                    HumanMessage(
+                        prompts.data_block("checklist", listed) + "\n\n" + prompts.data_block("draft", window)
+                    ),
+                ]
+            )
+        met_here = 0
+        for r in result.items:
+            key = next((i for i in items if _fold(i) == _fold(r.item)), None)
+            if key is None:
+                continue
+            quote = r.evidence.strip() or (r.note.strip() if r.met else "")  # small models put the passage in the note
+            if r.met and quote and quote_in(quote, window) and not from_injection(quote, window):
+                verdicts[key].update(met=True, quote=quote, note="")
+                met_here += 1
+            elif not verdicts[key]["met"] and r.note.strip():
+                verdicts[key]["note"] = r.note.strip()
+        say(f"Lista de revisión, ventana {k}/{len(windows)}: {met_here} punto(s) acreditados con cita")
+    return list(verdicts.values())
+
+
+def _fold(text: str) -> str:
+    return normalize(text)
+
+
 # ── the pass ───────────────────────────────────────────────────────────
 def review(
     *,
@@ -397,6 +435,7 @@ def review(
     lock=None,
     progress=None,
     log=None,
+    checklist: list[str] | None = None,
 ) -> Review:
     """Review a draft: repeats and quotes in code, citations against the archive, legal issues by the model.
     `log(line)` receives a readable account of each phase as it finishes."""
@@ -441,7 +480,26 @@ def review(
         legal, windows = find_legal_issues(llm, text, paragraphs, guard, progress, log=say)
         issues += legal
         say(f"Cuestiones legales señaladas por el modelo (avisos): {len(legal)}")
-    issues.sort(key=lambda i: (i.paragraph, text.find(i.passage)))
+    verdicts: list[dict] = []
+    if checklist and llm is not None:
+        say(f"Lista de revisión del procedimiento: {len(checklist)} puntos")
+        verdicts = check_list(llm, text, paragraphs, checklist, lock if lock is not None else nullcontext(), say)
+        for v in verdicts:
+            if not v["met"]:
+                issues.append(
+                    Issue(
+                        0,
+                        "lista_revision",
+                        "aviso",
+                        v["item"],
+                        0,
+                        v["note"] or "no se encuentra en el borrador un pasaje que lo acredite",
+                    )
+                )
+        say(f"Lista de revisión: {sum(1 for v in verdicts if v['met'])} de {len(verdicts)} puntos cumplidos")
+    elif checklist:
+        notes.append("lista de revisión no comprobada: hace falta el modelo")
+    issues.sort(key=lambda i: (i.paragraph or 10**6, text.find(i.passage)))
     for n, issue in enumerate(issues, start=1):
         issue.n = n
     return Review(
@@ -453,6 +511,7 @@ def review(
         windows,
         notes,
         round(time.perf_counter() - started, 1),
+        verdicts,
     )
 
 
@@ -499,6 +558,16 @@ def format_report(r: Review) -> str:
     ]
     for note in r.notes:
         lines += [f"_{note}_", ""]
+    if r.checklist:
+        lines += ["## Lista de revisión", ""]
+        for v in r.checklist:
+            line = f"- {'✔' if v['met'] else '✘'} {v['item']}"
+            if v["quote"]:
+                line += f" — «{v['quote'][:200]}»"
+            elif v["note"]:
+                line += f" — {v['note']}"
+            lines.append(line)
+        lines.append("")
     for severity, title in (("error", "Errores"), ("aviso", "Avisos")):
         group = [i for i in r.issues if i.severity == severity]
         if not group:
@@ -549,6 +618,7 @@ def run_review_job(
         exclude = spec.get("exclude")
         chunks = [c for s in sources if s != exclude for c in memory.document_chunks(s)]
         law_source = law_source_factory() if law_source_factory else None
+        checklist = spec.get("checklist") or None
         result = review(
             text=text,
             name=job["source"],
@@ -559,6 +629,7 @@ def run_review_job(
             lock=lock,
             progress=lambda done, total: update_job(conn, job_id, done=done, total=total),
             log=log,
+            checklist=checklist,
         )
         log(
             f"Terminado en {result.seconds} s: {result.errors()} errores, {len(result.issues) - result.errors()} avisos"

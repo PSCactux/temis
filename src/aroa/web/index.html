@@ -222,6 +222,23 @@
   .paper mark.iss { background:var(--warn-soft); border-bottom:2px solid var(--warn); cursor:pointer; }
   .paper mark.iss.err { background:var(--bad-soft); border-bottom-color:var(--bad); }
   .paper mark.iss.focus { outline:2px solid var(--accent); outline-offset:2px; }
+  .procpaper { font-family:var(--ui); font-size:13.5px; }
+  .procpaper h1 { font-family:var(--serif); }
+  .procpaper .lead { color:var(--ink-2); font-size:14px; margin:0 0 18px; }
+  .procpaper .fields { display:grid; grid-template-columns:1fr 1fr; gap:12px 18px; margin:8px 0 18px; }
+  .procpaper .fld { display:flex; flex-direction:column; gap:4px; }
+  .procpaper .fld.wide { grid-column:1 / -1; }
+  .procpaper .fld label { font-size:12.5px; font-weight:600; color:var(--ink); }
+  .procpaper .fld small { color:var(--muted); font-weight:400; }
+  .procpaper .fld input, .procpaper .fld textarea { border:1px solid var(--line-2); border-radius:8px; padding:7px 10px; background:var(--panel); font:inherit; color:var(--ink); resize:vertical; }
+  .procpaper .fld input:focus, .procpaper .fld textarea:focus { outline:none; border-color:var(--accent-line); box-shadow:0 0 0 3px var(--accent-soft); background:var(--paper); }
+  .procpaper .ck { list-style:none; padding:0; } .procpaper .ck li { display:flex; gap:8px; align-items:flex-start; padding:4px 0; } .procpaper .ck li svg.i { width:15px; height:15px; color:var(--accent); margin-top:3px; }
+  .procpaper .instr { white-space:pre-wrap; color:var(--ink-2); font-family:var(--serif); font-size:14px; }
+  .rv .issues .check { border:1px solid var(--line); border-radius:10px; padding:10px 12px; margin:0 0 10px; background:var(--paper); font-size:13px; }
+  .rv .issues .check h5 { margin:0 0 6px; font-size:11.5px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); }
+  .rv .issues .check .it { display:grid; grid-template-columns:18px 1fr; gap:8px; padding:4px 0; }
+  .rv .issues .check .it svg.i { width:15px; height:15px; } .rv .issues .check .it.ok svg.i { color:var(--ok); } .rv .issues .check .it.no svg.i { color:var(--bad); }
+  .rv .issues .check .it q { display:block; color:var(--muted); font-size:12px; font-family:var(--serif); }
   .editor-wrap { flex:1; min-height:0; position:relative; display:flex; flex-direction:column; background:var(--bg); }
   body > .tox-tinymce-aux { position:absolute !important; top:0; left:0; width:0; height:0; }  /* TinyMCE's popup sink must not become a grid cell */
   .editor-wrap .tox-tinymce { flex:1; border:0 !important; border-radius:0 !important; height:auto !important; }
@@ -338,6 +355,7 @@
   <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 21h20z"/><path d="M12 10v5M12 18h.01"/></symbol>
   <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-proc" viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="6" rx="1.5"/><rect x="14" y="4" width="7" height="6" rx="1.5"/><rect x="8.5" y="15" width="7" height="6" rx="1.5"/><path d="M6.5 10v2.5h11V10M12 12.5V15"/></symbol>
   <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 8v6l-4-2v-4z"/></symbol>
 </svg>
 
@@ -346,6 +364,7 @@
   <button data-sec="chat" class="active"><svg class="i"><use href="#i-chat"/></svg><span data-i18n="sec_chat"></span></button>
   <button data-sec="docs"><svg class="i"><use href="#i-doc"/></svg><span data-i18n="sec_docs"></span></button>
   <button data-sec="jobs"><svg class="i"><use href="#i-jobs"/></svg><span data-i18n="sec_jobs"></span><span class="badge" id="jobs-badge" hidden></span></button>
+  <button data-sec="procs"><svg class="i"><use href="#i-proc"/></svg><span data-i18n="sec_procs"></span></button>
   <div class="grow"></div>
   <button id="b-alarms" data-i18n-title="alarms"><svg class="i"><use href="#i-bell"/></svg><span data-i18n="alarms"></span><span class="badge" id="alarms-badge" hidden></span></button>
   <button id="b-status" data-i18n-title="status"><svg class="i"><use href="#i-pulse"/></svg><span data-i18n="status"></span><span class="dot" id="health-dot"></span></button>
@@ -369,6 +388,12 @@
     <div class="note" id="sel-note" hidden><svg class="i"><use href="#i-filter"/></svg><span id="sel-text"></span><button type="button" id="sel-clear" data-i18n="clear"></button></div>
     <div class="list"><div id="uploads"></div><div id="docs"></div></div>
     <div class="empty" id="docs-empty" hidden data-i18n="no_docs"></div>
+  </div>
+  <!-- procedures -->
+  <div class="sp-view" id="sp-procs" hidden>
+    <div class="sh"><h2 data-i18n="procedures"></h2><button class="btn primary sm" id="new-proc" data-i18n-title="new_proc"><svg class="i"><use href="#i-plus"/></svg><span data-i18n="new_short"></span></button></div>
+    <div class="list" id="procs"></div>
+    <div class="empty" id="procs-empty" hidden data-i18n="no_procs"></div>
   </div>
   <!-- jobs -->
   <div class="sp-view" id="sp-jobs" hidden>
@@ -419,6 +444,12 @@
       <div class="rv" id="rv" hidden><div class="scrollv"><div class="paper" id="rv-draft"></div></div><div class="issues" id="rv-issues"></div></div>
       <div class="scrollv" id="an-scroll" hidden><div class="paper prose" id="an-body"></div></div>
     </section>
+    <!-- procedure -->
+    <section class="view" id="view-proc" hidden>
+      <div class="center" id="proc-empty"><div class="empty-state"><div class="ic"><svg class="i"><use href="#i-proc"/></svg></div><h3 data-i18n="procs_empty_h"></h3><p data-i18n="procs_empty_p"></p><button class="btn primary" id="new-proc-2"><svg class="i"><use href="#i-plus"/></svg><span data-i18n="new_proc"></span></button></div></div>
+      <div class="toolbar" id="proc-tools" hidden></div>
+      <div class="scrollv" id="proc-scroll" hidden><div class="paper prose procpaper" id="proc-body"></div></div>
+    </section>
     <!-- inspector: the source a citation points at -->
     <aside class="inspector" id="inspector">
       <div class="ih"><div class="t" id="insp-title"></div><button class="btn ghost sm icon" id="insp-close" data-i18n-title="close"><svg class="i"><use href="#i-x"/></svg></button></div>
@@ -437,12 +468,12 @@
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const column = $('#column'), log = $('#log');
 let thread = null, busy = false, threadsCache = [], docsCache = [], jobsCache = [], attachments = [], selected = new Set();
-let section = 'chat', currentDoc = null, currentJob = null;
+let section = 'chat', currentDoc = null, currentJob = null, procsCache = [], currentProc = null;
 
 /* ── language ──────────────────────────────────────────── */
 const L = {
   en: {
-    sec_chat: 'Chat', sec_docs: 'Documents', sec_jobs: 'Work', alarms: 'Alarms', status: 'Status', theme: 'Theme', language: 'Language',
+    sec_chat: 'Chat', sec_docs: 'Documents', sec_jobs: 'Work', sec_procs: 'Procedures', procedures: 'Procedures', no_procs: 'No procedures yet. Write one: template, data, how to write it, how to review it.', procs_empty_h: 'Procedures', procs_empty_p: 'A procedure is one document with four sections: the template, the data it needs, how to write it and how to review it. Pick one to fill in its data and draft the document; Aroa follows the steps and the review checks the list.', new_proc: 'New procedure', draft_btn: 'Draft the document', edit_proc: 'Edit procedure', template_lbl: 'Template', data_lbl: 'Data', instructions_lbl: 'Writing', checklist_lbl: 'Review checklist', kind_draft: 'Draft', drafting: 'drafting', draft_done: 'Draft ready: open in the editor', draft_failed: 'Drafting failed', matter_lbl: 'Matter (for the file name)', no_template: 'This procedure names no template.', checklist_title: 'Procedure checklist', met: 'met', unmet: 'not met', proc_skeleton: '<h1>Procedure name</h1><p>When it is used, in two lines.</p><h2>Template</h2><p>documento: name_of_a_library_document.md</p><h2>Data</h2><ul><li>Field: hint for whoever fills it</li></ul><h2>Writing</h2><p>Register, structure, what to cite, what never to write.</p><h2>Review</h2><ul><li>One thing the finished document must show</li></ul>', inline_template: 'inline template', alarms: 'Alarms', status: 'Status', theme: 'Theme', language: 'Language',
     conversations: 'Conversations', new_short: 'New', new_title: 'New conversation', no_threads: 'No conversations yet.', filter_threads: 'Filter conversations', filter_docs: 'Filter documents',
     documents: 'Documents', add: 'Add', add_title: 'Markdown, text, PDF, Word or HTML', add_doc: 'Add a document', no_docs: 'No documents yet. Create one, add .md, .txt, .pdf or .docx files, or drop them anywhere.',
     docs_empty_h: 'Document library', docs_empty_p: 'Documents are indexed pseudonymised and answered from with citations. Pick one on the left to read it, analyse it whole or review it as a draft.',
@@ -480,7 +511,7 @@ const L = {
     ],
   },
   es: {
-    sec_chat: 'Chat', sec_docs: 'Documentos', sec_jobs: 'Trabajos', alarms: 'Alarmas', status: 'Estado', theme: 'Tema', language: 'Idioma',
+    sec_chat: 'Chat', sec_docs: 'Documentos', sec_jobs: 'Trabajos', sec_procs: 'Procedim.', procedures: 'Procedimientos', no_procs: 'Todavía no hay procedimientos. Escribe uno: plantilla, datos, cómo se redacta, cómo se revisa.', procs_empty_h: 'Procedimientos', procs_empty_p: 'Un procedimiento es un documento con cuatro apartados: la plantilla, los datos que necesita, cómo se redacta y cómo se revisa. Elige uno para rellenar sus datos y redactar el documento; Aroa sigue los pasos y la revisión comprueba la lista.', new_proc: 'Nuevo procedimiento', draft_btn: 'Redactar el documento', edit_proc: 'Editar procedimiento', template_lbl: 'Plantilla', data_lbl: 'Datos', instructions_lbl: 'Redacción', checklist_lbl: 'Lista de revisión', kind_draft: 'Borrador', drafting: 'redactando', draft_done: 'Borrador listo: se abre en el editor', draft_failed: 'La redacción ha fallado', matter_lbl: 'Expediente (para el nombre del archivo)', no_template: 'Este procedimiento no indica plantilla.', checklist_title: 'Lista de revisión del procedimiento', met: 'cumplido', unmet: 'no cumplido', proc_skeleton: '<h1>Nombre del procedimiento</h1><p>Cuándo se usa, en dos líneas.</p><h2>Plantilla</h2><p>documento: nombre_de_un_documento_de_la_biblioteca.md</p><h2>Datos</h2><ul><li>Campo: pista para quien lo rellena</li></ul><h2>Redacción</h2><p>Registro, estructura, qué citar, qué no escribir nunca.</p><h2>Revisión</h2><ul><li>Una cosa que el documento terminado debe mostrar</li></ul>', inline_template: 'plantilla en el propio procedimiento', alarms: 'Alarmas', status: 'Estado', theme: 'Tema', language: 'Idioma',
     conversations: 'Conversaciones', new_short: 'Nueva', new_title: 'Nueva conversación', no_threads: 'Todavía no hay conversaciones.', filter_threads: 'Filtrar conversaciones', filter_docs: 'Filtrar documentos',
     documents: 'Documentos', add: 'Añadir', add_title: 'Markdown, texto, PDF, Word o HTML', add_doc: 'Añadir un documento', no_docs: 'Todavía no hay documentos. Crea uno, añade archivos .md, .txt, .pdf o .docx, o suéltalos en cualquier parte.',
     docs_empty_h: 'Biblioteca de documentos', docs_empty_p: 'Los documentos se indexan pseudonimizados y se responde desde ellos con citas. Elige uno a la izquierda para leerlo, analizarlo entero o revisarlo como borrador.',
@@ -529,7 +560,7 @@ function applyLang() {
   $$('[data-i18n-placeholder]').forEach(el => el.placeholder = T(el.dataset.i18nPlaceholder));
   $('#lang').firstElementChild.textContent = loc().toUpperCase();
   if (column.querySelector('.welcome')) showWelcome();
-  setTitle(); renderAttachments(); renderThreads(); renderDocs(); renderJobs(); loadHealth();
+  setTitle(); renderAttachments(); renderThreads(); renderDocs(); renderJobs(); renderProcs(); loadHealth();
   if (section === 'doc' && currentDoc) docToolbar(); if (currentJob) openJob(currentJob, true);
 }
 $('#lang').onclick = () => { lang = loc() === 'es' ? 'en' : 'es'; try { localStorage.setItem('aroa.lang', lang); } catch {} applyLang(); if (thread && !column.querySelector('.welcome')) openThread(thread); };
@@ -592,12 +623,13 @@ function show(sec) {
   section = sec;
   $$('#rail [data-sec]').forEach(b => b.classList.toggle('active', b.dataset.sec === sec));
   $$('.sp-view').forEach(v => v.hidden = v.id !== 'sp-' + sec);
-  $('#view-chat').hidden = sec !== 'chat'; $('#view-doc').hidden = sec !== 'docs'; $('#view-job').hidden = sec !== 'jobs';
+  $('#view-chat').hidden = sec !== 'chat'; $('#view-doc').hidden = sec !== 'docs'; $('#view-job').hidden = sec !== 'jobs'; $('#view-proc').hidden = sec !== 'procs';
   $('#matter-box').hidden = sec !== 'chat'; $('#sel').hidden = sec !== 'chat' || !selected.size;
   $('#side').classList.remove('open');
   closeInspector();
   setTitle();
   if (sec === 'jobs') loadJobs();
+  if (sec === 'procs') loadProcs();
 }
 $$('#rail [data-sec]').forEach(b => b.onclick = () => show(b.dataset.sec));
 $('#menu').onclick = () => $('#side').classList.toggle('open');
@@ -607,7 +639,8 @@ function setTitle() {
   acts.innerHTML = '';
   if (section === 'chat') { const row = threadsCache.find(r => r.thread_id === thread); title.textContent = row ? row.title : T('new_title'); sub.textContent = ''; }
   else if (section === 'docs') { const d = docsCache.find(x => x.source === currentDoc); title.textContent = editing ? (editing.name || T('untitled')) : d ? d.title : T('documents'); sub.textContent = editing ? (editing.source || '') : d ? d.source : ''; }
-  else { title.textContent = currentJob ? (currentJob.kind === 'review' ? T('kind_review') : T('kind_analysis')) : T('jobs'); sub.textContent = currentJob ? currentJob.source : ''; }
+  else if (section === 'procs') { title.textContent = editing ? (editing.name || T('untitled')) : currentProc ? currentProc.name : T('procedures'); sub.textContent = currentProc && !editing ? currentProc.source : ''; }
+  else { title.textContent = currentJob ? (currentJob.kind === 'review' ? T('kind_review') : currentJob.kind === 'draft' ? T('kind_draft') : T('kind_analysis')) : T('jobs'); sub.textContent = currentJob ? currentJob.source : ''; }
 }
 
 /* ── chat rendering ────────────────────────────────────── */
@@ -867,10 +900,14 @@ function docToolbar() {
     `<button class="btn sm" id="d-rev" title="${T('review_long')}">${ico('eye')}${T('review')}</button>` +
     `<button class="btn ghost sm icon danger" id="d-del" title="${T('delete')}">${ico('trash')}</button>`;
 }
+$('#proc-tools').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || !editing) return;
+  if (b.id === 'ed-save') saveDoc(); if (b.id === 'ed-close') closeEditor();
+});
 $('#doc-tools').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.id === 'ed-save') { saveDoc(); return; } if (b.id === 'ed-word') { exportWord(); return; } if (b.id === 'ed-versions') { showVersions(); return; } if (b.id === 'ed-close') { closeEditor(); return; }
-  if (b.id === 'ed-review') { const e2 = ed(); if (e2) startReview({ name: (editing.name || 'borrador') + '.html', text: e2.getContent({ format: 'text' }) }); return; }
+  if (b.id === 'ed-review') { const e2 = ed(); if (e2) startReview({ name: (editing.name || 'borrador') + '.html', text: e2.getContent({ format: 'text' }), procedure: editing.from_procedure || '' }); return; }
   if (!currentDoc) return;
   if (b.id === 'd-edit') { openEditor(currentDoc); return; }
   if (b.id === 'd-use') { selected.has(currentDoc) ? selected.delete(currentDoc) : selected.add(currentDoc); renderDocs(); }
@@ -949,9 +986,12 @@ async function initEditor(html) {
 function markDirty(d) { if (!editing) return; editing.dirty = d; const st = $('#ed-state'); if (st) { st.className = 'state' + (d ? ' dirty' : ''); st.textContent = d ? T('unsaved') : (editing.savedAt ? T('saved_ago').replace('{t}', ago(editing.savedAt)) : (editing.source ? T('saved') : '')); } }
 function updateWords() { const e = ed(), w = $('#ed-words'); if (e && w) { const n = e.plugins.wordcount ? e.plugins.wordcount.body.getWordCount() : 0; w.textContent = `${n} ${T('words')}`; } }
 function mdToHtml(text) { return md(text).replace(/<button[^>]*class="cite"[^>]*>(\[\d+\])<\/button>/g, '$1'); }
-async function openEditor(source, html, name) {
+async function openEditor(source, html, name, opts = {}) {
   // source: an existing document (null for a new one); html: initial content when there is no source
-  show('docs'); currentDoc = source; renderDocs();
+  // opts.procedure: 'new' or a slug → the editor edits a procedure (saved in the procedures folder);
+  // opts.from_procedure: slug of the procedure a drafted document follows (its checklist joins the review)
+  const procMode = !!opts.procedure;
+  show(procMode ? 'procs' : 'docs'); if (!procMode) { currentDoc = source; renderDocs(); }
   if (source && html == null) {
     const r = await fetch('/api/documents/' + encodeURIComponent(source) + '/html');
     if (!r.ok) { toast(T('not_removed')); return; }
@@ -959,14 +999,24 @@ async function openEditor(source, html, name) {
     html = d.format === 'html' ? d.content : d.format === 'markdown' ? mdToHtml(d.content) : mdToHtml(d.content.replace(/\n/g, '\n\n'));
   }
   const editable = !!source && /\.html?$/i.test(source);
-  editing = { source: editable ? source : null, origin: source, name: name || (source ? source.replace(/\.[^.]+$/, '') : ''), dirty: false, savedAt: null };
-  $('#doc-empty').hidden = true; $('#doc-scroll').hidden = true; $('#doc-tools').hidden = false; $('#editor-wrap').hidden = false;
+  editing = { source: editable ? source : null, origin: source, name: name || (source ? source.replace(/\.[^.]+$/, '') : ''), dirty: false, savedAt: null, procedure: opts.procedure || null, from_procedure: opts.from_procedure || null };
+  if (procMode) { $('#proc-empty').hidden = true; $('#proc-scroll').hidden = true; $('#proc-tools').hidden = false; $('#view-proc').appendChild($('#editor-wrap')); }
+  else { $('#doc-empty').hidden = true; $('#doc-scroll').hidden = true; $('#doc-tools').hidden = false; $('#view-doc').appendChild($('#editor-wrap')); }
+  $('#editor-wrap').hidden = false;
   editorToolbar(); setTitle();
   $('#title').textContent = editing.name || T('untitled');
   await initEditor(html);
   if (!editable && source) markDirty(true);  // a .md/.docx opens as a copy to be saved under a name
 }
+function toolsEl() { return editing && editing.procedure ? $('#proc-tools') : $('#doc-tools'); }
 function editorToolbar() {
+  if (editing.procedure) {
+    toolsEl().innerHTML = `<input class="name" id="ed-name" value="${esc(editing.name)}" placeholder="${T('untitled')}">` +
+      `<span class="state" id="ed-state"></span><span class="stats" id="ed-words"></span>` +
+      `<button class="btn primary sm" id="ed-save">${ico('check')}${T('save')}</button><button class="btn ghost sm" id="ed-close">${T('close_editor')}</button>`;
+    $('#ed-name').addEventListener('input', e => { editing.name = e.target.value; $('#title').textContent = editing.name || T('untitled'); });
+    return;
+  }
   $('#doc-tools').innerHTML = `<input class="name" id="ed-name" value="${esc(editing.name)}" placeholder="${T('untitled')}" ${editing.source ? 'readonly' : ''}>` +
     `<span class="state" id="ed-state"></span><span class="stats" id="ed-words"></span>` +
     `<button class="btn sm" id="ed-versions" ${editing.source ? '' : 'disabled'}>${ico('clock')}${T('versions')}</button>` +
@@ -979,6 +1029,14 @@ function editorToolbar() {
 async function saveDoc(asNew = false) {
   const e = ed(); if (!e || !editing) return;
   const html = e.getContent();
+  if (editing.procedure) {
+    const name = editing.name || prompt(T('name_prompt'), ''); if (!name) return;
+    const isNew = editing.procedure === 'new';
+    const r = await fetch(isNew ? '/api/procedures' : '/api/procedures/' + encodeURIComponent(editing.procedure), { method: isNew ? 'POST' : 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, html }) });
+    if (!r.ok) { toast(T('not_removed')); return; }
+    const p = await r.json(); editing.procedure = p.slug; editing.name = p.name; editing.savedAt = new Date().toISOString(); e.setDirty(false); markDirty(false); toast(T('saved')); loadProcs(); $('#title').textContent = p.name;
+    return;
+  }
   if (editing.source && !asNew) {
     const r = await fetch('/api/documents/' + encodeURIComponent(editing.source), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ html }) });
     if (!r.ok) { toast(T('not_removed')); return; }
@@ -1019,6 +1077,7 @@ function closeEditor(force) {
   if (editing && editing.dirty && !force && !confirm(T('leave_q'))) return false;
   if (ed()) tinymce.remove('#editor');
   $('#editor-wrap').hidden = true; $('#pop-versions').classList.remove('open');
+  if (editing && editing.procedure) { const slug = editing.procedure; editing = null; if (slug !== 'new') openProc(slug); else { $('#proc-tools').hidden = true; $('#proc-empty').hidden = false; setTitle(); } return true; }
   const src = editing && (editing.source || editing.origin); editing = null;
   if (src && docsCache.some(d => d.source === src)) openDoc(src); else { currentDoc = null; docView(); setTitle(); }
   return true;
@@ -1082,6 +1141,47 @@ $('#clip').onclick = async () => {
   toast(r.ok ? T('clipped') : T('not_removed')); loadDocs(); loadHealth();
 };
 
+/* ── procedures: template + data + writing + review ────── */
+async function loadProcs() { procsCache = await (await fetch('/api/procedures')).json(); renderProcs(); }
+function renderProcs() {
+  $('#procs-empty').hidden = procsCache.length > 0;
+  $('#procs').innerHTML = procsCache.map(p => `<div class="item ${currentProc && currentProc.slug === p.slug ? 'active' : ''}" data-proc="${esc(p.slug)}"><div class="ic">${ico('proc')}</div><div class="tx"><div class="t">${esc(p.name)}</div><div class="m"><span>${p.fields.length} ${T('data_lbl').toLowerCase()} · ${p.checklist.length} ${T('checklist_lbl').toLowerCase()}</span></div></div></div>`).join('');
+}
+$('#procs').addEventListener('click', e => { const it = e.target.closest('[data-proc]'); if (it) openProc(it.dataset.proc); });
+async function openProc(slug) {
+  if (editing && !closeEditorSilently()) return;
+  show('procs');
+  const r = await fetch('/api/procedures/' + encodeURIComponent(slug)); if (!r.ok) { toast(T('not_removed')); return; }
+  currentProc = await r.json(); renderProcs(); setTitle(); history.replaceState(null, '', '#proc=' + encodeURIComponent(slug));
+  const p = currentProc;
+  $('#proc-empty').hidden = true; $('#proc-tools').hidden = false; $('#proc-scroll').hidden = false; $('#editor-wrap').hidden = true;
+  $('#proc-tools').innerHTML = `<span class="stats">${esc(p.source)}</span><button class="btn sm" id="p-edit">${ico('pen')}${T('edit_proc')}</button><button class="btn ghost sm icon danger" id="p-del" title="${T('delete')}">${ico('trash')}</button>`;
+  const long = n => /descripci|documentos|daños|hechos|observ/i.test(n);
+  $('#proc-body').innerHTML = `<h1>${esc(p.name)}</h1>${p.description ? `<p class="lead">${esc(p.description)}</p>` : ''}` +
+    `<h2>${T('template_lbl')}</h2><p>${p.template_ref ? `<button type="button" class="cite link" data-open-doc="${esc(p.template_ref)}">${esc(p.template_ref)}</button>` : p.template_text ? T('inline_template') : T('no_template')}</p>` +
+    `<h2>${T('data_lbl')}</h2><form id="proc-form" class="fields">${p.fields.map((f, i) => `<div class="fld ${long(f.name) ? 'wide' : ''}"><label for="pf${i}">${esc(f.name)}${f.hint ? ` <small>· ${esc(f.hint)}</small>` : ''}</label>${long(f.name) ? `<textarea id="pf${i}" rows="2" data-field="${esc(f.name)}"></textarea>` : `<input id="pf${i}" data-field="${esc(f.name)}">`}</div>`).join('')}` +
+    `<div class="fld"><label for="pf-matter">${T('matter_lbl')}</label><input id="pf-matter" placeholder="${T('matter_ph')}" value="${esc($('#matter').value.trim())}"></div></form>` +
+    `<p><button type="button" class="btn primary" id="p-draft">${ico('pen')}${T('draft_btn')}</button></p>` +
+    (p.instructions ? `<h2>${T('instructions_lbl')}</h2><div class="instr">${esc(p.instructions)}</div>` : '') +
+    (p.checklist.length ? `<h2>${T('checklist_lbl')}</h2><ul class="ck">${p.checklist.map(c => `<li>${ico('check')}<span>${esc(c)}</span></li>`).join('')}</ul>` : '');
+  $('#proc-scroll').scrollTop = 0;
+}
+$('#proc-body').addEventListener('click', async e => {
+  const d = e.target.closest('[data-open-doc]'); if (d) { openDoc(d.dataset.openDoc); return; }
+  if (e.target.closest('#p-draft')) {
+    const data = {}; $$('#proc-form [data-field]').forEach(el => { if (el.value.trim()) data[el.dataset.field] = el.value.trim(); });
+    const r = await fetch('/api/procedures/' + encodeURIComponent(currentProc.slug) + '/draft', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data, matter: $('#pf-matter').value.trim() }) });
+    if (!r.ok) { toast(T('draft_failed')); return; }
+    watchJob((await r.json()).job_id, 'draft', true);
+  }
+});
+$('#proc-tools').addEventListener('click', async e => {
+  if (e.target.closest('#p-edit')) { const p = currentProc; const html = p.format === 'html' ? p.content : mdToHtml(p.content); openEditor(null, html, p.name, { procedure: p.slug }); return; }
+  if (e.target.closest('#p-del')) { if (!confirm(T('remove_q').replace('{n}', currentProc.name))) return; await fetch('/api/procedures/' + encodeURIComponent(currentProc.slug), { method: 'DELETE' }); currentProc = null; $('#proc-empty').hidden = false; $('#proc-tools').hidden = true; $('#proc-scroll').hidden = true; loadProcs(); setTitle(); }
+});
+function newProc() { if (editing && !closeEditorSilently()) return; show('procs'); currentProc = null; renderProcs(); openEditor(null, T('proc_skeleton'), '', { procedure: 'new' }); }
+$('#new-proc').onclick = newProc; $('#new-proc-2').onclick = newProc;
+
 /* ── jobs: reviews and analyses ────────────────────────── */
 async function startAnalysis(source) {
   const goal = prompt(T('goal_prompt'), ''); if (goal === null) return;
@@ -1103,8 +1203,8 @@ function watchJob(job_id, kind, open = false) {
     const job = await (await fetch('/api/jobs/' + job_id)).json();
     const row = jobsCache.find(j => j.job_id === job_id); if (row) Object.assign(row, { status: job.status, done: job.done, total: job.total, last_line: (job.log || []).slice(-1)[0] || '' }); renderJobs();
     if (currentJob && currentJob.job_id === job_id && job.status !== 'done') showJobLog(job);
-    if (job.status === 'done') { watching.delete(job_id); toast(T(kind === 'review' ? 'review_done' : 'analysis_done')); loadJobs(); openJob(job); return; }
-    if (job.status === 'failed') { watching.delete(job_id); toast(`${T(kind === 'review' ? 'review_failed' : 'analysis_failed')}: ${job.error || ''}`); loadJobs(); return; }
+    if (job.status === 'done') { watching.delete(job_id); toast(T(kind === 'review' ? 'review_done' : kind === 'draft' ? 'draft_done' : 'analysis_done')); loadJobs(); openJob(job); return; }
+    if (job.status === 'failed') { watching.delete(job_id); toast(`${T(kind === 'review' ? 'review_failed' : kind === 'draft' ? 'draft_failed' : 'analysis_failed')}: ${job.error || ''}`); loadJobs(); return; }
     setTimeout(tick, 1500);
   };
   tick();
@@ -1120,11 +1220,12 @@ function renderJobs() {
   $('#jobs-badge').hidden = !running; $('#jobs-badge').textContent = running;
   $('#jobs-empty').hidden = jobsCache.length > 0;
   $('#jobs').innerHTML = jobsCache.map(j => {
-    const icon = j.kind === 'review' ? 'pen' : 'scan', live = j.status === 'queued' || j.status === 'running';
+    const icon = j.kind === 'review' ? 'pen' : j.kind === 'draft' ? 'doc' : 'scan', live = j.status === 'queued' || j.status === 'running';
     const cls = j.status === 'failed' ? 'bad' : j.status === 'done' ? '' : 'warn';
-    const state = j.status === 'done' ? ago(j.updated_ts) : j.status === 'failed' ? T('failed') : j.status === 'queued' ? T('queued') : `${T(j.kind === 'review' ? 'reviewing' : 'analyzing')}${j.total ? ` ${j.done}/${j.total}` : '…'}`;
+    const verb = j.kind === 'review' ? 'reviewing' : j.kind === 'draft' ? 'drafting' : 'analyzing';
+    const state = j.status === 'done' ? ago(j.updated_ts) : j.status === 'failed' ? T('failed') : j.status === 'queued' ? T('queued') : `${T(verb)}${j.total ? ` ${j.done}/${j.total}` : '…'}`;
     return `<div class="item ${currentJob && currentJob.job_id === j.job_id ? 'active' : ''}" data-job="${esc(j.job_id)}"><div class="ic ${cls}">${ico(icon)}</div><div class="tx"><div class="t">${esc(j.source)}</div>` +
-      `<div class="m"><span>${j.kind === 'review' ? T('kind_review') : T('kind_analysis')}</span><span>· ${esc(state)}</span></div>` +
+      `<div class="m"><span>${j.kind === 'review' ? T('kind_review') : j.kind === 'draft' ? T('kind_draft') : T('kind_analysis')}</span><span>· ${esc(state)}</span></div>` +
       (live ? `<div class="bar ${j.total ? '' : 'busy'}"><i style="width:${j.total ? Math.round(j.done / j.total * 100) : 0}%"></i></div>${j.last_line ? `<div class="m" title="${esc(j.last_line)}"><span>${esc(j.last_line.replace(/^\d\d:\d\d:\d\d /, ''))}</span></div>` : ''}` : '') + `</div></div>`;
   }).join('');
 }
@@ -1145,6 +1246,12 @@ function showJobLog(job) {  // a running (or failed) job: its readable progress,
   $('#an-scroll').scrollTop = $('#an-scroll').scrollHeight;
 }
 function openJob(job, keepDecisions = false) {
+  if (job.kind === 'draft') {  // a drafted document goes straight to the editor, unsaved, named after the procedure and matter
+    const r = job.result; currentJob = null;
+    openEditor(null, r.html, r.name, { from_procedure: r.procedure });
+    if (r.missing_fields.length || r.data_unused.length || r.blocks_written < r.blocks) toast(`${r.missing_fields.length ? T('data_lbl') + ' ' + r.missing_fields.join(', ') + ' · ' : ''}${r.blocks - r.blocks_written ? (r.blocks - r.blocks_written) + ' [[…]]' : ''}`.replace(/ · $/, ''));
+    return;
+  }
   show('jobs'); currentJob = job; renderJobs(); setTitle(); history.replaceState(null, '', '#job=' + job.job_id);
   $('#job-empty').hidden = true; $('#job-tools').hidden = false;
   if (job.kind === 'review') { $('#rv').hidden = false; $('#an-scroll').hidden = true; showReview(job, keepDecisions); }
@@ -1175,6 +1282,7 @@ function showReview(job, keepDecisions) {
     `<span class="stats">${r.paragraphs} ${T('paragraphs')} · ${r.quotes_checked} ${T('quotes_checked')} · ${r.citations_checked} ${T('citations_checked')} · ${r.seconds} s</span>` +
     `<span id="rv-count" style="white-space:nowrap"></span><button class="btn sm" id="rv-edit" title="${T('open_corrected')}">${ico('pen')}${T('edit')}</button><button class="btn sm" id="rv-copy">${ico('copy')}${T('copy_fixed')}</button><button class="btn primary sm" id="rv-download">${ico('download')}${T('download_fixed')}</button>`;
   let side = '';
+  if (r.checklist && r.checklist.length) side += `<div class="check"><h5>${T('checklist_title')} · ${r.checklist.filter(v => v.met).length}/${r.checklist.length}</h5>` + r.checklist.map(v => `<div class="it ${v.met ? 'ok' : 'no'}">${ico(v.met ? 'check' : 'x')}<span>${esc(v.item)}${v.quote ? `<q>«${esc(v.quote.length > 160 ? v.quote.slice(0, 160) + '…' : v.quote)}»</q>` : v.note ? `<q>${esc(v.note)}</q>` : ''}</span></div>`).join('') + `</div>`;
   for (const n of r.notes || []) side += `<div class="rv-note">${esc(n)}</div>`;
   if (!r.issues.length) side += `<div class="rv-note ok">${T('no_issues')}</div>`;
   $('#rv-issues').innerHTML = side + r.issues.map(issueCard).join('');
@@ -1268,16 +1376,17 @@ async function refreshThread() {  // alarms post into the thread on their own; r
 }
 setInterval(refreshThread, 20000);
 setInterval(loadAlarmCount, 30000);
-const deepJob = /^#job=([\w-]+)$/.exec(location.hash), deepDoc = /^#doc=(.+)$/.exec(location.hash), deep = /^#t=([\w-]+)$/.exec(location.hash);
+const deepJob = /^#job=([\w-]+)$/.exec(location.hash), deepDoc = /^#doc=(.+)$/.exec(location.hash), deepProc = /^#proc=(.+)$/.exec(location.hash), deep = /^#t=([\w-]+)$/.exec(location.hash);
 thread = deep ? deep[1] : id();
 if (lang) applyLang(); else loadHealth();
 loadDocs().then(() => {
   if (deepJob) fetch('/api/jobs/' + deepJob[1]).then(r => r.ok ? r.json() : null).then(j => { if (j && j.status === 'done') openJob(j); else show('jobs'); });
   else if (deepDoc) openDoc(decodeURIComponent(deepDoc[1]));
+  else if (deepProc) loadProcs().then(() => openProc(decodeURIComponent(deepProc[1])));
   else if (deep) openThread(deep[1]);
   else { showWelcome(); loadThreads().then(setTitle); }
 });
-if (!deep && !deepJob && !deepDoc) showWelcome();
+if (!deep && !deepJob && !deepDoc && !deepProc) showWelcome();
 loadJobs(); loadAlarmCount();
 </script>
 </body>

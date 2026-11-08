@@ -192,11 +192,13 @@ class Anonymizer:
         ).fetchone()
         if row:
             return row["placeholder"]
-        if kind in ("PERSON", "ORG") and len(original) >= 5:
-            # "Talleres Ribera" and "Talleres Ribera, S.L." are the same party: reuse the placeholder
+        if kind in ("PERSON", "ORG") and len(original) >= 8 and " " in original.strip():
+            # "Talleres Ribera" and "Talleres Ribera, S.L." are the same party: reuse the placeholder.
+            # A lone first name never merges: "Marta" is not "Marta Soler Vidal".
             for known in self.conn.execute("SELECT placeholder, original FROM pseudonyms WHERE kind = ?", (kind,)):
-                a, b = original.lower(), known["original"].lower()
-                if (a in b or b in a) and min(len(a), len(b)) >= 5:
+                a, b = original.lower().strip(), known["original"].lower().strip()
+                shorter = min(a, b, key=len)
+                if (a in b or b in a) and len(shorter) >= 8 and " " in shorter:
                     return known["placeholder"]
         count = self.conn.execute("SELECT COUNT(*) AS n FROM pseudonyms WHERE kind = ?", (kind,)).fetchone()["n"]
         placeholder = f"[{kind}_{count + 1}]"
