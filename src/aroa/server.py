@@ -11,11 +11,12 @@ from functools import partial
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
+from fastapi.responses import FileResponse, PlainTextResponse, Response, StreamingResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 
-from . import analysis, clippings, lawcheck, prompts, review
+from . import analysis, clippings, documents, lawcheck, prompts, review
 from .app import Assistant
 from .config import get_settings
 from .memory.loaders import EXTENSIONS, read_text
@@ -55,6 +56,16 @@ class Clipping(BaseModel):
     text: str
     note: str = ""
     matter: str = ""
+
+
+class DocumentSave(BaseModel):
+    html: str
+    name: str = ""  # for a new document; ignored when saving over an existing .html
+
+
+class ExportRequest(BaseModel):
+    html: str
+    name: str = "documento"
 
 
 class ReviewRequest(BaseModel):
@@ -164,6 +175,7 @@ async def _alarm_loop() -> None:
 
 
 app = FastAPI(title="Aroa Assistant", lifespan=lifespan)
+app.mount("/vendor", StaticFiles(directory=WEB / "vendor"), name="vendor")
 
 
 @app.get("/")
@@ -316,6 +328,80 @@ def document_text(source: str):
     if not path.exists():
         raise HTTPException(404, "unknown document")
     return {"source": path.name, "text": read_text(path)}
+
+
+@app.get("/api/documents/{source}/html")
+def document_html(source: str):
+    """The document as the editor needs it: HTML for .html and .docx, raw text otherwise (the client renders it)."""
+    path = runtime.assistant.settings.docs_dir / Path(source).name
+    if not path.exists():
+        raise HTTPException(404, "unknown document")
+    suffix = path.suffix.lower()
+    if suffix in (".html", ".htm"):
+        return {"source": path.name, "format": "html", "content": path.read_text(encoding="utf-8", errors="replace")}
+    if suffix == ".docx":
+        return {"source": path.name, "format": "html", "content": documents.docx_to_html(path)}
+    return {"source": path.name, "format": "markdown" if suffix == ".md" else "text", "content": read_text(path)}
+
+
+@app.post("/api/documents/html")
+async def create_html_document(body: DocumentSave, overwrite: bool = False):
+    """A new editable document from the editor's HTML; refuses to replace an existing one unless asked."""
+    docs = runtime.assistant.settings.docs_dir
+    try:
+        name = documents.safe_name(body.name)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    if (docs / name).exists() and not overwrite:
+        raise HTTPException(409, f"{name} already exists")
+    documents.save_html(docs, name, body.html)
+    result = await run_in_threadpool(runtime.ingest)
+    return {"source": name, **result}
+
+
+@app.put("/api/documents/{source}")
+async def save_html_document(source: str, body: DocumentSave):
+    """Save over an existing editable (.html) document; the previous content becomes a version."""
+    path = runtime.assistant.settings.docs_dir / Path(source).name
+    if not path.exists():
+        raise HTTPException(404, "unknown document")
+    if path.suffix.lower() not in (".html", ".htm"):
+        raise HTTPException(400, "only .html documents are saved in place; save a copy instead")
+    documents.save_html(runtime.assistant.settings.docs_dir, path.name, body.html)
+    result = await run_in_threadpool(runtime.ingest)
+    return {"source": path.name, **result}
+
+
+@app.get("/api/documents/{source}/versions")
+def document_versions(source: str):
+    return documents.versions(runtime.assistant.settings.docs_dir, source)
+
+
+@app.get("/api/documents/{source}/versions/{version}")
+def document_version(source: str, version: str):
+    content = documents.version_html(runtime.assistant.settings.docs_dir, source, version)
+    if content is None:
+        raise HTTPException(404, "unknown version")
+    return {"source": Path(source).name, "version": version, "content": content}
+
+
+@app.post("/api/documents/{source}/versions/{version}/restore")
+async def restore_version(source: str, version: str):
+    if documents.restore(runtime.assistant.settings.docs_dir, source, version) is None:
+        raise HTTPException(404, "unknown version")
+    return await run_in_threadpool(runtime.ingest)
+
+
+@app.post("/api/export/docx")
+def export_docx(body: ExportRequest):
+    """The editor's HTML as a Word file."""
+    name = documents.safe_name(body.name or "documento", ".docx")
+    data = documents.html_to_docx(body.html, title=Path(name).stem)
+    return Response(
+        data,
+        media_type="application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        headers={"Content-Disposition": f'attachment; filename="{name}"'},
+    )
 
 
 @app.post("/api/attachments")

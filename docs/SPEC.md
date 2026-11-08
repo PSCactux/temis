@@ -125,6 +125,15 @@ survive, always as warnings. The result lists issues anchored to passages with a
 derivable, a change the user accepts or rejects; the UI marks them on the draft and downloads the
 corrected text. `POST /api/reviews` queues it, `aroa revisar FILE` runs it synchronously. See ADR 010.
 
+## Editor
+
+`documents.py` + TinyMCE 6 (vendored): the firm's documents are edited in the web UI. Editable documents
+are `.html` files in the documents folder; `.md`, `.txt`, `.pdf` and `.docx` open in the editor as a copy
+to save under a name. `html_to_text` feeds the index, `docx_to_html`/`html_to_docx` bring Word in and
+out (structural subset), and every save keeps the previous content as a version (`.versions/`). Endpoints:
+`GET /api/documents/{source}/html`, `POST /api/documents/html`, `PUT /api/documents/{source}`,
+`GET …/versions`, `POST …/versions/{v}/restore`, `POST /api/export/docx`. See ADR 011.
+
 ## Observability
 
 - **Traces**: OpenInference spans over OTLP/HTTP to any collector; contents hidden unless

@@ -85,6 +85,7 @@ says it should, and a template produces a draft with every section present.
 marking one as answered is recorded with who and when.
 
 ## Phase 10 — editor and reader
+_Editor done 2026-11-08 (ADR 011): TinyMCE vendored, .html native, Word import/export, versions, open from chat and from the review. Pending: tracked suggestions from the review inside the editor, PDF reader with page navigation._
 - A document editor in the web UI (professional: headings, lists, tables, footnotes, tracked
   suggestions from the review pass) that saves into the matter folder and keeps citations as
   links that open the source.

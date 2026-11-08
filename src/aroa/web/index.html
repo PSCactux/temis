@@ -207,6 +207,19 @@
   .paper mark.iss { background:var(--warn-soft); border-bottom:2px solid var(--warn); cursor:pointer; }
   .paper mark.iss.err { background:var(--bad-soft); border-bottom-color:var(--bad); }
   .paper mark.iss.focus { outline:2px solid var(--accent); outline-offset:2px; }
+  .editor-wrap { flex:1; min-height:0; position:relative; display:flex; flex-direction:column; background:var(--bg); }
+  body > .tox-tinymce-aux { position:absolute !important; top:0; left:0; width:0; height:0; }  /* TinyMCE's popup sink must not become a grid cell */
+  .editor-wrap .tox-tinymce { flex:1; border:0 !important; border-radius:0 !important; height:auto !important; }
+  .editor-wrap .tox .tox-edit-area::before { display:none; }
+  .editor-wrap .tox:not(.tox-tinymce-inline) .tox-editor-header { box-shadow:none !important; border-bottom:1px solid var(--line) !important; padding:4px 12px !important; background:var(--panel) !important; }
+  .editor-wrap .tox .tox-toolbar__primary { background:transparent !important; }
+  .editor-wrap .tox .tox-statusbar { border-top:1px solid var(--line) !important; background:var(--panel) !important; }
+  .editor-wrap .tox .tox-edit-area__iframe { background:var(--bg) !important; }
+  .pop.versions { position:absolute; left:auto; right:24px; top:8px; bottom:auto; width:340px; max-height:60%; overflow:auto; }
+  .pop.versions .row { align-items:center; } .pop.versions .row .acts { display:flex; gap:4px; }
+  .toolbar .name { font-weight:600; color:var(--ink); font-size:13.5px; border:1px solid transparent; border-radius:6px; padding:2px 6px; width:280px; max-width:40%; background:transparent; }
+  .toolbar .name:focus { outline:none; border-color:var(--accent-line); background:var(--paper); }
+  .toolbar .state { color:var(--muted); white-space:nowrap; } .toolbar .state.dirty { color:var(--warn); }
   .toolbar { display:flex; align-items:center; gap:8px; padding:10px 24px; border-bottom:1px solid var(--line); background:var(--panel); flex:none; font-size:12.5px; color:var(--muted); min-height:52px; }
   .toolbar .stats { min-width:0; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .toolbar .sp { flex:1; }
@@ -335,8 +348,8 @@
   </div>
   <!-- documents -->
   <div class="sp-view" id="sp-docs" hidden>
-    <div class="sh"><h2 data-i18n="documents"></h2><button class="btn primary sm" id="add-doc" data-i18n-title="add_title"><svg class="i"><use href="#i-plus"/></svg><span data-i18n="add"></span></button></div>
-    <input type="file" id="file" accept=".md,.txt,.pdf" multiple hidden>
+    <div class="sh"><h2 data-i18n="documents"></h2><button class="btn sm icon" id="add-doc" data-i18n-title="add_title"><svg class="i"><use href="#i-clip"/></svg></button><button class="btn primary sm" id="new-doc" data-i18n-title="new_doc"><svg class="i"><use href="#i-plus"/></svg><span data-i18n="new_short"></span></button></div>
+    <input type="file" id="file" accept=".md,.txt,.pdf,.docx,.html" multiple hidden>
     <div class="filter"><svg class="i"><use href="#i-search"/></svg><input id="f-docs" data-i18n-placeholder="filter_docs"></div>
     <div class="note" id="sel-note" hidden><svg class="i"><use href="#i-filter"/></svg><span id="sel-text"></span><button type="button" id="sel-clear" data-i18n="clear"></button></div>
     <div class="list"><div id="uploads"></div><div id="docs"></div></div>
@@ -369,7 +382,7 @@
           <div class="atts" id="attach-list"></div>
           <div class="line">
             <button type="button" class="btn ghost icon" id="attach" data-i18n-title="attach_title"><svg class="i"><use href="#i-clip"/></svg></button>
-            <input type="file" id="attach-file" accept=".md,.txt,.pdf" multiple hidden>
+            <input type="file" id="attach-file" accept=".md,.txt,.pdf,.docx,.html" multiple hidden>
             <textarea id="text" rows="1" data-i18n-placeholder="write"></textarea>
             <button class="send" type="submit" id="send" aria-label="Send"><svg class="i"><use href="#i-send"/></svg></button>
           </div>
@@ -379,9 +392,10 @@
     </section>
     <!-- document -->
     <section class="view" id="view-doc" hidden>
-      <div class="center" id="doc-empty"><div class="empty-state"><div class="ic"><svg class="i"><use href="#i-doc"/></svg></div><h3 data-i18n="docs_empty_h"></h3><p data-i18n="docs_empty_p"></p><button class="btn primary" id="add-doc-2"><svg class="i"><use href="#i-plus"/></svg><span data-i18n="add_doc"></span></button></div></div>
+      <div class="center" id="doc-empty"><div class="empty-state"><div class="ic"><svg class="i"><use href="#i-doc"/></svg></div><h3 data-i18n="docs_empty_h"></h3><p data-i18n="docs_empty_p"></p><button class="btn primary" id="new-doc-2"><svg class="i"><use href="#i-plus"/></svg><span data-i18n="new_doc"></span></button> <button class="btn" id="add-doc-2"><svg class="i"><use href="#i-clip"/></svg><span data-i18n="add_doc"></span></button></div></div>
       <div class="toolbar" id="doc-tools" hidden></div>
       <div class="scrollv" id="doc-scroll" hidden><div class="paper" id="doc-body"></div></div>
+      <div class="editor-wrap" id="editor-wrap" hidden><div class="pop versions" id="pop-versions"></div><textarea id="editor"></textarea></div>
     </section>
     <!-- jobs: review / analysis -->
     <section class="view" id="view-job" hidden>
@@ -415,7 +429,7 @@ const L = {
   en: {
     sec_chat: 'Chat', sec_docs: 'Documents', sec_jobs: 'Work', alarms: 'Alarms', status: 'Status', theme: 'Theme', language: 'Language',
     conversations: 'Conversations', new_short: 'New', new_title: 'New conversation', no_threads: 'No conversations yet.', filter_threads: 'Filter conversations', filter_docs: 'Filter documents',
-    documents: 'Documents', add: 'Add', add_title: 'Markdown, text or PDF', add_doc: 'Add a document', no_docs: 'No documents yet. Add .md, .txt or .pdf files, or drop them anywhere.',
+    documents: 'Documents', add: 'Add', add_title: 'Markdown, text, PDF, Word or HTML', add_doc: 'Add a document', no_docs: 'No documents yet. Create one, add .md, .txt, .pdf or .docx files, or drop them anywhere.',
     docs_empty_h: 'Document library', docs_empty_p: 'Documents are indexed pseudonymised and answered from with citations. Pick one on the left to read it, analyse it whole or review it as a draft.',
     jobs: 'Reviews and analyses', no_jobs: 'Nothing yet. Start a review or an analysis from a document or an attachment.', jobs_empty_h: 'Reviews and analyses', jobs_empty_p: 'Long jobs run in the background: a whole-document analysis or the review pass over a draft. Pick one on the left to open its result.',
     selected: '{n} selected', selected_one: 'Conversation confined to 1 document', selected_many: 'Conversation confined to {n} documents', selected_title: 'This conversation answers only from the selected documents', select_title: 'Confine the conversation to this document', clear: 'clear',
@@ -426,6 +440,7 @@ const L = {
     paragraphs: 'paragraphs', quotes_checked: 'quotes checked', citations_checked: 'legal citations checked', errors: 'errors', warnings: 'warnings', no_issues: 'No issues: nothing repeated, every quote verbatim, every legal reference resolved.',
     download_fixed: 'Download corrected', copy_fixed: 'Copy', copied: 'Copied', accept: 'Accept', reject: 'Reject', original: 'Original', open: 'open', delete_paragraph: 'Proposed: delete this paragraph', paragraph: 'paragraph', changes: 'changes accepted',
     kind_review: 'Review', kind_analysis: 'Analysis', chunks: 'fragments', findings: 'findings',
+    edit: 'Edit', new_doc: 'New document', untitled: 'Untitled', save: 'Save', save_as: 'Save as', export_word: 'Word', versions: 'Versions', no_versions: 'No earlier versions.', restore: 'Restore', view_version: 'View', close_editor: 'Done', unsaved: 'Unsaved changes', saved: 'Saved', saved_ago: 'saved {t}', name_prompt: 'Document name', exists_q: '"{n}" already exists. Overwrite it?', open_in_editor: 'Open in the editor', open_corrected: 'Open corrected in the editor', words: 'words', leave_q: 'There are unsaved changes.', restore_q: 'Restore this version? The current text is kept as a version.', copy_of: 'copy', editor_loading: 'Loading the editor…', drop_origin_q: 'Saved as an editable document. Remove the original "{n}" from the index so the content is not duplicated?',
     issue_kinds: { parrafo_repetido: 'repeated paragraph', cita_no_literal: 'quote not verbatim', cita_no_encontrada: 'quote not found in the documents', articulo_inexistente: 'inexistent article', articulo_equivocado: 'wrong article', norma_no_encontrada: 'norm not found', norma_sin_descargar: 'norm not downloaded in the archive', jurisprudencia_sin_verificar: 'case law not verified', cita_legal_no_literal: 'legal quote not verbatim', cuestion_legal: 'legal issue (model)' },
     matter: 'Matter', matter_ph: 'e.g. 2026-014', matter_title: 'Memory wall: what is said in a matter is recalled only inside that matter',
     write: 'Write to Aroa…', hint: 'Enter to send · Shift+Enter for a new line · personal data is pseudonymised before the model sees it',
@@ -452,7 +467,7 @@ const L = {
   es: {
     sec_chat: 'Chat', sec_docs: 'Documentos', sec_jobs: 'Trabajos', alarms: 'Alarmas', status: 'Estado', theme: 'Tema', language: 'Idioma',
     conversations: 'Conversaciones', new_short: 'Nueva', new_title: 'Nueva conversación', no_threads: 'Todavía no hay conversaciones.', filter_threads: 'Filtrar conversaciones', filter_docs: 'Filtrar documentos',
-    documents: 'Documentos', add: 'Añadir', add_title: 'Markdown, texto o PDF', add_doc: 'Añadir un documento', no_docs: 'Todavía no hay documentos. Añade archivos .md, .txt o .pdf, o suéltalos en cualquier parte.',
+    documents: 'Documentos', add: 'Añadir', add_title: 'Markdown, texto, PDF, Word o HTML', add_doc: 'Añadir un documento', no_docs: 'Todavía no hay documentos. Crea uno, añade archivos .md, .txt, .pdf o .docx, o suéltalos en cualquier parte.',
     docs_empty_h: 'Biblioteca de documentos', docs_empty_p: 'Los documentos se indexan pseudonimizados y se responde desde ellos con citas. Elige uno a la izquierda para leerlo, analizarlo entero o revisarlo como borrador.',
     jobs: 'Revisiones y análisis', no_jobs: 'Todavía nada. Lanza una revisión o un análisis desde un documento o un adjunto.', jobs_empty_h: 'Revisiones y análisis', jobs_empty_p: 'Los trabajos largos corren en segundo plano: el análisis de un documento entero o el pase de revisión sobre un borrador. Elige uno a la izquierda para abrir su resultado.',
     selected: '{n} seleccionados', selected_one: 'Conversación limitada a 1 documento', selected_many: 'Conversación limitada a {n} documentos', selected_title: 'Esta conversación responde solo desde los documentos seleccionados', select_title: 'Limitar la conversación a este documento', clear: 'quitar',
@@ -463,6 +478,7 @@ const L = {
     paragraphs: 'párrafos', quotes_checked: 'citas de documentos comprobadas', citations_checked: 'citas legales comprobadas', errors: 'errores', warnings: 'avisos', no_issues: 'Sin hallazgos: nada repetido, todas las citas literales y todas las referencias legales resueltas.',
     download_fixed: 'Descargar corregido', copy_fixed: 'Copiar', copied: 'Copiado', accept: 'Aceptar', reject: 'Rechazar', original: 'Original', open: 'abrir', delete_paragraph: 'Propuesta: eliminar este párrafo', paragraph: 'párrafo', changes: 'cambios aceptados',
     kind_review: 'Revisión', kind_analysis: 'Análisis', chunks: 'fragmentos', findings: 'hallazgos',
+    edit: 'Editar', new_doc: 'Nuevo documento', untitled: 'Sin título', save: 'Guardar', save_as: 'Guardar como', export_word: 'Word', versions: 'Versiones', no_versions: 'No hay versiones anteriores.', restore: 'Restaurar', view_version: 'Ver', close_editor: 'Terminar', unsaved: 'Cambios sin guardar', saved: 'Guardado', saved_ago: 'guardado {t}', name_prompt: 'Nombre del documento', exists_q: '«{n}» ya existe. ¿Sobrescribirlo?', open_in_editor: 'Abrir en el editor', open_corrected: 'Abrir corregido en el editor', words: 'palabras', leave_q: 'Hay cambios sin guardar.', restore_q: '¿Restaurar esta versión? El texto actual se guarda como versión.', copy_of: 'copia', editor_loading: 'Cargando el editor…', drop_origin_q: 'Guardado como documento editable. ¿Quitar el original «{n}» del índice para no tener el contenido duplicado?',
     issue_kinds: { parrafo_repetido: 'párrafo repetido', cita_no_literal: 'cita no literal', cita_no_encontrada: 'cita no encontrada en los documentos', articulo_inexistente: 'artículo inexistente', articulo_equivocado: 'artículo equivocado', norma_no_encontrada: 'norma no encontrada', norma_sin_descargar: 'norma no descargada en el archivo', jurisprudencia_sin_verificar: 'jurisprudencia sin verificar', cita_legal_no_literal: 'cita legal no literal', cuestion_legal: 'cuestión legal (modelo)' },
     matter: 'Expediente', matter_ph: 'p. ej. 2026-014', matter_title: 'Muralla de memoria: lo dicho en un expediente solo se recuerda dentro de ese expediente',
     write: 'Escribe a Aroa…', hint: 'Intro para enviar · Mayús+Intro para nueva línea · los datos personales se pseudonimizan antes de que el modelo los vea',
@@ -511,7 +527,7 @@ function applyTheme() {
   $('#theme-icon').setAttribute('href', theme === 'light' ? '#i-sun' : theme === 'dark' ? '#i-moon' : '#i-auto');
   $('#b-theme').title = `${T('theme')}: ${T('theme_' + theme)}`;
 }
-$('#b-theme').onclick = () => { theme = THEMES[(THEMES.indexOf(theme) + 1) % 3]; try { localStorage.setItem('aroa.theme', theme); } catch {} applyTheme(); toast(`${T('theme')}: ${T('theme_' + theme)}`); };
+$('#b-theme').onclick = () => { theme = THEMES[(THEMES.indexOf(theme) + 1) % 3]; try { localStorage.setItem('aroa.theme', theme); } catch {} applyTheme(); toast(`${T('theme')}: ${T('theme_' + theme)}`); if (editing && ed()) { const h = ed().getContent(), d = editing.dirty; initEditor(h).then(() => markDirty(d)); } };
 applyTheme();
 
 /* ── helpers ───────────────────────────────────────────── */
@@ -575,7 +591,7 @@ function setTitle() {
   const title = $('#title'), sub = $('#subtitle'), acts = $('#top-actions');
   acts.innerHTML = '';
   if (section === 'chat') { const row = threadsCache.find(r => r.thread_id === thread); title.textContent = row ? row.title : T('new_title'); sub.textContent = ''; }
-  else if (section === 'docs') { const d = docsCache.find(x => x.source === currentDoc); title.textContent = d ? d.title : T('documents'); sub.textContent = d ? d.source : ''; }
+  else if (section === 'docs') { const d = docsCache.find(x => x.source === currentDoc); title.textContent = editing ? (editing.name || T('untitled')) : d ? d.title : T('documents'); sub.textContent = editing ? (editing.source || '') : d ? d.source : ''; }
   else { title.textContent = currentJob ? (currentJob.kind === 'review' ? T('kind_review') : T('kind_analysis')) : T('jobs'); sub.textContent = currentJob ? currentJob.source : ''; }
 }
 
@@ -607,7 +623,7 @@ function addAssistant(text, m = {}) {
   const el = document.createElement('div'); el.className = 'msg ai';
   const body = m.kind === 'question' ? `<div class="question-card"><div class="lbl">${T('asking')}</div>${md(text)}</div>` : md(text);
   el.innerHTML = `<div class="av">A</div><div class="answer"><div class="head"><b>Aroa</b>${kindTag(m)}</div><div class="body">${body}</div>` +
-    (m.turn_id ? `<div class="actions"><button class="btn ghost sm" data-path="${esc(m.turn_id)}">${ico('list')}${T('path')}</button>` +
+    (m.turn_id ? `<div class="actions"><button class="btn ghost sm" data-path="${esc(m.turn_id)}">${ico('list')}${T('path')}</button><button class="btn ghost sm" data-edit="1" title="${T('open_in_editor')}">${ico('pen')}${T('edit')}</button>` +
       `<button class="btn ghost sm icon fb" data-fb="1" data-turn="${esc(m.turn_id)}" title="${T('good')}">${ico('up')}</button><button class="btn ghost sm icon fb" data-fb="-1" data-turn="${esc(m.turn_id)}" title="${T('bad')}">${ico('down')}</button></div><div class="path" id="path-${esc(m.turn_id)}"></div>` : '') + '</div>';
   const sources = Array.isArray(m.sources) ? m.sources : [];
   el.querySelector('.answer').dataset.sources = JSON.stringify(sources);
@@ -647,6 +663,7 @@ column.addEventListener('click', async e => {
     const s = sources.find(x => x.n === +b.dataset.n);
     if (s) openInspector(s.file, s.quote); return;
   }
+  if (b.dataset.edit) { const text = b.closest('.answer').querySelector('.body').innerHTML; openEditor(null, text.replace(/<button[^>]*class="cite[^"]*"[^>]*>(\[\d+\])<\/button>/g, '$1').replace(/<h3>/g, '<h2>').replace(/<\/h3>/g, '</h2>'), ''); return; }
   if (b.dataset.path) {
     const box = $('#path-' + b.dataset.path);
     if (box.classList.contains('open')) { box.classList.remove('open'); return; }
@@ -773,7 +790,7 @@ function renderDocs() {
   $('#docs-empty').hidden = docsCache.length > 0;
   $('#docs').innerHTML = rows.map(d => `<div class="item ${d.source === currentDoc ? 'active' : ''}" data-open="${esc(d.source)}" title="${esc(d.source)}">` +
     `<input type="checkbox" data-sel="${esc(d.source)}" ${selected.has(d.source) ? 'checked' : ''} title="${T('select_title')}">` +
-    `<div class="tx"><div class="t">${esc(d.title)}</div><div class="m"><span>${d.chunks} ${T('chunks')}</span>${d.source.startsWith('recorte-') ? `<span>· ${ico('scissors', 'i')}</span>` : ''}</div></div></div>`).join('');
+    `<div class="tx"><div class="t">${esc(d.title)}</div><div class="m"><span class="chip">${esc(d.source.split('.').pop().toUpperCase())}</span><span>${d.chunks} ${T('chunks')}</span>${d.source.startsWith('recorte-') ? `<span>· ${ico('scissors', 'i')}</span>` : ''}</div></div></div>`).join('');
   renderSelection();
 }
 function renderSelection() {
@@ -796,6 +813,7 @@ $('#docs').addEventListener('change', e => { const c = e.target.closest('[data-s
 $('#docs').addEventListener('click', e => { if (e.target.closest('[data-sel]')) return; const it = e.target.closest('[data-open]'); if (it) openDoc(it.dataset.open); });
 
 async function openDoc(source, quote) {
+  if (editing) { if (!closeEditorSilently()) return; }
   show('docs'); currentDoc = source; renderDocs(); setTitle(); history.replaceState(null, '', '#doc=' + encodeURIComponent(source));
   docView(); docToolbar();
   const body = $('#doc-body'); body.innerHTML = `<div class="live"><div class="spinner"></div></div>`;
@@ -806,18 +824,24 @@ async function openDoc(source, quote) {
   body.innerHTML = pretty(highlight(d.text, quote));
   const m = body.querySelector('#mark'); if (m) setTimeout(() => m.scrollIntoView({ block: 'center', behavior: 'smooth' }), 150); else $('#doc-scroll').scrollTop = 0;
 }
-function docView() { const has = !!currentDoc; $('#doc-empty').hidden = has; $('#doc-tools').hidden = !has; $('#doc-scroll').hidden = !has; }
+function docView() { const has = !!currentDoc; $('#doc-empty').hidden = has || !!editing; $('#doc-tools').hidden = !has && !editing; $('#doc-scroll').hidden = !has || !!editing; }
 function docToolbar() {
+  if (editing) return;  // the editor owns the toolbar while it is open
   const d = docsCache.find(x => x.source === currentDoc); if (!d) return;
   const on = selected.has(currentDoc);
   $('#doc-tools').innerHTML = `<span class="stats">${d.chunks} ${T('chunks')}</span>` +
     `<button class="btn sm ${on ? 'primary' : ''}" id="d-use">${ico(on ? 'check' : 'filter')}${on ? T('using_in_chat') : T('use_in_chat')}</button>` +
+    `<button class="btn sm" id="d-edit">${ico('pen')}${T('edit')}</button>` +
     `<button class="btn sm" id="d-an" title="${T('analyze_long')}">${ico('scan')}${T('analyze')}</button>` +
-    `<button class="btn sm" id="d-rev" title="${T('review_long')}">${ico('pen')}${T('review')}</button>` +
+    `<button class="btn sm" id="d-rev" title="${T('review_long')}">${ico('eye')}${T('review')}</button>` +
     `<button class="btn ghost sm icon danger" id="d-del" title="${T('delete')}">${ico('trash')}</button>`;
 }
 $('#doc-tools').addEventListener('click', async e => {
-  const b = e.target.closest('button'); if (!b || !currentDoc) return;
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.id === 'ed-save') { saveDoc(); return; } if (b.id === 'ed-word') { exportWord(); return; } if (b.id === 'ed-versions') { showVersions(); return; } if (b.id === 'ed-close') { closeEditor(); return; }
+  if (b.id === 'ed-review') { const e2 = ed(); if (e2) startReview({ name: (editing.name || 'borrador') + '.html', text: e2.getContent({ format: 'text' }) }); return; }
+  if (!currentDoc) return;
+  if (b.id === 'd-edit') { openEditor(currentDoc); return; }
   if (b.id === 'd-use') { selected.has(currentDoc) ? selected.delete(currentDoc) : selected.add(currentDoc); renderDocs(); }
   if (b.id === 'd-an') startAnalysis(currentDoc);
   if (b.id === 'd-rev') startReview({ name: currentDoc, source: currentDoc });
@@ -859,6 +883,119 @@ work.addEventListener('drop', e => {
   if (e.target.closest('.composer')) attach(files); else upload(files);
 });
 
+/* ── editor (TinyMCE, served locally) ──────────────────── */
+let editing = null;  // { source, name, dirty, savedAt }
+let tinyReady = null;
+function loadTiny() {
+  if (window.tinymce) return Promise.resolve();
+  if (tinyReady) return tinyReady;
+  tinyReady = new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = '/vendor/tinymce/tinymce.min.js'; sc.onload = ok; sc.onerror = ko; document.head.appendChild(sc); });
+  return tinyReady;
+}
+function isDark() { return theme === 'dark' || (theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches); }
+function ed() { return window.tinymce && tinymce.get('editor'); }
+async function initEditor(html) {
+  await loadTiny();
+  if (ed()) tinymce.remove('#editor');
+  const dark = isDark(), es = loc() === 'es';
+  await tinymce.init({
+    selector: '#editor', base_url: '/vendor/tinymce', suffix: '.min', promotion: false, branding: false, menubar: false, resize: false, height: '100%',
+    language: es ? 'es' : 'en', language_url: es ? '/vendor/tinymce/langs/es.js' : undefined,
+    skin: dark ? 'oxide-dark' : 'oxide', content_css: dark ? 'dark' : 'document',
+    plugins: 'lists advlist table link autolink searchreplace wordcount charmap visualblocks pagebreak quickbars',
+    toolbar: 'undo redo | blocks | bold italic underline strikethrough | alignleft aligncenter alignright alignjustify | bullist numlist outdent indent | table link charmap pagebreak | searchreplace visualblocks removeformat',
+    quickbars_insert_toolbar: false, quickbars_selection_toolbar: 'bold italic underline | h2 h3 blockquote',
+    block_formats: es ? 'Párrafo=p; Título=h1; Sección=h2; Subsección=h3; Cita=blockquote' : 'Paragraph=p; Title=h1; Section=h2; Subsection=h3; Quote=blockquote',
+    table_default_attributes: { border: '1' }, table_default_styles: { 'border-collapse': 'collapse', width: '100%' },
+    content_style: 'body{font-family:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;font-size:12pt;line-height:1.65;max-width:760px;margin:36px auto;padding:0 28px 60px;background:' + (dark ? '#1f2222' : '#fff') + ';box-shadow:0 1px 3px rgba(0,0,0,.08);min-height:900px} h1{font-size:20pt} h2{font-size:14pt;letter-spacing:.02em} h3{font-size:12.5pt} table td,table th{border:1px solid #999;padding:4px 8px} blockquote{border-left:3px solid #9ab;margin-left:0;padding-left:12px;color:#555}',
+    setup: e => {
+      e.on('input change undo redo ExecCommand SetContent', () => { if (editing && !e.isDirty() === false) markDirty(true); updateWords(); });
+      e.on('init', () => { e.setContent(html || ''); e.setDirty(false); markDirty(false); updateWords(); });
+      e.addShortcut('meta+s', 'Save', () => saveDoc()); e.addShortcut('ctrl+s', 'Save', () => saveDoc());
+    },
+  });
+}
+function markDirty(d) { if (!editing) return; editing.dirty = d; const st = $('#ed-state'); if (st) { st.className = 'state' + (d ? ' dirty' : ''); st.textContent = d ? T('unsaved') : (editing.savedAt ? T('saved_ago').replace('{t}', ago(editing.savedAt)) : (editing.source ? T('saved') : '')); } }
+function updateWords() { const e = ed(), w = $('#ed-words'); if (e && w) { const n = e.plugins.wordcount ? e.plugins.wordcount.body.getWordCount() : 0; w.textContent = `${n} ${T('words')}`; } }
+function mdToHtml(text) { return md(text).replace(/<button[^>]*class="cite"[^>]*>(\[\d+\])<\/button>/g, '$1'); }
+async function openEditor(source, html, name) {
+  // source: an existing document (null for a new one); html: initial content when there is no source
+  show('docs'); currentDoc = source; renderDocs();
+  if (source && html == null) {
+    const r = await fetch('/api/documents/' + encodeURIComponent(source) + '/html');
+    if (!r.ok) { toast(T('not_removed')); return; }
+    const d = await r.json();
+    html = d.format === 'html' ? d.content : d.format === 'markdown' ? mdToHtml(d.content) : mdToHtml(d.content.replace(/\n/g, '\n\n'));
+  }
+  const editable = !!source && /\.html?$/i.test(source);
+  editing = { source: editable ? source : null, origin: source, name: name || (source ? source.replace(/\.[^.]+$/, '') : ''), dirty: false, savedAt: null };
+  $('#doc-empty').hidden = true; $('#doc-scroll').hidden = true; $('#doc-tools').hidden = false; $('#editor-wrap').hidden = false;
+  editorToolbar(); setTitle();
+  $('#title').textContent = editing.name || T('untitled');
+  await initEditor(html);
+  if (!editable && source) markDirty(true);  // a .md/.docx opens as a copy to be saved under a name
+}
+function editorToolbar() {
+  $('#doc-tools').innerHTML = `<input class="name" id="ed-name" value="${esc(editing.name)}" placeholder="${T('untitled')}" ${editing.source ? 'readonly' : ''}>` +
+    `<span class="state" id="ed-state"></span><span class="stats" id="ed-words"></span>` +
+    `<button class="btn sm" id="ed-versions" ${editing.source ? '' : 'disabled'}>${ico('clock')}${T('versions')}</button>` +
+    `<button class="btn sm" id="ed-word">${ico('download')}${T('export_word')}</button>` +
+    `<button class="btn sm" id="ed-review" title="${T('review_long')}">${ico('pen')}${T('review')}</button>` +
+    `<button class="btn primary sm" id="ed-save">${ico('check')}${editing.source ? T('save') : T('save_as')}</button>` +
+    `<button class="btn ghost sm" id="ed-close">${T('close_editor')}</button>`;
+  $('#ed-name').addEventListener('input', e => { editing.name = e.target.value; $('#title').textContent = editing.name || T('untitled'); });
+}
+async function saveDoc(asNew = false) {
+  const e = ed(); if (!e || !editing) return;
+  const html = e.getContent();
+  if (editing.source && !asNew) {
+    const r = await fetch('/api/documents/' + encodeURIComponent(editing.source), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ html }) });
+    if (!r.ok) { toast(T('not_removed')); return; }
+  } else {
+    let name = editing.name || prompt(T('name_prompt'), ''); if (!name) return;
+    let r = await fetch('/api/documents/html', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ html, name }) });
+    if (r.status === 409) {
+      const d = await r.json(); if (!confirm(T('exists_q').replace('{n}', d.detail.split(' ')[0]))) return;
+      r = await fetch('/api/documents/html?overwrite=true', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ html, name }) });
+    }
+    if (!r.ok) { toast(T('not_removed')); return; }
+    const d = await r.json(); editing.source = d.source; editing.name = d.source.replace(/\.html$/, ''); currentDoc = d.source;
+    editorToolbar(); history.replaceState(null, '', '#doc=' + encodeURIComponent(d.source));
+    const origin = editing.origin; editing.origin = null;
+    if (origin && origin !== d.source && !/\.html?$/i.test(origin) && confirm(T('drop_origin_q').replace('{n}', origin))) await fetch('/api/documents/' + encodeURIComponent(origin), { method: 'DELETE' });
+  }
+  editing.savedAt = new Date().toISOString(); e.setDirty(false); markDirty(false); toast(T('saved')); loadDocs(); loadHealth(); setTitle(); $('#title').textContent = editing.name;
+}
+async function exportWord() {
+  const e = ed(); if (!e) return;
+  const r = await fetch('/api/export/docx', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ html: e.getContent(), name: editing.name || 'documento' }) });
+  if (!r.ok) { toast(T('not_removed')); return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(await r.blob()); a.download = (editing.name || 'documento') + '.docx'; a.click(); URL.revokeObjectURL(a.href);
+}
+async function showVersions() {
+  const pop = $('#pop-versions'); if (pop.classList.contains('open')) { pop.classList.remove('open'); return; }
+  const rows = await (await fetch('/api/documents/' + encodeURIComponent(editing.source) + '/versions')).json();
+  pop.innerHTML = `<h4>${ico('clock')}${T('versions')}</h4>` + (rows.length ? rows.map(v => `<div class="row"><span>${new Date(v.saved_at).toLocaleString(loc())}</span><span class="acts"><button class="btn ghost sm" data-view="${v.version}">${T('view_version')}</button><button class="btn sm" data-restore="${v.version}">${T('restore')}</button></span></div>`).join('') : `<div class="empty">${T('no_versions')}</div>`);
+  pop.classList.add('open');
+}
+$('#pop-versions').addEventListener('click', async e => {
+  const v = e.target.closest('[data-view]'), rs = e.target.closest('[data-restore]');
+  if (v) { const d = await (await fetch(`/api/documents/${encodeURIComponent(editing.source)}/versions/${v.dataset.view}`)).json(); ed().setContent(d.content); markDirty(true); $('#pop-versions').classList.remove('open'); }
+  if (rs) { if (!confirm(T('restore_q'))) return; await fetch(`/api/documents/${encodeURIComponent(editing.source)}/versions/${rs.dataset.restore}/restore`, { method: 'POST' }); $('#pop-versions').classList.remove('open'); openEditor(editing.source); toast(T('saved')); }
+});
+function closeEditorSilently() { if (editing && editing.dirty && !confirm(T('leave_q'))) return false; if (ed()) tinymce.remove('#editor'); $('#editor-wrap').hidden = true; $('#pop-versions').classList.remove('open'); editing = null; return true; }
+function closeEditor(force) {
+  if (editing && editing.dirty && !force && !confirm(T('leave_q'))) return false;
+  if (ed()) tinymce.remove('#editor');
+  $('#editor-wrap').hidden = true; $('#pop-versions').classList.remove('open');
+  const src = editing && (editing.source || editing.origin); editing = null;
+  if (src && docsCache.some(d => d.source === src)) openDoc(src); else { currentDoc = null; docView(); setTitle(); }
+  return true;
+}
+window.addEventListener('beforeunload', e => { if (editing && editing.dirty) { e.preventDefault(); e.returnValue = ''; } });
+$('#new-doc').onclick = () => openEditor(null, '', '');
+$('#new-doc-2').onclick = () => openEditor(null, '', '');
+
 /* ── highlight + inspector + clippings ─────────────────── */
 function pretty(html) {
   // escaped text with <mark>s: headings, bold and quotes shown as such, the words untouched
@@ -892,6 +1029,7 @@ async function openInspector(source, quote) {
   const m = body.querySelector('#mark'); if (m) setTimeout(() => m.scrollIntoView({ block: 'center', behavior: 'smooth' }), 220); else body.scrollTop = 0;
 }
 function closeInspector() { $('#inspector').classList.remove('open'); }
+document.addEventListener('click', e => { if (!e.target.closest('#pop-versions') && !e.target.closest('#ed-versions')) $('#pop-versions').classList.remove('open'); });
 $('#insp-close').onclick = closeInspector;
 
 function clipButton() {
@@ -991,7 +1129,7 @@ function showReview(job, keepDecisions) {
   const errs = r.issues.filter(i => i.severity === 'error').length, warns = r.issues.length - errs;
   $('#job-tools').innerHTML = `<span class="pill ${errs ? 'err' : 'ok'}">${errs ? ico('alert') : ico('check')}${errs} ${T('errors')}</span><span class="pill ${warns ? 'warn' : 'plain'}">${warns} ${T('warnings')}</span>` +
     `<span class="stats">${r.paragraphs} ${T('paragraphs')} · ${r.quotes_checked} ${T('quotes_checked')} · ${r.citations_checked} ${T('citations_checked')} · ${r.seconds} s</span>` +
-    `<span id="rv-count" style="white-space:nowrap"></span><button class="btn sm" id="rv-copy">${ico('copy')}${T('copy_fixed')}</button><button class="btn primary sm" id="rv-download">${ico('download')}${T('download_fixed')}</button>`;
+    `<span id="rv-count" style="white-space:nowrap"></span><button class="btn sm" id="rv-edit" title="${T('open_corrected')}">${ico('pen')}${T('edit')}</button><button class="btn sm" id="rv-copy">${ico('copy')}${T('copy_fixed')}</button><button class="btn primary sm" id="rv-download">${ico('download')}${T('download_fixed')}</button>`;
   let side = '';
   for (const n of r.notes || []) side += `<div class="rv-note">${esc(n)}</div>`;
   if (!r.issues.length) side += `<div class="rv-note ok">${T('no_issues')}</div>`;
@@ -1044,6 +1182,7 @@ $('#job-tools').addEventListener('click', e => {
   const r = reviewState.job.result;
   if (e.target.closest('#rv-download')) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([correctedDraft(r)], { type: 'text/markdown' })); a.download = (r.name || 'borrador').replace(/\.[^.]+$/, '') + '-revisado.md'; a.click(); URL.revokeObjectURL(a.href); }
   if (e.target.closest('#rv-copy')) navigator.clipboard.writeText(correctedDraft(r)).then(() => toast(T('copied')));
+  if (e.target.closest('#rv-edit')) openEditor(null, mdToHtml(correctedDraft(r)), (r.name || 'borrador').replace(/\.[^.]+$/, '') + '-revisado');
 });
 
 /* ── popovers: alarms and status ───────────────────────── */

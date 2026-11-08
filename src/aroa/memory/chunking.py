@@ -96,6 +96,7 @@ def chunk_document(
     text: str, *, title: str, source: str, max_chars: int, page: int | None = None, start_index: int = 0
 ) -> list[Chunk]:
     doc_id = slugify(Path(source).stem)
+    point = slugify(Path(source).name)  # ids carry the extension: contrato.md and contrato.html are two documents
     chunks: list[Chunk] = []
     for heading, body in split_sections(text):
         if not body:
@@ -104,7 +105,7 @@ def chunk_document(
         for piece in split_long(body, max_chars):
             chunks.append(
                 Chunk(
-                    id=f"{doc_id}:{start_index + len(chunks)}",
+                    id=f"{point}:{start_index + len(chunks)}",
                     doc_id=doc_id,
                     title=title,
                     section=section,

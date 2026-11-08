@@ -40,6 +40,7 @@ and are never recalled while working on another matter.
 | **Citations are checked before anything is filed** | Every article, law or judgment cited in a draft is extracted with patterns and verified in code against the firm's own archive of the BOE (consolidated legislation, with the date the text was fetched): the norm exists, the article exists, here is its current text and official link, or a plain «no existe». Judgments are flagged as not automatically verifiable. |
 | **Long documents, whole** | A document of any length is read fragment by fragment, findings are merged in code (repeats folded, every location kept) and nothing is reported without a verbatim quote that opens where it came from. Runs as a background job with progress; the model-written overview is kept only if every sentence cites a finding. |
 | **The review pass** | A draft is checked in a separate job: repeated paragraphs, quotes that are not verbatim in the documents (with the original as the fix), citations against the BOE archive (inexistent article, wrong article number corrected when the quoted text sits elsewhere). The model only points at legal issues, as warnings, and only where it quotes the draft. Changes are accepted or rejected one by one. |
+| **Editor** | Documents are edited in the app with a Word-like editor (served locally, no CDN): headings, lists, tables, find and replace, versions on every save, export to `.docx`, import of `.docx`. A chat answer or the corrected draft of a review opens in the editor with one click. |
 | **Untrusted content is quarantined** | Documents, tool results, pages, attachments and memory reach the model inside tags that name their origin, never in a system prompt; facts are extracted from the user's words only when the reply carries external content; `run_command` runs one allowlisted command without a shell (ADR 6). |
 | **Keeps personal data out of models** | Identifiers by patterns, names by a model proposal filtered in code; stable placeholders; revealed only at the interface. `redact_file` produces black-box copies for sharing. |
 | **Applies the firm's policy** | Fabricating or altering evidence, deceiving, crossing matters, leaking data: blocked before any work, with the reason. |
@@ -166,13 +167,13 @@ uv run aroa serve               # http://127.0.0.1:8000
 uv run aroa revisar escrito.md --corregido escrito_revisado.md   # the review pass on a draft, no server needed
 ```
 
-Your documents go in `data/docs/` (or drop `.md`, `.txt` and `.pdf` files on the web UI, which saves
+Your documents go in `data/docs/` (or drop `.md`, `.txt`, `.pdf`, `.docx` and `.html` files on the web UI, which saves
 them there and indexes them pseudonymised), matter folders in `data/projects/<matter>/`, the persona in
 `data/persona/*.md`. None of those are tracked by git except the samples. Tick documents in the sidebar
 to confine a conversation to them: retrieval, hints and the writer see only those files, and a question
 they do not cover is answered with an abstention, not with another document. A file attached to a message is
 read for that turn only unless you tick "keep in documents"; clicking a citation opens the source with the
-quote highlighted. The ✎ button on an attachment or a document reviews it as a draft: issues are marked
+quote highlighted. "Review" on an attachment or a document reviews it as a draft: issues are marked
 on the text, each proposed change is accepted or rejected, and the corrected draft is downloaded. `ASSISTANT_LANGUAGE=es` puts the texts the code writes (sources, blocked replies, the
 path of a turn) in Spanish; the UI has its own ES/EN switch.
 
