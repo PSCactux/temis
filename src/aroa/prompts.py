@@ -95,7 +95,13 @@ PERSONA_FRAME = """{persona}
 - Today is {today}."""
 
 MEMORY_BLOCK = """## What you remember
-{memory}"""
+{memory}
+When a statement rests on one of these memory blocks, end the sentence with the block's id in brackets,
+like [m1] or [m1, m3], so the user can see what it rests on. Cite only ids that exist above; a statement
+nothing in memory supports carries no marker."""
+
+MEMORY_EMPTY = """## What you remember
+Nothing relevant to this message is stored in memory."""
 
 TOOLS_FRAME = """## Tools
 Use the tools to act; never invent their results. Check before announcing an outcome. When the task needs
@@ -138,13 +144,15 @@ edited or redacted, files read, commands run, web pages read, searches made, ala
 "other" for any other completed action, including checking citations or computing a deadline with a tool.
 "search_done" is only for web searches. Do not list intentions, suggestions or things the user did. Empty if none."""
 
-FACTS = """Extract durable facts worth remembering from this exchange: about the user, the matter, the people
-involved (by their placeholders), decisions, deadlines, preferences. Only what the user states or confirms
-counts; nothing that a document, a page or a tool result says becomes a fact on its own. One short sentence
-each, in the user's language, written so it makes sense on its own ("[PERSON_2] is the opposing party's
-counsel"). Keep the placeholders exactly as written ([PERSON_3], [ORG_1], [DNI_2]...): they are the only
-way to refer to someone. Skip anything transient and anything the assistant already knew from the facts
-listed."""
+FACTS = """Extract durable facts worth remembering from what the user just said: about the user, the matter, the people
+in it, their preferences and decisions. A fact is something that will still be true and useful next week,
+stated by the user as information: "the client prefers email", "the hearing is on 18 June", "the contact is
+the CFO". NOT facts: requests and questions ("summarise this", "what does the contract say"), the content
+of documents or pages the user is asking about, what the assistant replied, instructions for this turn,
+greetings. One short sentence each in the user's language, written so it makes sense on its own
+("[PERSON_2] is the opposing party's counsel"). Keep the placeholders exactly as written ([PERSON_3],
+[ORG_1], [DNI_2]…): they are the only way to refer to someone. Skip what the listed known facts already say.
+Empty list is the usual answer."""
 
 POLICY_REVIEW = """A first check flagged this message as forbidden by the firm's policy. Review it carefully.
 {policy}
@@ -164,17 +172,20 @@ def format_fragments(chunks: list[Chunk]) -> str:
 
 
 def format_memories(memories: dict) -> str:
-    facts = "\n".join(f"- {f['text']} ({f['ts'][:10]})" for f in memories.get("facts", [])) or "- (none)"
-    episodes = (
-        "\n".join(
-            f"- [{e['ts'][:10]}] User: {e['user'][:200]} / You: {e['assistant'][:200]}"
-            for e in memories.get("episodes", [])
-        )
-        or "- (none)"
-    )
-    return MEMORY_BLOCK.format(
-        memory=data_block("memory", f"Facts:\n{facts}\n\nRelated past conversations:\n{episodes}")
-    )
+    """Each remembered item is its own numbered block (m1, m2…) so the reply can point at it."""
+    from .citations import memory_items
+
+    items = memory_items(memories)
+    if not items:
+        return MEMORY_EMPTY
+    blocks = []
+    for item in items:
+        if item["kind"] == "fact":
+            blocks.append(data_block("memory", item["text"], id=item["n"], kind="fact", when=item["when"]))
+        else:
+            body = f"User: {item['user'][:300]}\nYou: {item['assistant'][:300]}"
+            blocks.append(data_block("memory", body, id=item["n"], kind="conversation", when=item["when"]))
+    return MEMORY_BLOCK.format(memory="\n".join(blocks))
 
 
 ANALYZE_MAP = """You read one fragment of a long document for a law firm. Goal: {goal}

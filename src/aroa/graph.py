@@ -27,7 +27,7 @@ from langgraph.graph.message import add_messages
 from langgraph.types import Checkpointer, interrupt
 
 from . import prompts
-from .citations import check_answer, citation_problems, cited_numbers, tidy_markers, unverified_numbers
+from .citations import check_answer, citation_problems, cite_memory, cited_numbers, tidy_markers, unverified_numbers
 from .config import Settings
 from .i18n import t
 from .memory.chunking import Chunk
@@ -43,7 +43,6 @@ from .trace import Steps
 from .verify import check_claims, unread_urls
 
 MAX_DOCUMENT_ANSWERS = 2
-EXTERNAL_CONTENT_ROUTES = {"documents", "web", "project"}  # replies here carry text nobody at the firm wrote
 REPEAT_WARN = 2  # the same tool call with the same arguments is answered from memory from here on
 REPEAT_STOP = 5  # and from here on the loop is forced to conclude
 MAX_VERIFY_RETRIES = 1
@@ -74,6 +73,35 @@ class AgentState(TypedDict, total=False):
 
 def _chunks(items: list[dict]) -> list[Chunk]:
     return [Chunk(**item) for item in items]
+
+
+ATTACHMENT = re.compile(r'\n\n<attachment name="([^"\n]+)">\n(.*?)\n</attachment>', re.S)
+ATTACHMENT_PREFIX = "adjunto:"
+MAX_ATTACHMENT_CHUNKS = 12
+
+
+def strip_attachments(text: str) -> str:
+    return ATTACHMENT.sub("", text).strip()
+
+
+def attachment_chunks(text: str, max_chars: int, query: str = "") -> list[Chunk]:
+    """The files attached to the message as citable fragments, the ones closest to the question first.
+    They are never indexed: they exist for this turn, like the message itself."""
+    from .memory.chunking import chunk_document
+
+    chunks: list[Chunk] = []
+    for name, body in ATTACHMENT.findall(text):
+        chunks += chunk_document(body, title=name, source=ATTACHMENT_PREFIX + name, max_chars=max_chars)
+    if len(chunks) <= MAX_ATTACHMENT_CHUNKS:
+        return chunks
+    words = {w for w in re.findall(r"\w+", query.lower()) if len(w) > 3}
+    ranked = sorted(chunks, key=lambda c: -len(words & set(re.findall(r"\w+", c.text.lower()))))
+    kept = ranked[:MAX_ATTACHMENT_CHUNKS]
+    return [c for c in chunks if c in kept]  # reading order kept
+
+
+def is_attachment(chunk: Chunk) -> bool:
+    return chunk.source.startswith(ATTACHMENT_PREFIX)
 
 
 def _timed(node):
@@ -231,8 +259,8 @@ def build_graph(
         chosen = result.route
         project = result.project.strip() if chosen == "project" else ""
         mentioned = project_in(state["messages"][-1].content, projects())
-        if mentioned and chosen in ("chat", "project"):
-            chosen, project = "project", mentioned  # a message that names a matter folder is work in that folder
+        if mentioned and (chosen == "project" or (chosen == "chat" and wants_files(state["messages"][-1].content))):
+            chosen, project = "project", mentioned  # naming a matter folder plus file work is work in that folder
         elif chosen == "project" and project not in projects():
             chosen, project = "chat", ""  # an unknown project is answered in conversation, not with tools
         if chosen == "chat" and config.get("configurable", {}).get("documents"):
@@ -242,7 +270,7 @@ def build_graph(
         text = state["messages"][-1].content
         if chosen in ("chat", "web") and settings.boe_archive_dir and cites_law(text) and not wants_web(text):
             chosen = "review"  # the law lives in the BOE archive: the checker reads it, the model does not recall it
-        if chosen == "documents" and not memory.document_titles():
+        if chosen == "documents" and not memory.document_titles() and not ATTACHMENT.search(text):
             chosen = "chat"
         query = result.search_query.strip() or state["query"]
         return {
@@ -262,18 +290,37 @@ def build_graph(
         return "chat"
 
     # ── chat ───────────────────────────────────────────────────────────
+    def with_memory(reply: AIMessage, state: AgentState) -> tuple[AIMessage, list[dict]]:
+        """Markers like [m1] kept only when the remembered block exists; the cited items are listed under the reply
+        like the sources of a document answer, so an answer from memory shows what it rests on."""
+        text, sources = cite_memory(str(reply.content), state.get("memories") or {}, lang)
+        if sources:
+            lines = [text.strip(), "", f"**{t(lang, 'memory_sources')}**", ""]
+            for s in sources:
+                lines.append(f"- [{s['n']}] {s['label']}")
+                lines.append(f"  > «{s['quote'][:300]}»")
+            text = "\n".join(lines)
+        return AIMessage(text, additional_kwargs=dict(reply.additional_kwargs), id=reply.id), sources
+
     def chat(state: AgentState, config: RunnableConfig) -> dict:
         history = window(state["messages"], settings.history_messages)
         reply = llm.invoke([system_prompt(state), *history])
-        return {"messages": [_final(reply, config, kind="chat")], "trace": [*state["trace"], steps.chatted()]}
+        message, sources = with_memory(reply, state)
+        return {
+            "messages": [_final(message, config, kind="chat", sources=sources)],
+            "trace": [*state["trace"], steps.chatted(len(sources))],
+        }
 
     # ── documents ──────────────────────────────────────────────────────
     def retrieve(state: AgentState, config: RunnableConfig) -> dict:
-        question = state["messages"][-1].content
+        message = state["messages"][-1].content
+        question = strip_attachments(message)
         selected = config.get("configurable", {}).get("documents") or None
-        chunks = memory.search_documents(state["query"], sources=selected)
-        if state["query"] != question:
+        attached = attachment_chunks(message, settings.chunk_max_chars, state["query"] or question)
+        chunks = memory.search_documents(state["query"], sources=selected) if memory.document_titles() else []
+        if state["query"] != question and chunks:
             chunks = _fuse(chunks, memory.search_documents(question, sources=selected))
+        chunks = attached + chunks  # what the user just attached comes first and is cited like any fragment
         return {
             "retrieved": [c.to_payload() for c in chunks],
             "trace": [*state["trace"], steps.retrieved(chunks, [state["query"], question])],
@@ -335,21 +382,23 @@ def build_graph(
             return {"messages": [_final(AIMessage(text), config, kind="abstain", sources=[])]}
         quotes = {q.source: q.text for q in answer.quotes}
         bad = unverified_numbers(citation_problems(answer, sources)) if state["citation_errors"] else set()
-        cited = [
-            {
-                "n": n,
-                "label": sources[n - 1].label(),
-                "file": sources[n - 1].source,
-                "quote": quotes.get(n),
-                "verified": n not in bad,
-            }
-            for n in sorted(cited_numbers(answer.answer))
-            if 1 <= n <= len(sources)
-        ]
+        cited = []
+        for n in sorted(cited_numbers(answer.answer)):
+            if not 1 <= n <= len(sources):
+                continue
+            c = sources[n - 1]
+            item = {"n": n, "label": c.label(), "file": c.source, "quote": quotes.get(n), "verified": n not in bad}
+            if is_attachment(c):  # not in the library: the fragment itself travels with the answer
+                where = "" if c.section in ("Start", c.title) else f" — {c.section}"
+                item.update(
+                    kind="attachment", file=None, label=f"{t(lang, 'attachment')} · {c.title}{where}", text=c.text
+                )
+            cited.append(item)
         lines = [tidy_markers(answer.answer.strip()), "", f"**{t(lang, 'sources')}**", ""]
         for s in cited:
             mark = "" if s["verified"] else f" — _{t(lang, 'unverified_mark')}_"
-            lines.append(f"- [{s['n']}] {s['label']} (`{s['file']}`){mark}")
+            where = f" (`{s['file']}`)" if s["file"] else ""
+            lines.append(f"- [{s['n']}] {s['label']}{where}{mark}")
             if s["quote"]:
                 lines.append(f"  > «{s['quote']}»")
         if state["citation_errors"]:
@@ -376,7 +425,8 @@ def build_graph(
         reply = model.invoke([system_prompt(state, tools_note=note), *history])
         calls = reply.tool_calls if not exhausted else []
         if not calls:
-            reply = _final(reply, config, kind=state["route"])
+            reply, sources = with_memory(reply, state)
+            reply = _final(reply, config, kind=state["route"], sources=sources)
         return {"messages": [reply], "trace": [*state["trace"], steps.thought(calls, concluded=not calls)]}
 
     def after_act(state: AgentState) -> Literal["tools", "verify"]:
@@ -514,7 +564,13 @@ def build_graph(
         elif failures:
             marked = AIMessage(reply.content + "\n\n_" + t(lang, "unverified", failures="; ".join(failures)) + "_")
             update["messages"] = [
-                _final(marked, config, kind=state["route"], verified=False),
+                _final(
+                    marked,
+                    config,
+                    kind=state["route"],
+                    verified=False,
+                    sources=reply.additional_kwargs.get("sources", []),
+                ),
                 RemoveMessage(id=reply.id),
             ]
         return update
@@ -530,16 +586,18 @@ def build_graph(
         turn = turn_messages(state["messages"])
         user, reply = turn[0].content, state["messages"][-1].content
         known = "\n".join(f"- {f['text']}" for f in state["memories"].get("facts", [])) or "- (none)"
-        # On routes that read documents, pages or files, the reply carries their content: only the
-        # user's words are offered to the extractor, so a planted sentence cannot become a durable fact.
-        external = state["route"] in EXTERNAL_CONTENT_ROUTES
-        exchange = f"User: {user}" if external else f"User: {user}\n\nAssistant: {reply}"
+        # Only the user's words are offered to the extractor, on every route. What Aroa replied is either
+        # document content (cited there, never memory) or the model's own text (not a fact). This also keeps a
+        # planted sentence in a document or page from becoming a durable fact.
+        spoken = strip_attachments(user)  # a file attached to the message is not something the user said
+        if not spoken.strip():
+            return {"facts_written": [], "trace": [*state["trace"], steps.memorized([], [])]}
         result: Facts = extractor.invoke(
-            [SystemMessage(prompts.FACTS), HumanMessage(f"Known facts:\n{known}\n\n{exchange}")]
+            [SystemMessage(prompts.FACTS), HumanMessage(f"Known facts:\n{known}\n\nUser: {spoken}")]
         )
         thread_id, turn_id = conf.get("thread_id", "default"), conf.get("turn_id", "no-turn")
         matter = conf.get("matter", "")
-        origin = f"{state['route']}:{'user' if external else 'exchange'}"
+        origin = f"{state['route']}:user"
         stored, skipped = memory.add_facts(
             result.facts, thread_id=thread_id, turn_id=turn_id, matter=matter, origin=origin
         )
@@ -612,6 +670,19 @@ def wants_web(text: str) -> bool:
 def deadline_in(text: str) -> bool:
     """A message that names a concrete date and a term is asking when something ends."""
     return bool(DATE_WORDS.search(text)) and bool(TERM_WORDS.search(text))
+
+
+FILE_WORK = re.compile(
+    r"\b(crea|crear|guarda|guardar|escribe|escribir|anota|apunta|archivo|archivos|fichero|ficheros|carpeta|nota|notas|"
+    r"lee|leer|abre|abrir|lista|listar|borra|borrar|elimina|eliminar|modifica|renombra|ejecuta|redacta|"
+    r"file|files|folder|create|write|save|list|read|delete|draft)\b",
+    re.IGNORECASE,
+)
+
+
+def wants_files(text: str) -> bool:
+    """The message asks for work on files, not just a question that names a matter."""
+    return bool(FILE_WORK.search(text))
 
 
 def project_in(text: str, names: list[str]) -> str:

@@ -143,6 +143,15 @@ review checklist. `POST /api/procedures/{slug}/draft` queues a `draft` job: plac
 `POST /api/reviews` with `procedure` adds the checklist to the review (met only with a verbatim quote).
 Procedures are created and edited in the app (`POST/PUT /api/procedures`). See ADR 012.
 
+## Memory as evidence, attachments as fragments
+
+Only the user's words feed the fact extractor (every route). Recalled facts and conversations reach the
+prompt as numbered `<memory id="m1">` blocks; conversational replies cite them as `[m1]`, invalid markers
+are removed in code and the cited items are listed under the reply (`sources` with `kind: memory`).
+`GET /api/memory/facts` lists what is remembered, `POST /api/memory/forget` removes a fact. Files attached
+to a message become fragments of the documents route for that turn (`adjunto:<name>` sources, never
+indexed) and are cited like any other; the fragment text travels with the answer. See ADR 013.
+
 ## Observability
 
 - **Traces**: OpenInference spans over OTLP/HTTP to any collector; contents hidden unless

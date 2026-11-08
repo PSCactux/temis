@@ -345,6 +345,34 @@ def feedback(turn_id: str, body: Feedback):
     return {"ok": True}
 
 
+class Forget(BaseModel):
+    text: str
+
+
+@app.get("/api/memory/facts")
+def memory_facts(limit: int = 500):
+    """What Aroa remembers, revealed: text, when, matter and where it came from."""
+    a = runtime.assistant
+    rows = a.memory.list_facts(limit=limit)
+    return [{**r, "text": a.reveal(r.get("text", ""))} for r in rows]
+
+
+@app.post("/api/memory/forget")
+def forget_fact(body: Forget):
+    """Remove a remembered fact by its exact text (the user decides what Aroa keeps)."""
+    a = runtime.assistant
+    removed = a.memory.forget(body.text) or (
+        a.memory.forget(a.anonymizer.anonymize(body.text, names=False)) if a.anonymizer else 0
+    )
+    if not removed and a.anonymizer:  # the user sees names; the store holds placeholders
+        for row in a.memory.list_facts(limit=10000):
+            if a.reveal(row["text"]) == body.text:
+                removed += a.memory.forget(row["text"])
+    if not removed:
+        raise HTTPException(404, "no such fact")
+    return {"removed": removed}
+
+
 @app.get("/api/alarms")
 def list_alarms():
     a = runtime.assistant

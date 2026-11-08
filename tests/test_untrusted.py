@@ -31,7 +31,8 @@ def test_fragments_and_memory_are_tagged():
     fragments = format_fragments([chunk("Veinte días.")])
     assert fragments.startswith('<fragments>\n<fragment id="1" source="Guía de plazos — Sección 4">')
     memory = format_memories({"facts": [{"text": "El cliente prefiere correo", "ts": "2026-01-01"}], "episodes": []})
-    assert "<memory>" in memory and "El cliente prefiere correo" in memory and memory.rstrip().endswith("</memory>")
+    assert '<memory id="m1" kind="fact" when="2026-01-01">' in memory and "El cliente prefiere correo" in memory
+    assert "</memory>" in memory and "Cite only ids that exist above" in memory
 
 
 def test_document_hints_travel_in_the_user_turn_not_the_system_prompt(make_assistant):
@@ -86,12 +87,13 @@ def test_on_document_routes_only_the_users_words_feed_the_memory(make_assistant)
     assert memory.facts[0]["origin"] == "documents:user"
 
 
-def test_chat_route_memorizes_the_exchange_with_its_origin(make_assistant):
+def test_memory_is_fed_only_with_the_users_words_on_every_route(make_assistant):
     memory = FakeMemory()
-    assistant = make_assistant([routing("chat"), "Anotado.", Facts(facts=["Prefiere correo"])], memory=memory)
+    assistant = make_assistant([routing("chat"), "Anotado.", Facts(facts=["Prefers email"])], memory=memory)
     assistant.ask("t1", "prefiero que me escribas por correo")
-    assert "Assistant: Anotado." in assistant.model.calls[-1][-1].content
-    assert memory.facts[0]["origin"] == "chat:exchange"
+    sent = assistant.model.calls[2][-1].content  # the extractor's input
+    assert "User: prefiero que me escribas por correo" in sent and "Assistant:" not in sent and "Anotado" not in sent
+    assert memory.facts[0]["origin"] == "chat:user"
 
 
 @pytest.mark.parametrize(

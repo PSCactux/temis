@@ -77,5 +77,7 @@ class Steps:
         items = [f"{self._('stored')} · {s}" for s in stored] + [f"{self._('duplicate')} · {s}" for s in skipped]
         return self.entry("memorize", self._("memorized", stored=len(stored), skipped=len(skipped)), items)
 
-    def chatted(self) -> dict:
+    def chatted(self, cited: int = 0) -> dict:
+        if cited:
+            return self.entry("chat", self._("chatted_cited", n=cited))
         return self.entry("chat", self._("chatted"))

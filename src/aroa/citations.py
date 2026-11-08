@@ -20,6 +20,77 @@ INJECTION = re.compile(
 )
 
 
+MEMORY_MARKER = re.compile(r"\[(m\d+(?:\s*,\s*m\d+)*)\]", re.IGNORECASE)
+
+
+def memory_items(memories: dict) -> list[dict]:
+    """Recalled facts then conversations, numbered m1, m2… in the order the prompt lists them."""
+    items: list[dict] = []
+    for f in memories.get("facts", []) or []:
+        items.append(
+            {
+                "n": f"m{len(items) + 1}",
+                "kind": "fact",
+                "text": f["text"],
+                "when": (f.get("ts") or "")[:10],
+                "origin": f.get("origin", ""),
+            }
+        )
+    for e in memories.get("episodes", []) or []:
+        items.append(
+            {
+                "n": f"m{len(items) + 1}",
+                "kind": "conversation",
+                "user": e.get("user", ""),
+                "assistant": e.get("assistant", ""),
+                "when": (e.get("ts") or "")[:10],
+                "thread_id": e.get("thread_id", ""),
+            }
+        )
+    return items
+
+
+def cite_memory(text: str, memories: dict, lang: str = "en") -> tuple[str, list[dict]]:
+    """Markers like [m1] kept only when the block exists; returns the clean reply and the cited items as sources,
+    in the same shape the documents route uses (n, label, quote) plus kind and when."""
+    from .i18n import t
+
+    items = {i["n"]: i for i in memory_items(memories)}
+    cited: list[str] = []
+
+    def sub(m: re.Match) -> str:
+        ids = [x.strip().lower() for x in m.group(1).split(",")]
+        kept = [x for x in ids if x in items]
+        for x in kept:
+            if x not in cited:
+                cited.append(x)
+        return "[" + ", ".join(kept) + "]" if kept else ""
+
+    clean = MEMORY_MARKER.sub(sub, text)
+    clean = re.sub(r"[ \t]+([.,;:!?])", r"\1", re.sub(r"[ \t]{2,}", " ", clean))
+    sources = []
+    for x in cited:
+        item = items[x]
+        if item["kind"] == "fact":
+            label = t(lang, "mem_fact", when=item["when"])
+            quote = item["text"]
+        else:
+            label = t(lang, "mem_conv", when=item["when"])
+            quote = item["user"]
+        sources.append(
+            {
+                "n": x,
+                "kind": "memory",
+                "label": label,
+                "quote": quote,
+                "when": item["when"],
+                "file": None,
+                "verified": True,
+            }
+        )
+    return clean, sources
+
+
 def cited_numbers(text: str) -> set[int]:
     return {int(_digits(n)) for group in MARKER.findall(text) for n in group.split(",")}
 

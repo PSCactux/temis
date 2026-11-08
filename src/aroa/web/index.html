@@ -34,7 +34,7 @@
   }
   * { box-sizing:border-box; }
   html, body { height:100%; }
-  body { margin:0; font:13.5px/1.5 var(--ui); color:var(--ink); background:var(--bg); display:grid; grid-template-columns:var(--rail) var(--side) 1fr; overflow:hidden; -webkit-font-smoothing:antialiased; }
+  body { margin:0; height:100vh; font:13.5px/1.5 var(--ui); color:var(--ink); background:var(--bg); display:grid; grid-template-columns:var(--rail) var(--side) 1fr; grid-template-rows:minmax(0, 1fr); overflow:hidden; -webkit-font-smoothing:antialiased; }
   button, input, textarea { font:inherit; color:inherit; }
   button { cursor:pointer; }
   a { color:var(--accent); }
@@ -56,7 +56,7 @@
   .btn.danger:hover { color:var(--bad); background:var(--bad-soft); }
 
   /* ── rail ── */
-  .rail { background:var(--panel); border-right:1px solid var(--line); display:flex; flex-direction:column; align-items:center; padding:12px 0 10px; gap:4px; }
+  .rail { background:var(--panel); border-right:1px solid var(--line); display:flex; flex-direction:column; align-items:center; padding:12px 0 10px; gap:4px; min-height:0; overflow:hidden; }
   .rail .brand { width:36px; height:36px; border-radius:9px; background:var(--accent); color:var(--accent-ink); display:grid; place-items:center; font:700 19px/1 var(--serif); margin-bottom:12px; }
   .rail button { width:60px; height:54px; border:0; background:transparent; border-radius:10px; color:var(--muted); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:10px; font-weight:500; letter-spacing:.01em; position:relative; }
   .rail button svg.i { width:20px; height:20px; }
@@ -68,14 +68,15 @@
   .rail .dot.bad { background:var(--bad); }
 
   /* ── side panel ── */
-  .side { background:var(--panel); border-right:1px solid var(--line); display:flex; flex-direction:column; min-width:0; }
+  .side { background:var(--panel); border-right:1px solid var(--line); display:flex; flex-direction:column; min-width:0; min-height:0; }
+  .sp-view { display:flex; flex-direction:column; flex:1; min-height:0; }
   .side .sh { display:flex; align-items:center; gap:8px; padding:16px 14px 8px; }
   .side .sh h2 { margin:0; font-size:15px; font-weight:600; flex:1; letter-spacing:-.01em; }
   .side .filter { margin:4px 12px 8px; position:relative; }
   .side .filter input { width:100%; height:32px; border:1px solid var(--line); border-radius:8px; background:var(--paper); padding:0 10px 0 32px; outline:none; }
   .side .filter input:focus { border-color:var(--accent-line); box-shadow:0 0 0 3px var(--accent-soft); }
   .side .filter svg.i { position:absolute; left:10px; top:7px; width:16px; height:16px; color:var(--muted); }
-  .side .list { flex:1; overflow:auto; padding:0 8px 12px; }
+  .side .list { flex:1; min-height:0; overflow:auto; padding:0 8px 12px; }
   .side .empty { padding:24px 16px; color:var(--muted); font-size:12.5px; text-align:center; line-height:1.5; }
   .side .sec { padding:12px 8px 4px; font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
   .item { display:flex; gap:10px; align-items:flex-start; padding:9px 10px; border-radius:8px; cursor:pointer; position:relative; }
@@ -100,6 +101,15 @@
 
   /* ── work area ── */
   .work { display:flex; flex-direction:column; min-width:0; min-height:0; position:relative; }
+  .info { font-family:var(--ui); font-size:14px; line-height:1.6; }
+  .info h1 { font-family:var(--serif); }
+  .info h2 { margin-top:28px; }
+  .info p, .info li { color:var(--ink-2); }
+  .info .kv { display:grid; grid-template-columns:auto 1fr; gap:4px 16px; font-size:13px; margin:10px 0 16px; }
+  .info .kv span:nth-child(odd) { color:var(--muted); } .info .kv b { font-family:var(--mono); font-weight:500; font-size:12.5px; }
+  .info .flow { display:flex; flex-wrap:wrap; gap:6px; align-items:center; margin:8px 0 14px; } .info .flow span { background:var(--accent-soft); color:var(--accent); border-radius:6px; padding:3px 9px; font-size:12.5px; font-weight:500; } .info .flow i { color:var(--muted); font-style:normal; }
+  .info .mem { border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin:6px 0; display:grid; grid-template-columns:1fr auto; gap:8px; align-items:start; font-size:13px; }
+  .info .mem small { display:block; color:var(--muted); font-family:var(--mono); font-size:11px; margin-top:2px; }
   .topbar { height:52px; display:flex; align-items:center; gap:10px; padding:0 18px; border-bottom:1px solid var(--line); background:var(--panel); flex:none; }
   .topbar .title { font-weight:600; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; letter-spacing:-.01em; }
   .topbar .sub { color:var(--muted); font-size:12px; white-space:nowrap; overflow:hidden; text-outline:none; text-overflow:ellipsis; }
@@ -309,6 +319,8 @@
   .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--ink); color:var(--bg); padding:9px 16px; border-radius:999px; font-size:13px; box-shadow:var(--shadow); opacity:0; transition:opacity .2s; pointer-events:none; z-index:60; }
   .toast.show { opacity:1; }
 
+  .rail { grid-column:1; } .side { grid-column:2; } .work { grid-column:3; }
+  body.noside { grid-template-columns:var(--rail) 0 1fr; } body.noside .side { display:none; }
   @media (max-width: 1100px) { .rv .issues { width:340px; } .suggest { grid-template-columns:repeat(2, 1fr); } }
   @media (max-width: 860px) {
     body { grid-template-columns:var(--rail) 1fr; }
@@ -356,6 +368,7 @@
   <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-proc" viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="6" rx="1.5"/><rect x="14" y="4" width="7" height="6" rx="1.5"/><rect x="8.5" y="15" width="7" height="6" rx="1.5"/><path d="M6.5 10v2.5h11V10M12 12.5V15"/></symbol>
+  <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
   <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 8v6l-4-2v-4z"/></symbol>
 </svg>
 
@@ -367,6 +380,7 @@
   <button data-sec="procs"><svg class="i"><use href="#i-proc"/></svg><span data-i18n="sec_procs"></span></button>
   <div class="grow"></div>
   <button id="b-alarms" data-i18n-title="alarms"><svg class="i"><use href="#i-bell"/></svg><span data-i18n="alarms"></span><span class="badge" id="alarms-badge" hidden></span></button>
+  <button id="b-info" data-sec="info"><svg class="i"><use href="#i-info"/></svg><span data-i18n="info"></span></button>
   <button id="b-status" data-i18n-title="status"><svg class="i"><use href="#i-pulse"/></svg><span data-i18n="status"></span><span class="dot" id="health-dot"></span></button>
   <button id="b-theme" data-i18n-title="theme"><svg class="i"><use href="#i-auto" id="theme-icon"/></svg><span data-i18n="theme"></span></button>
   <button id="lang"><span style="font-size:12px;font-weight:600">ES</span><span data-i18n="language"></span></button>
@@ -450,6 +464,8 @@
       <div class="toolbar" id="proc-tools" hidden></div>
       <div class="scrollv" id="proc-scroll" hidden><div class="paper prose procpaper" id="proc-body"></div></div>
     </section>
+    <!-- information: what Aroa is, how it works, what happens to the data -->
+    <section class="view" id="view-info" hidden><div class="scrollv"><div class="paper prose info" id="info-body"></div></div></section>
     <!-- inspector: the source a citation points at -->
     <aside class="inspector" id="inspector">
       <div class="ih"><div class="t" id="insp-title"></div><button class="btn ghost sm icon" id="insp-close" data-i18n-title="close"><svg class="i"><use href="#i-x"/></svg></button></div>
@@ -473,6 +489,7 @@ let section = 'chat', currentDoc = null, currentJob = null, procsCache = [], cur
 /* ── language ──────────────────────────────────────────── */
 const L = {
   en: {
+    info: 'About', info_title: 'About Aroa',
     sec_chat: 'Chat', sec_docs: 'Documents', sec_jobs: 'Work', sec_procs: 'Procedures', procedures: 'Procedures', no_procs: 'No procedures yet. Write one: template, data, how to write it, how to review it.', procs_empty_h: 'Procedures', procs_empty_p: 'A procedure is one document with four sections: the template, the data it needs, how to write it and how to review it. Pick one to fill in its data and draft the document; Aroa follows the steps and the review checks the list.', new_proc: 'New procedure', draft_btn: 'Draft the document', edit_proc: 'Edit procedure', template_lbl: 'Template', data_lbl: 'Data', instructions_lbl: 'Writing', checklist_lbl: 'Review checklist', kind_draft: 'Draft', drafting: 'drafting', draft_done: 'Draft ready: open in the editor', draft_failed: 'Drafting failed', matter_lbl: 'Matter (for the file name)', no_template: 'This procedure names no template.', checklist_title: 'Procedure checklist', met: 'met', unmet: 'not met', proc_skeleton: '<h1>Procedure name</h1><p>When it is used, in two lines.</p><h2>Template</h2><p>documento: name_of_a_library_document.md</p><h2>Data</h2><ul><li>Field: hint for whoever fills it</li></ul><h2>Writing</h2><p>Register, structure, what to cite, what never to write.</p><h2>Review</h2><ul><li>One thing the finished document must show</li></ul>', inline_template: 'inline template', alarms: 'Alarms', status: 'Status', theme: 'Theme', language: 'Language',
     conversations: 'Conversations', new_short: 'New', new_title: 'New conversation', no_threads: 'No conversations yet.', filter_threads: 'Filter conversations', filter_docs: 'Filter documents',
     documents: 'Documents', add: 'Add', add_title: 'Markdown, text, PDF, Word or HTML', add_doc: 'Add a document', no_docs: 'No documents yet. Create one, add .md, .txt, .pdf or .docx files, or drop them anywhere.',
@@ -493,7 +510,7 @@ const L = {
     attach_title: 'Attach a document to this message', keep: 'keep in documents', keep_title: 'Also index it, so Aroa can find it in later conversations',
     drop: 'Drop documents to index them', close: 'Close', welcome: 'What can I help with?',
     welcome_p: 'Ask about the indexed documents, the web, your matters, or set an alarm. Try one of these with the sample corpus:',
-    thinking: 'Thinking', path: 'Path', steps_n: '{n} steps · {s} s', working: 'working', log: 'Progress', show_details: 'details', in_progress: 'In progress', good: 'Good answer', bad: 'Bad answer', thanks: 'Thanks, feedback stored', no_path: 'No path recorded for this turn.',
+    thinking: 'Thinking', path: 'Path', mem_fact_word: 'fact', forget: 'Forget this fact', forget_q: 'Remove this fact from memory? Aroa will no longer rely on it.', forgotten: 'Forgotten', forget_hint: 'A remembered fact comes from what someone at the firm told Aroa. If it is wrong or should not be kept:', steps_n: '{n} steps · {s} s', working: 'working', log: 'Progress', show_details: 'details', in_progress: 'In progress', good: 'Good answer', bad: 'Bad answer', thanks: 'Thanks, feedback stored', no_path: 'No path recorded for this turn.',
     asking: 'Aroa is asking you', k_blocked: 'blocked by policy', k_question: 'needs your answer', k_abstain: 'not in the documents', k_verified: 'verified', k_unverified: 'unverified',
     route: 'route', model_calls: 'model calls', tools: 'tools', claims: 'claims', facts_stored: 'facts stored', audit_tools: 'Audit · tool calls', audit_memory: 'Audit · memory writes', feedback: 'Feedback',
     stored: 'stored', duplicate: 'duplicate', server_error: 'The server did not answer: ', remove_q: 'Remove "{n}" from the index?', removed: 'Document removed', not_removed: 'Could not do it',
@@ -511,6 +528,7 @@ const L = {
     ],
   },
   es: {
+    info: 'Info', info_title: 'Qué es Aroa y cómo funciona',
     sec_chat: 'Chat', sec_docs: 'Documentos', sec_jobs: 'Trabajos', sec_procs: 'Procedim.', procedures: 'Procedimientos', no_procs: 'Todavía no hay procedimientos. Escribe uno: plantilla, datos, cómo se redacta, cómo se revisa.', procs_empty_h: 'Procedimientos', procs_empty_p: 'Un procedimiento es un documento con cuatro apartados: la plantilla, los datos que necesita, cómo se redacta y cómo se revisa. Elige uno para rellenar sus datos y redactar el documento; Aroa sigue los pasos y la revisión comprueba la lista.', new_proc: 'Nuevo procedimiento', draft_btn: 'Redactar el documento', edit_proc: 'Editar procedimiento', template_lbl: 'Plantilla', data_lbl: 'Datos', instructions_lbl: 'Redacción', checklist_lbl: 'Lista de revisión', kind_draft: 'Borrador', drafting: 'redactando', draft_done: 'Borrador listo: se abre en el editor', draft_failed: 'La redacción ha fallado', matter_lbl: 'Expediente (para el nombre del archivo)', no_template: 'Este procedimiento no indica plantilla.', checklist_title: 'Lista de revisión del procedimiento', met: 'cumplido', unmet: 'no cumplido', proc_skeleton: '<h1>Nombre del procedimiento</h1><p>Cuándo se usa, en dos líneas.</p><h2>Plantilla</h2><p>documento: nombre_de_un_documento_de_la_biblioteca.md</p><h2>Datos</h2><ul><li>Campo: pista para quien lo rellena</li></ul><h2>Redacción</h2><p>Registro, estructura, qué citar, qué no escribir nunca.</p><h2>Revisión</h2><ul><li>Una cosa que el documento terminado debe mostrar</li></ul>', inline_template: 'plantilla en el propio procedimiento', alarms: 'Alarmas', status: 'Estado', theme: 'Tema', language: 'Idioma',
     conversations: 'Conversaciones', new_short: 'Nueva', new_title: 'Nueva conversación', no_threads: 'Todavía no hay conversaciones.', filter_threads: 'Filtrar conversaciones', filter_docs: 'Filtrar documentos',
     documents: 'Documentos', add: 'Añadir', add_title: 'Markdown, texto, PDF, Word o HTML', add_doc: 'Añadir un documento', no_docs: 'Todavía no hay documentos. Crea uno, añade archivos .md, .txt, .pdf o .docx, o suéltalos en cualquier parte.',
@@ -531,7 +549,7 @@ const L = {
     attach_title: 'Adjuntar un documento a este mensaje', keep: 'guardar en documentos', keep_title: 'Además lo indexa, para que Aroa lo encuentre en conversaciones futuras',
     drop: 'Suelta documentos para indexarlos', close: 'Cerrar', welcome: '¿En qué te ayudo?',
     welcome_p: 'Pregunta por los documentos indexados, la web, tus expedientes, o pon una alarma. Prueba con el corpus de muestra:',
-    thinking: 'Pensando', path: 'Recorrido', steps_n: '{n} pasos · {s} s', working: 'en curso', log: 'Progreso', show_details: 'detalles', in_progress: 'En curso', good: 'Buena respuesta', bad: 'Mala respuesta', thanks: 'Gracias, valoración guardada', no_path: 'No hay recorrido registrado para esta vuelta.',
+    thinking: 'Pensando', path: 'Recorrido', mem_fact_word: 'hecho', forget: 'Olvidar este hecho', forget_q: '¿Quitar este hecho de la memoria? Aroa dejará de apoyarse en él.', forgotten: 'Olvidado', forget_hint: 'Un hecho recordado procede de lo que alguien del despacho le dijo a Aroa. Si está mal o no debe conservarse:', steps_n: '{n} pasos · {s} s', working: 'en curso', log: 'Progreso', show_details: 'detalles', in_progress: 'En curso', good: 'Buena respuesta', bad: 'Mala respuesta', thanks: 'Gracias, valoración guardada', no_path: 'No hay recorrido registrado para esta vuelta.',
     asking: 'Aroa te pregunta', k_blocked: 'bloqueado por política', k_question: 'necesita tu respuesta', k_abstain: 'no está en los documentos', k_verified: 'verificado', k_unverified: 'sin verificar',
     route: 'ruta', model_calls: 'llamadas al modelo', tools: 'herramientas', claims: 'afirmaciones', facts_stored: 'hechos guardados', audit_tools: 'Auditoría · herramientas', audit_memory: 'Auditoría · memoria', feedback: 'Valoración',
     stored: 'guardado', duplicate: 'duplicado', server_error: 'El servidor no ha respondido: ', remove_q: '¿Quitar «{n}» del índice?', removed: 'Documento quitado', not_removed: 'No se ha podido',
@@ -594,7 +612,7 @@ function inline(s) {
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
     .replace(/(^|[\s(])_(.+?)_(?=[\s).,;:]|$)/g, '$1<i>$2</i>')
-    .replace(/\[(\d+(?:\s*,\s*\d+)*)\]/g, (_, list) => list.split(/\s*,\s*/).map(n => `<button type="button" class="cite" data-n="${n}">[${n}]</button>`).join(''))
+    .replace(/\[((?:m?\d+)(?:\s*,\s*m?\d+)*)\]/g, (_, list) => list.split(/\s*,\s*/).map(n => `<button type="button" class="cite" data-n="${n}">[${n}]</button>`).join(''))
     .replace(/(https?:\/\/[^\s<)]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
 }
 function md(text) {
@@ -623,13 +641,15 @@ function show(sec) {
   section = sec;
   $$('#rail [data-sec]').forEach(b => b.classList.toggle('active', b.dataset.sec === sec));
   $$('.sp-view').forEach(v => v.hidden = v.id !== 'sp-' + sec);
-  $('#view-chat').hidden = sec !== 'chat'; $('#view-doc').hidden = sec !== 'docs'; $('#view-job').hidden = sec !== 'jobs'; $('#view-proc').hidden = sec !== 'procs';
+  $('#view-chat').hidden = sec !== 'chat'; $('#view-doc').hidden = sec !== 'docs'; $('#view-job').hidden = sec !== 'jobs'; $('#view-proc').hidden = sec !== 'procs'; $('#view-info').hidden = sec !== 'info';
+  document.body.classList.toggle('noside', sec === 'info');
   $('#matter-box').hidden = sec !== 'chat'; $('#sel').hidden = sec !== 'chat' || !selected.size;
   $('#side').classList.remove('open');
   closeInspector();
   setTitle();
   if (sec === 'jobs') loadJobs();
   if (sec === 'procs') loadProcs();
+  if (sec === 'info') renderInfo();
 }
 $$('#rail [data-sec]').forEach(b => b.onclick = () => show(b.dataset.sec));
 $('#menu').onclick = () => $('#side').classList.toggle('open');
@@ -639,6 +659,7 @@ function setTitle() {
   acts.innerHTML = '';
   if (section === 'chat') { const row = threadsCache.find(r => r.thread_id === thread); title.textContent = row ? row.title : T('new_title'); sub.textContent = ''; }
   else if (section === 'docs') { const d = docsCache.find(x => x.source === currentDoc); title.textContent = editing ? (editing.name || T('untitled')) : d ? d.title : T('documents'); sub.textContent = editing ? (editing.source || '') : d ? d.source : ''; }
+  else if (section === 'info') { title.textContent = T('info_title'); sub.textContent = ''; }
   else if (section === 'procs') { title.textContent = editing ? (editing.name || T('untitled')) : currentProc ? currentProc.name : T('procedures'); sub.textContent = currentProc && !editing ? currentProc.source : ''; }
   else { title.textContent = currentJob ? (currentJob.kind === 'review' ? T('kind_review') : currentJob.kind === 'draft' ? T('kind_draft') : T('kind_analysis')) : T('jobs'); sub.textContent = currentJob ? currentJob.source : ''; }
 }
@@ -675,7 +696,7 @@ function addAssistant(text, m = {}) {
       `<button class="btn ghost sm icon fb" data-fb="1" data-turn="${esc(m.turn_id)}" title="${T('good')}">${ico('up')}</button><button class="btn ghost sm icon fb" data-fb="-1" data-turn="${esc(m.turn_id)}" title="${T('bad')}">${ico('down')}</button></div><div class="path" id="path-${esc(m.turn_id)}"></div>` : '') + '</div>';
   const sources = Array.isArray(m.sources) ? m.sources : [];
   el.querySelector('.answer').dataset.sources = JSON.stringify(sources);
-  if (sources.length) el.querySelectorAll('.cite').forEach(c => { const s = sources.find(x => x.n === +c.dataset.n); if (s) { c.classList.add('link'); if (s.verified === false) { c.classList.add('unverified'); c.title = T('k_unverified'); } } });
+  if (sources.length) el.querySelectorAll('.cite').forEach(c => { const s = sources.find(x => String(x.n) === c.dataset.n); if (s) { c.classList.add('link'); if (s.verified === false) { c.classList.add('unverified'); c.title = T('k_unverified'); } } });
   column.appendChild(el); scrollDown(); return el;
 }
 function addLive() {
@@ -719,8 +740,8 @@ column.addEventListener('click', async e => {
   if (b.dataset.q) { $('#text').value = b.dataset.q; $('#form').requestSubmit(); return; }
   if (b.classList.contains('cite')) {
     const sources = JSON.parse(b.closest('.answer')?.dataset.sources || '[]');
-    const s = sources.find(x => x.n === +b.dataset.n);
-    if (s) openInspector(s.file, s.quote); return;
+    const s = sources.find(x => String(x.n) === b.dataset.n);
+    if (s && s.kind === 'memory') showMemory(s); else if (s && s.kind === 'attachment') showFragment(s); else if (s) openInspector(s.file, s.quote); return;
   }
   if (b.dataset.edit) { const text = b.closest('.answer').querySelector('.body').innerHTML; openEditor(null, text.replace(/<button[^>]*class="cite[^"]*"[^>]*>(\[\d+\])<\/button>/g, '$1').replace(/<h3>/g, '<h2>').replace(/<\/h3>/g, '</h2>'), ''); return; }
   if (b.dataset.path) {
@@ -1119,6 +1140,18 @@ async function openInspector(source, quote) {
   const m = body.querySelector('#mark'); if (m) setTimeout(() => m.scrollIntoView({ block: 'center', behavior: 'smooth' }), 220); else body.scrollTop = 0;
 }
 function closeInspector() { $('#inspector').classList.remove('open'); }
+function showFragment(s) {  // a fragment of a file attached to the message: it travels with the answer
+  $('#insp-title').innerHTML = `${esc(s.label)}<small>[${esc(s.n)}]</small>`;
+  const body = $('#insp-body'); delete body.dataset.source; body.innerHTML = highlight(s.text || s.quote || '', s.quote);
+  $('#inspector').classList.add('open'); const m = body.querySelector('#mark'); if (m) setTimeout(() => m.scrollIntoView({ block: 'center' }), 150); else body.scrollTop = 0;
+}
+function showMemory(s) {  // a remembered fact or conversation the reply rests on: nothing to fetch, it is the source
+  $('#insp-title').innerHTML = `${esc(s.label)}<small>[${esc(s.n)}]</small>`;
+  const body = $('#insp-body'); delete body.dataset.source;
+  body.innerHTML = `<mark>${esc(s.quote)}</mark>` + (s.label.toLowerCase().includes(T('mem_fact_word')) ? `<p style="margin-top:18px;font-family:var(--ui);font-size:12.5px;color:var(--muted)">${T('forget_hint')}<br><button type="button" class="btn sm" id="forget-fact" style="margin-top:8px">${ico('trash')}${T('forget')}</button></p>` : '');
+  const b = $('#forget-fact'); if (b) b.onclick = async () => { if (!confirm(T('forget_q'))) return; const r = await fetch('/api/memory/forget', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: s.quote }) }); toast(r.ok ? T('forgotten') : T('not_removed')); if (r.ok) closeInspector(); };
+  $('#inspector').classList.add('open'); body.scrollTop = 0;
+}
 document.addEventListener('click', e => { if (!e.target.closest('#pop-versions') && !e.target.closest('#ed-versions')) $('#pop-versions').classList.remove('open'); });
 $('#insp-close').onclick = closeInspector;
 
@@ -1263,12 +1296,12 @@ function showReport(job) {
     `<button class="btn sm" id="an-open">${ico('doc')}${T('open_doc')}</button>`;
   $('#an-open').onclick = () => openDoc(r.source);
   body.innerHTML = md(r.report); body.dataset.sources = JSON.stringify(r.sources || []);
-  body.querySelectorAll('.cite').forEach(c => { if ((r.sources || []).some(s => s.n === +c.dataset.n)) c.classList.add('link'); });
+  body.querySelectorAll('.cite').forEach(c => { if ((r.sources || []).some(s => String(s.n) === c.dataset.n)) c.classList.add('link'); });
   $('#an-scroll').scrollTop = 0;
 }
 $('#an-body').addEventListener('click', e => {
   const b = e.target.closest('.cite'); if (!b) return;
-  const s = JSON.parse($('#an-body').dataset.sources || '[]').find(x => x.n === +b.dataset.n);
+  const s = JSON.parse($('#an-body').dataset.sources || '[]').find(x => String(x.n) === b.dataset.n);
   if (s) openInspector(s.file, s.quote);
 });
 
@@ -1335,6 +1368,103 @@ $('#job-tools').addEventListener('click', e => {
   if (e.target.closest('#rv-download')) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([correctedDraft(r)], { type: 'text/markdown' })); a.download = (r.name || 'borrador').replace(/\.[^.]+$/, '') + '-revisado.md'; a.click(); URL.revokeObjectURL(a.href); }
   if (e.target.closest('#rv-copy')) navigator.clipboard.writeText(correctedDraft(r)).then(() => toast(T('copied')));
   if (e.target.closest('#rv-edit')) openEditor(null, mdToHtml(correctedDraft(r)), (r.name || 'borrador').replace(/\.[^.]+$/, '') + '-revisado');
+});
+
+/* ── information page ──────────────────────────────────── */
+const INFO = {
+  es: {
+    intro: 'Aroa es el asistente del despacho. Responde desde los documentos del despacho, la web y lo que le habéis contado, redacta y revisa escritos, calcula plazos y comprueba citas legales. Todo lo que afirma debe poder comprobarse: cada respuesta desde documentos lleva citas literales que se verifican en código, y lo que no se puede verificar se marca.',
+    now: 'Ahora mismo',
+    flow_h: 'Qué pasa cuando escribes un mensaje',
+    flow: ['Pseudonimizar', 'Recordar', 'Enrutar', 'Trabajar', 'Verificar', 'Memorizar'],
+    flow_p: [
+      'Pseudonimizar: antes de que ningún modelo lea el mensaje, el código sustituye DNI, NIE, CIF, teléfonos, correos, cuentas bancarias y matrículas por marcadores ([DNI_1], [IBAN_2]); los nombres de personas y empresas los detecta un modelo pequeño y también se sustituyen ([PERSON_3], [ORG_1]). El mapa marcador→dato real se guarda solo en este equipo y se usa para volver a mostrarte los datos reales al final.',
+      'Recordar: se recuperan los hechos y conversaciones anteriores relacionados, limitados al expediente en el que estás (muralla por expediente).',
+      'Enrutar: un modelo decide la ruta (charla, documentos, web, alarmas y plazos, expediente, revisión) y el código corrige casos claros: una fecha con un plazo va a la calculadora de plazos, una cita de artículo va al archivo del BOE, un documento seleccionado obliga a responder desde él.',
+      'Trabajar: en documentos, se buscan fragmentos, se filtran los útiles, se redacta la respuesta citando [n] y se comprueba en código que cada cita es literal (si no, se reintenta una vez y, si sigue mal, se marca). En web, alarmas y expedientes, el modelo usa herramientas (buscar, leer, crear alarma, leer o escribir en la carpeta del expediente con una lista cerrada de comandos) y después un verificador comprueba que cada acción que dice haber hecho consta en la evidencia de la vuelta.',
+      'Memorizar: solo de lo que tú has dicho se extraen hechos duraderos (preferencias, decisiones, personas, fechas). Lo que Aroa responde nunca se convierte en hecho; lo que está en un documento se cita en el documento.',
+      'Cada paso queda en el «Recorrido» de la respuesta, con su tiempo, sus llamadas al modelo, las herramientas usadas y lo que se guardó.',
+    ],
+    can_h: 'Qué puede hacer',
+    can: ['Responder desde los documentos con citas literales verificadas y abstenerse cuando no están.', 'Analizar un documento entero, por largo que sea, con hallazgos citados y repetidos fundidos.', 'Revisar un borrador: párrafos repetidos, citas no literales, artículos inexistentes o equivocados contra el archivo del BOE, cuestiones legales señaladas por el modelo (siempre como avisos) y la lista de revisión de un procedimiento.', 'Seguir un procedimiento del despacho: plantilla, datos, normas de redacción y lista de revisión en un solo documento.', 'Editar documentos con un editor tipo Word, con versiones, e importar y exportar Word.', 'Calcular plazos procesales en código con el calendario de festivos y la regla de cada jurisdicción.', 'Alarmas, recortes de documentos y memoria por expediente.'],
+    data_h: 'Datos: qué se guarda, dónde y qué sale del equipo',
+    data: [
+      'Todo se guarda en la carpeta de datos de este equipo: los documentos tal cual los subes, sus fragmentos pseudonimizados en el índice vectorial, los hechos y conversaciones recordados (pseudonimizados), cada vuelta con su recorrido y auditoría (herramientas llamadas con un hash de su resultado, hechos escritos), las alarmas, las versiones de los documentos editados y el mapa de seudónimos.',
+      'El modelo nunca ve un DNI, un teléfono ni un nombre real: ve marcadores. Los datos reales se restauran en código al mostrarte la respuesta.',
+      'Con un modelo local (ollama:…) nada sale del equipo, con dos excepciones que tú provocas: la búsqueda web envía la consulta (ya pseudonimizada) a internet, y la lectura de una página descarga esa página. Si el modelo configurado fuera externo (anthropic:…, openai:…), los textos pseudonimizados se enviarían a ese proveedor.',
+      'El archivo del BOE y los festivos son copias locales: comprobar un artículo no consulta nada fuera.',
+    ],
+    legal_h: 'Marco legal, en términos técnicos',
+    legal: [
+      'El despacho es el responsable del tratamiento; Aroa es una herramienta que trata los datos en los equipos del despacho.',
+      'La pseudonimización reduce el riesgo, pero no es anonimización: el mapa de seudónimos permite reidentificar y está en este equipo, bajo el control del despacho. Protegerlo (acceso, copias, cifrado del disco) es parte del tratamiento.',
+      'La muralla por expediente evita que lo dicho en un expediente aparezca en otro. La memoria se puede ver y borrar hecho a hecho desde esta página; un documento se quita del índice al eliminarlo.',
+      'Hay una política del despacho que el asistente aplica antes de trabajar: no fabrica ni retrodata pruebas, no engaña a tribunales ni a partes, no entrega datos de clientes a terceros ni reidentifica personas, no ayuda a ocultar delitos.',
+      'Aroa no es asesoramiento jurídico: propone, cita y comprueba; decide el abogado. Esta página describe el funcionamiento técnico, no sustituye el registro de actividades ni la evaluación de impacto que el despacho decida hacer.',
+    ],
+    limits_h: 'Límites que conviene conocer',
+    limits: ['El modelo puede equivocarse al redactar o al elegir la ruta; por eso las citas, las acciones y los plazos se comprueban en código y lo no comprobado se marca «sin verificar».', 'La detección de nombres es por modelo y puede fallar con nombres poco habituales; los identificadores con formato (DNI, IBAN…) se detectan por patrón, siempre.', 'La jurisprudencia no se verifica automáticamente: no hay archivo local de sentencias y la base pública no permite la reutilización masiva.', 'Exportar a Word conserva estructura (títulos, listas, tablas, negritas), no la maquetación.'],
+    mem_h: 'Lo que Aroa recuerda',
+    mem_p: 'Hechos extraídos de lo que habéis dicho. Pulsa «Olvidar» en el que no deba conservarse.',
+    none: 'No hay hechos guardados.', forget: 'Olvidar', model: 'Modelo', local: 'en este equipo', external: 'proveedor externo', privacy: 'Privacidad', traced: 'Trazas', memory_counts: 'Memoria', facts: 'hechos', fragments: 'fragmentos de documentos',
+  },
+  en: {
+    intro: 'Aroa is the firm\'s assistant. It answers from the firm\'s documents, the web and what you have told it, drafts and reviews briefs, computes deadlines and checks legal citations. Everything it states must be checkable: every answer from documents carries verbatim citations verified in code, and what cannot be verified is marked.',
+    now: 'Right now',
+    flow_h: 'What happens when you send a message',
+    flow: ['Pseudonymise', 'Recall', 'Route', 'Work', 'Verify', 'Memorise'],
+    flow_p: [
+      'Pseudonymise: before any model reads the message, the code replaces national IDs, tax IDs, phones, e-mails, bank accounts and plates with placeholders ([DNI_1], [IBAN_2]); names of people and companies are detected by a small model and replaced too ([PERSON_3], [ORG_1]). The placeholder→real map lives only on this computer and is used to show you the real data again at the end.',
+      'Recall: related facts and past conversations are retrieved, confined to the matter you are in (matter wall).',
+      'Route: a model picks the route (chat, documents, web, alarms and deadlines, matter folder, review) and the code corrects clear cases: a date with a term goes to the deadline calculator, an article citation goes to the BOE archive, a selected document forces answering from it.',
+      'Work: on documents, fragments are searched, filtered, the answer is written citing [n] and the code checks that every quote is verbatim (otherwise one retry, then marked). On web, alarms and matters the model uses tools (search, read, create alarm, read or write in the matter folder with a closed list of commands) and a verifier then checks that every action it claims appears in the turn\'s evidence.',
+      'Memorise: durable facts are extracted only from what you said (preferences, decisions, people, dates). What Aroa replied never becomes a fact; what is in a document is cited in the document.',
+      'Every step is kept in the answer\'s "Path", with its time, model calls, tools used and what was stored.',
+    ],
+    can_h: 'What it can do',
+    can: ['Answer from the documents with verified verbatim citations and abstain when they do not cover it.', 'Analyse a whole document of any length, with cited findings and repeats merged.', 'Review a draft: repeated paragraphs, non-verbatim quotes, inexistent or wrong articles against the BOE archive, legal issues pointed by the model (always as warnings) and a procedure\'s checklist.', 'Follow a firm procedure: template, data, writing rules and review checklist in one document.', 'Edit documents in a Word-like editor with versions, import and export Word.', 'Compute procedural deadlines in code with the holiday calendar and each jurisdiction\'s rule.', 'Alarms, clippings and memory per matter.'],
+    data_h: 'Data: what is stored, where, and what leaves the computer',
+    data: [
+      'Everything is stored in this computer\'s data folder: the documents as uploaded, their pseudonymised fragments in the vector index, remembered facts and conversations (pseudonymised), every turn with its path and audit (tools called with a hash of their result, facts written), alarms, versions of edited documents and the pseudonym map.',
+      'The model never sees a real ID, phone or name: it sees placeholders. Real data is restored in code when the answer is shown to you.',
+      'With a local model (ollama:…) nothing leaves the computer, with two exceptions you trigger: web search sends the (pseudonymised) query to the internet, and reading a page downloads that page. If the configured model were external (anthropic:…, openai:…), pseudonymised texts would be sent to that provider.',
+      'The BOE archive and the holidays are local copies: checking an article queries nothing outside.',
+    ],
+    legal_h: 'Legal framing, in technical terms',
+    legal: [
+      'The firm is the data controller; Aroa is a tool that processes data on the firm\'s computers.',
+      'Pseudonymisation reduces risk but is not anonymisation: the pseudonym map allows re-identification and lives on this computer under the firm\'s control. Protecting it (access, backups, disk encryption) is part of the processing.',
+      'The matter wall keeps what was said in one matter from surfacing in another. Memory can be seen and deleted fact by fact from this page; a document leaves the index when deleted.',
+      'A firm policy is applied before any work: no fabricated or backdated evidence, no deceiving courts or parties, no client data to third parties, no re-identification, no help concealing offences.',
+      'Aroa is not legal advice: it proposes, cites and checks; the lawyer decides. This page describes the technical operation; it does not replace the record of processing or the impact assessment the firm may decide to make.',
+    ],
+    limits_h: 'Limits worth knowing',
+    limits: ['The model can err when writing or routing; that is why citations, actions and deadlines are checked in code and the unchecked is marked "unverified".', 'Name detection is model-based and can miss unusual names; formatted identifiers (IDs, IBAN…) are detected by pattern, always.', 'Case law is not verified automatically: there is no local archive of judgments and the public database forbids bulk reuse.', 'Word export keeps structure (headings, lists, tables, emphasis), not layout.'],
+    mem_h: 'What Aroa remembers',
+    mem_p: 'Facts extracted from what you said. Press "Forget" on any that should not be kept.',
+    none: 'No facts stored.', forget: 'Forget', model: 'Model', local: 'on this computer', external: 'external provider', privacy: 'Privacy', traced: 'Tracing', memory_counts: 'Memory', facts: 'facts', fragments: 'document fragments',
+  },
+};
+async function renderInfo() {
+  const I = INFO[loc()] || INFO.en, body = $('#info-body');
+  let h = null; try { h = await (await fetch('/api/health')).json(); } catch {}
+  const li = a => `<ul>${a.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
+  const isLocal = h && /^ollama:/.test(h.model);
+  body.innerHTML = `<h1>${T('info_title')}</h1><p class="lead">${esc(I.intro)}</p>` +
+    (h ? `<h2>${I.now}</h2><div class="kv"><span>${I.model}</span><b>${esc(h.model)} · ${isLocal ? I.local : I.external}</b><span>${I.privacy}</span><b>${esc(h.privacy_mode)}</b><span>${I.traced}</span><b>${h.traced ? 'on' : 'off'}</b><span>${I.memory_counts}</span><b>${h.memory.facts} ${I.facts} · ${h.memory.documents} ${I.fragments}</b></div>` : '') +
+    `<h2>${I.flow_h}</h2><div class="flow">${I.flow.map((f, i) => `${i ? '<i>→</i>' : ''}<span>${esc(f)}</span>`).join('')}</div>${li(I.flow_p)}` +
+    `<h2>${I.can_h}</h2>${li(I.can)}<h2>${I.data_h}</h2>${li(I.data)}<h2>${I.legal_h}</h2>${li(I.legal)}<h2>${I.limits_h}</h2>${li(I.limits)}` +
+    `<h2>${I.mem_h}</h2><p>${esc(I.mem_p)}</p><div id="info-mem"><div class="live"><div class="spinner"></div></div></div>`;
+  try {
+    const facts = await (await fetch('/api/memory/facts')).json();
+    $('#info-mem').innerHTML = facts.length ? facts.map(f => `<div class="mem"><div>${esc(f.text)}<small>${esc((f.ts || '').slice(0, 10))}${f.matter ? ' · ' + esc(f.matter) : ''}${f.origin ? ' · ' + esc(f.origin) : ''}</small></div><button type="button" class="btn sm" data-forget="${esc(f.text)}">${ico('trash')}${I.forget}</button></div>`).join('') : `<p>${I.none}</p>`;
+  } catch { $('#info-mem').innerHTML = `<p>${T('unreachable')}</p>`; }
+}
+$('#info-body').addEventListener('click', async e => {
+  const b = e.target.closest('[data-forget]'); if (!b) return;
+  if (!confirm(T('forget_q'))) return;
+  const r = await fetch('/api/memory/forget', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: b.dataset.forget }) });
+  toast(r.ok ? T('forgotten') : T('not_removed')); if (r.ok) { b.closest('.mem').remove(); loadHealth(); }
 });
 
 /* ── popovers: alarms and status ───────────────────────── */

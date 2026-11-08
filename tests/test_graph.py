@@ -324,3 +324,79 @@ def test_a_page_claimed_but_not_read_is_fetched_by_the_code(make_assistant, monk
     assert tools == ["search_web", "read_page"]
     retry_prompt = assistant.model.calls[-3][0].content  # the second act call saw the page content
     assert "Content of https://boe.es/x" in retry_prompt
+
+
+def test_a_chat_reply_cites_the_memory_it_rests_on(make_assistant):
+    memory = FakeMemory()
+    memory.facts = [
+        {
+            "text": "El cliente prefiere el correo al teléfono.",
+            "ts": "2026-11-06T10:00:00+00:00",
+            "matter": "",
+            "origin": "chat:user",
+        },
+    ]
+    memory.recall = lambda query, exclude_thread=None, matter="": {
+        "facts": memory.facts,
+        "episodes": [
+            {
+                "ts": "2026-11-05T09:00:00+00:00",
+                "user": "¿Cómo contacto al cliente?",
+                "assistant": "Por correo.",
+                "thread_id": "old",
+            }
+        ],
+    }
+    assistant = make_assistant(
+        [routing("chat"), "Prefiere el correo [m1]. Lo hablamos ya [m2] y nada más [m7].", Facts(facts=[])],
+        memory=memory,
+    )
+    result = assistant.ask("t1", "¿Cómo prefiere que le contactemos?")
+    assert result.kind == "chat"
+    assert result.reply.startswith(
+        "Prefiere el correo [m1]. Lo hablamos ya [m2] y nada más."
+    )  # [m7] does not exist: gone
+    assert "**From memory**" in result.reply and "- [m1] Memory · fact stored on 2026-11-06" in result.reply
+    assert (
+        "- [m2] Memory · conversation of 2026-11-05" in result.reply and "«¿Cómo contacto al cliente?»" in result.reply
+    )
+    sources = result.extras["sources"]
+    assert [s["n"] for s in sources] == ["m1", "m2"] and sources[0]["kind"] == "memory"
+    prompt = assistant.model.calls[1][0].content  # the chat call's system prompt
+    assert (
+        '<memory id="m1" kind="fact" when="2026-11-06">' in prompt and '<memory id="m2" kind="conversation"' in prompt
+    )
+    assert "end the sentence with the block's id" in prompt
+    assert result.trace[2]["summary"].endswith("citing 2 memory item(s).")
+
+
+def test_an_attached_file_is_cited_like_a_fragment_even_without_a_library(make_assistant):
+    from aroa.schemas import DocumentAnswer, Grading, Quote
+
+    memory = FakeMemory()  # nothing indexed: the attachment is the only source
+    note = "NOTA SIMPLE\n\nTitular: INMOBILIARIA EJEMPLO SL, CIF B00000000. Finca 1.234 de Villaejemplo."
+    message = f'¿Quién es el titular?\n\n<attachment name="nota_simple.pdf">\n{note}\n</attachment>'
+    assistant = make_assistant(
+        [
+            routing("documents"),
+            Grading(relevant=[1]),
+            DocumentAnswer(
+                answer="El titular es INMOBILIARIA EJEMPLO SL [1].",
+                quotes=[Quote(source=1, text="Titular: INMOBILIARIA EJEMPLO SL")],
+                coverage="full",
+            ),
+            Facts(facts=[]),
+        ],
+        memory=memory,
+    )
+    result = assistant.ask("t1", message)
+    assert result.kind == "documents" and result.extras["verified"] is True
+    source = result.extras["sources"][0]
+    assert (
+        source["kind"] == "attachment"
+        and source["file"] is None
+        and source["label"].startswith("Attachment · nota_simple.pdf")
+    )
+    assert "INMOBILIARIA EJEMPLO SL" in source["text"] and "[1]" in result.reply and "nota_simple.pdf" in result.reply
+    extractor_input = assistant.model.calls[-1][-1].content  # the attachment never reaches the fact extractor
+    assert "User: ¿Quién es el titular?" in extractor_input and "INMOBILIARIA EJEMPLO" not in extractor_input
