@@ -60,6 +60,7 @@ finding has at least one citation that resolves to its page, no finding is repea
 is a separate background job with progress in the UI.
 
 ## Phase 7 — the review pass
+_Done 2026-11-08: review job (ADR 010): repeats, quotes and legal citations in code with proposed changes, model pointers as warnings; the planted-draft eval flags exactly the planted problems._
 - A second process, separate from writing: it takes a draft and checks it. Citations exist and
   are verbatim (code); references to laws, articles and cases resolve (lookup against the firm's
   documents and, when allowed, the web); legal issues flagged with the passage and the reason;

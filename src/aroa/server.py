@@ -7,6 +7,7 @@ import queue
 import tempfile
 import threading
 from contextlib import asynccontextmanager
+from functools import partial
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request
@@ -14,7 +15,7 @@ from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 
-from . import analysis, clippings, prompts
+from . import analysis, clippings, lawcheck, prompts, review
 from .app import Assistant
 from .config import get_settings
 from .memory.loaders import EXTENSIONS, read_text
@@ -56,6 +57,14 @@ class Clipping(BaseModel):
     matter: str = ""
 
 
+class ReviewRequest(BaseModel):
+    name: str = "borrador"
+    text: str = ""  # the draft; or
+    source: str = ""  # an indexed document reviewed as a draft (excluded from the documents it is checked against)
+    documents: list[str] = []  # documents the quotes are checked against; empty means every indexed document
+    legal: bool = True  # also let the model look for legal issues (slower)
+
+
 class Runtime:
     """One assistant, one lock: a local model answers one turn at a time, alarms included."""
 
@@ -70,11 +79,33 @@ class Runtime:
         self.jobs.put(job_id)
         return job_id
 
+    def enqueue_review(self, body: ReviewRequest, text: str) -> str:
+        spec = {"text": text, "documents": body.documents, "exclude": body.source or None, "legal": body.legal}
+        name = body.name or body.source or "borrador"
+        job_id = analysis.create_job(self.assistant.conn, "review", name, json.dumps(spec))
+        self.jobs.put(job_id)
+        return job_id
+
     def _work(self) -> None:
-        """One analysis at a time; each model call takes the turn lock, so conversations keep flowing between them."""
+        """One job at a time; each model call takes the turn lock, so conversations keep flowing between them."""
         a = self.assistant
         while True:
             job_id = self.jobs.get()
+            job = analysis.get_job(a.conn, job_id)
+            if job and job["kind"] == "review":
+                archive = a.settings.boe_archive_dir
+                review.run_review_job(
+                    a.conn,
+                    job_id,
+                    memory=a.memory,
+                    law_source_factory=partial(lawcheck.BoeArchive, archive) if archive else None,
+                    aliases=lawcheck.Aliases.load(a.settings.laws_path),
+                    llm=a.llm,
+                    lock=self.lock,
+                    anonymize=a.anonymizer.anonymize if a.anonymizer else None,
+                    reveal=a.reveal,
+                )
+                continue
             analysis.run_job(
                 a.conn, job_id, memory=a.memory, fast_llm=a.fast_llm, llm=a.llm, lock=self.lock, reveal=a.reveal
             )
@@ -288,8 +319,9 @@ def document_text(source: str):
 
 
 @app.post("/api/attachments")
-async def read_attachment(name: str, request: Request):
-    """Extract the text of a file for one turn, without saving or indexing it."""
+async def read_attachment(name: str, request: Request, full: bool = False):
+    """Extract the text of a file for one turn, without saving or indexing it; `full` skips the turn-sized cut
+    (the review pass needs the whole draft)."""
     safe = Path(name).name
     if Path(safe).suffix.lower() not in EXTENSIONS:
         raise HTTPException(400, f"only {', '.join(sorted(EXTENSIONS))} files")
@@ -300,8 +332,8 @@ async def read_attachment(name: str, request: Request):
         tmp.write(body)
         tmp.flush()
         text = await run_in_threadpool(read_text, Path(tmp.name))
-    truncated = len(text) > MAX_ATTACHMENT_CHARS
-    return {"name": safe, "text": text[:MAX_ATTACHMENT_CHARS], "chars": len(text), "truncated": truncated}
+    limit = len(text) if full else MAX_ATTACHMENT_CHARS
+    return {"name": safe, "text": text[:limit], "chars": len(text), "truncated": len(text) > limit}
 
 
 @app.post("/api/documents/{source}/analyze")
@@ -310,6 +342,20 @@ def analyze_document(source: str, body: AnalysisRequest):
     if source not in runtime.assistant.memory.indexed_sources():
         raise HTTPException(404, "unknown document")
     return {"job_id": runtime.enqueue_analysis(source, body.goal.strip())}
+
+
+@app.post("/api/reviews")
+def review_draft(body: ReviewRequest):
+    """Queue the review of a draft (pasted text or an indexed document); poll /api/jobs/{id} for the result."""
+    text = body.text
+    if body.source:
+        path = runtime.assistant.settings.docs_dir / Path(body.source).name
+        if body.source not in runtime.assistant.memory.indexed_sources() or not path.is_file():
+            raise HTTPException(404, "unknown document")
+        text = read_text(path)
+    if not text.strip():
+        raise HTTPException(400, "the draft is empty")
+    return {"job_id": runtime.enqueue_review(body, text)}
 
 
 @app.get("/api/jobs")

@@ -11,6 +11,7 @@ Case kinds and what passes:
 - alarms     a pending alarm exists after the turn and the claim is verified
 - review     the verdict on each citation comes from the checker (a tool call happened) and is the right one
 - analysis   a long document analysed whole: planted facts found, repeats merged, every finding quoted
+- draft_review  a draft with planted problems: exactly those flagged by the code, no noise from the model
 - deadlines  the due date in the reply comes from the deadline tool (a tool call happened) and is the right one
 - project    the file the assistant says it created exists and no claim failed
 """
@@ -45,6 +46,8 @@ class Case:
     documents: list[str] = field(default_factory=list)  # sources the turn is confined to
     ingest: str = ""  # analysis cases: a file (relative to the repo) indexed for this case only
     goal: str = ""  # analysis cases: what the analysis looks for
+    draft: str = ""  # draft_review cases: the draft file (relative to the repo)
+    expect_kinds: list[str] = field(default_factory=list)  # draft_review cases: the exact error kinds expected
 
 
 def load_cases(path: Path) -> list[Case]:
@@ -123,6 +126,8 @@ def evaluate_case(assistant, case: Case) -> dict:
     thread = f"eval-{case.id}-{uuid.uuid4().hex[:6]}"
     if case.kind == "analysis":
         return evaluate_analysis(assistant, case)
+    if case.kind == "draft_review":
+        return evaluate_draft_review(assistant, case)
     result = assistant.ask(thread, case.question, matter=matter, source="eval", documents=case.documents)
     reply, lowered = result.reply, result.reply.lower()
     checks: dict = {"_reply": reply, "no_error": result.kind != "error"}
@@ -165,6 +170,45 @@ def evaluate_case(assistant, case: Case) -> dict:
     elif case.kind == "project":
         checks["file_exists"] = (assistant.settings.projects_dir / matter / case.expect_file).is_file()
         checks["claims_verified"] = result.metrics["claims_failed"] == 0
+    return checks
+
+
+def evaluate_draft_review(assistant, case: Case) -> dict:
+    """Review a draft with planted problems: the code must flag exactly them; the model must add no noise."""
+    from .lawcheck import Aliases, BoeArchive
+    from .review import review
+
+    settings = assistant.settings
+    text = Path(case.draft).read_text(encoding="utf-8")
+    if assistant.anonymizer:
+        text = assistant.anonymizer.anonymize(text)
+    sources = case.documents or list(assistant.memory.indexed_sources())
+    chunks = [c for s in sources for c in assistant.memory.document_chunks(s)]
+    checks: dict = {}
+    try:
+        law_source = BoeArchive(settings.boe_archive_dir) if settings.boe_archive_dir else None
+        result = review(
+            text=text,
+            name=Path(case.draft).name,
+            chunks=chunks,
+            law_source=law_source,
+            aliases=Aliases.load(settings.laws_path) if law_source else None,
+            llm=assistant.llm,
+        )
+        errors = sorted(i.kind for i in result.issues if i.severity == "error")
+        model_issues = [i for i in result.issues if i.kind == "cuestion_legal"]
+        report = assistant.reveal(result.as_dict(text)["report"]).lower()
+        checks["no_error"] = True
+        checks["exact_errors"] = errors == sorted(case.expect_kinds)  # the planted problems and nothing else
+        checks["includes"] = all(any(t.lower() in report for t in term.split("|")) for term in case.must_include)
+        checks["model_quiet"] = not model_issues  # a sound draft gives the model nothing concrete to flag
+        checks["_reply"] = (
+            f"errors {errors}, {len(model_issues)} model issue(s), {result.quotes_checked} quotes and "
+            f"{result.citations_checked} citations checked, {result.seconds}s"
+            + "".join(f" · model: «{i.passage[:60]}» {i.reason}" for i in model_issues)
+        )
+    except Exception as exc:  # noqa: BLE001
+        checks = {"no_error": False, "_reply": f"{type(exc).__name__}: {exc}"}
     return checks
 
 

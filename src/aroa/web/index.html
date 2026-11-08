@@ -183,6 +183,24 @@
   .reader .rh small { display:block; color:var(--muted); font-weight:400; font-size:12px; font-family:var(--mono); }
   .reader .rb { flex:1; overflow:auto; padding:18px; font-size:13.5px; line-height:1.6; white-space:pre-wrap; overflow-wrap:anywhere; }
   .reader mark { background:var(--mark); color:inherit; border-radius:3px; padding:1px 2px; }
+  .reader.open.wide { width:min(820px, 62%); }
+  .reader .rh .back { margin-left:auto; font-size:12px; }
+  .reader .rb.review { white-space:normal; }
+  .rv-sum { font-size:13px; color:var(--ink-2); margin-bottom:8px; } .rv-sum .e { color:var(--bad); } .rv-sum .w { color:var(--warn); }
+  .rv-note { font-size:12.5px; color:var(--muted); font-style:italic; margin:4px 0; } .rv-note.ok { color:var(--ok); font-style:normal; }
+  .rv-acts { display:flex; gap:8px; margin:10px 0 14px; flex-wrap:wrap; }
+  .issue { border:1px solid var(--line); border-left:3px solid var(--warn); border-radius:8px; padding:8px 10px; margin:0 0 8px; font-size:13px; cursor:pointer; background:var(--panel); }
+  .issue.err { border-left-color:var(--bad); }
+  .issue.accept { background:var(--accent-soft); } .issue.reject { opacity:.55; }
+  .issue .ih { display:flex; gap:8px; align-items:baseline; font-size:12px; color:var(--muted); flex-wrap:wrap; } .issue .num { font-family:var(--mono); color:var(--accent); font-weight:600; } .issue .kind { font-weight:600; color:var(--ink); }
+  .issue .why { margin:4px 0; }
+  .issue blockquote { margin:4px 0; padding:2px 8px; border-left:2px solid var(--line-2); color:var(--ink-2); font-size:12.5px; }
+  .issue .orig, .issue .chg { font-size:12.5px; color:var(--ink-2); margin:4px 0; } .issue .chg { color:var(--accent); }
+  .issue .src { font-family:var(--mono); font-size:11.5px; word-break:break-all; display:block; margin-top:2px; }
+  .issue .acts { display:flex; gap:6px; margin-top:6px; } .issue .acts button { font:inherit; font-size:12px; padding:3px 10px; border-radius:6px; border:1px solid var(--line-2); background:var(--panel); color:var(--ink); cursor:pointer; }
+  .issue.accept .acts [data-dec=accept], .issue.reject .acts [data-dec=reject] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .rv-draft { white-space:pre-wrap; border-top:1px solid var(--line); padding-top:14px; margin-top:14px; }
+  .rv-draft mark.iss { background:var(--warn-soft); border-bottom:2px solid var(--warn); cursor:pointer; } .rv-draft mark.iss.err { background:var(--bad-soft); border-bottom-color:var(--bad); }
   .clip { position:absolute; z-index:6; display:none; }
   .clip.show { display:inline-flex; }
 
@@ -300,7 +318,7 @@ const L = {
     tag: 'Legal assistant · runs locally', new: 'New conversation', conversations: 'Conversations', no_threads: 'Nothing yet.',
     documents: 'Documents', add: '+ Add', add_title: 'Markdown, text or PDF', no_docs: 'Drop .md, .txt or .pdf files on the chat to index them.',
     selected: '{n} selected', selected_title: 'This conversation answers only from the selected documents', select_title: 'Work only on this document', clear: 'clear',
-    clip: 'Save clipping', clip_note: 'Note for this clipping (optional)', clipped: 'Clipping saved and indexed', analyze: 'Analyse the whole document', goal_prompt: 'What should the analysis look for? (empty = obligations, deadlines, amounts, penalties, risks)', analyzing: 'analysing', analysis_done: 'Analysis ready', analysis_failed: 'Analysis failed', last_analysis: 'last analysis',
+    clip: 'Save clipping', clip_note: 'Note for this clipping (optional)', clipped: 'Clipping saved and indexed', analyze: 'Analyse the whole document', goal_prompt: 'What should the analysis look for? (empty = obligations, deadlines, amounts, penalties, risks)', analyzing: 'analysing', analysis_done: 'Analysis ready', analysis_failed: 'Analysis failed', last_analysis: 'last analysis', review: 'Review as a draft', reviewing: 'reviewing', review_done: 'Review ready', review_failed: 'Review failed', paragraphs: 'paragraphs', quotes_checked: 'quotes checked', citations_checked: 'legal citations checked', errors: 'errors', warnings: 'warnings', no_issues: 'No issues: nothing repeated, every quote verbatim, every legal reference resolved.', download_fixed: 'Download corrected draft', copy_fixed: 'Copy corrected draft', copied: 'Copied', accept: 'Accept', reject: 'Reject', original: 'Original', open: 'open', delete_paragraph: 'Proposed: delete this paragraph', paragraph: 'paragraph', back_review: '↩ Back to the review', changes: 'changes accepted', issue_kinds: { parrafo_repetido: 'repeated paragraph', cita_no_literal: 'quote not verbatim', cita_no_encontrada: 'quote not found in the documents', articulo_inexistente: 'inexistent article', articulo_equivocado: 'wrong article', norma_no_encontrada: 'norm not found', norma_sin_descargar: 'norm not downloaded in the archive', jurisprudencia_sin_verificar: 'case law not verified', cita_legal_no_literal: 'legal quote not verbatim', cuestion_legal: 'legal issue (model)' },
     alarms: 'Alarms', report: 'Report', matter: 'Matter', matter_ph: 'e.g. 2026-014', matter_title: 'Memory wall: what is said in a matter is recalled only inside that matter',
     new_title: 'New conversation', write: 'Write to Aroa…', hint: 'Enter to send · Shift+Enter for a new line · personal data is pseudonymised before the model sees it',
     attach_title: 'Attach a document to this message', keep: 'keep in documents', keep_title: 'Also index it, so Aroa can find it in later conversations',
@@ -326,7 +344,7 @@ const L = {
     tag: 'Asistente legal · funciona en local', new: 'Nueva conversación', conversations: 'Conversaciones', no_threads: 'Todavía nada.',
     documents: 'Documentos', add: '+ Añadir', add_title: 'Markdown, texto o PDF', no_docs: 'Arrastra archivos .md, .txt o .pdf sobre el chat para indexarlos.',
     selected: '{n} seleccionados', selected_title: 'Esta conversación responde solo desde los documentos seleccionados', select_title: 'Trabajar solo sobre este documento', clear: 'quitar',
-    clip: 'Guardar recorte', clip_note: 'Nota para este recorte (opcional)', clipped: 'Recorte guardado e indexado', analyze: 'Analizar el documento entero', goal_prompt: '¿Qué debe buscar el análisis? (vacío = obligaciones, plazos, importes, penalizaciones, riesgos)', analyzing: 'analizando', analysis_done: 'Análisis listo', analysis_failed: 'El análisis ha fallado', last_analysis: 'último análisis',
+    clip: 'Guardar recorte', clip_note: 'Nota para este recorte (opcional)', clipped: 'Recorte guardado e indexado', analyze: 'Analizar el documento entero', goal_prompt: '¿Qué debe buscar el análisis? (vacío = obligaciones, plazos, importes, penalizaciones, riesgos)', analyzing: 'analizando', analysis_done: 'Análisis listo', analysis_failed: 'El análisis ha fallado', last_analysis: 'último análisis', review: 'Revisar como borrador', reviewing: 'revisando', review_done: 'Revisión lista', review_failed: 'La revisión ha fallado', paragraphs: 'párrafos', quotes_checked: 'citas de documentos comprobadas', citations_checked: 'citas legales comprobadas', errors: 'errores', warnings: 'avisos', no_issues: 'Sin hallazgos: nada repetido, todas las citas literales y todas las referencias legales resueltas.', download_fixed: 'Descargar borrador corregido', copy_fixed: 'Copiar borrador corregido', copied: 'Copiado', accept: 'Aceptar', reject: 'Rechazar', original: 'Original', open: 'abrir', delete_paragraph: 'Propuesta: eliminar este párrafo', paragraph: 'párrafo', back_review: '↩ Volver a la revisión', changes: 'cambios aceptados', issue_kinds: { parrafo_repetido: 'párrafo repetido', cita_no_literal: 'cita no literal', cita_no_encontrada: 'cita no encontrada en los documentos', articulo_inexistente: 'artículo inexistente', articulo_equivocado: 'artículo equivocado', norma_no_encontrada: 'norma no encontrada', norma_sin_descargar: 'norma no descargada en el archivo', jurisprudencia_sin_verificar: 'jurisprudencia sin verificar', cita_legal_no_literal: 'cita legal no literal', cuestion_legal: 'cuestión legal (modelo)' },
     alarms: 'Alarmas', report: 'Informe', matter: 'Expediente', matter_ph: 'p. ej. 2026-014', matter_title: 'Muralla de memoria: lo dicho en un expediente solo se recuerda dentro de ese expediente',
     new_title: 'Nueva conversación', write: 'Escribe a Aroa…', hint: 'Intro para enviar · Mayús+Intro para nueva línea · los datos personales se pseudonimizan antes de que el modelo los vea',
     attach_title: 'Adjuntar un documento a este mensaje', keep: 'guardar en documentos', keep_title: 'Además lo indexa, para que Aroa lo encuentre en conversaciones futuras',
@@ -500,16 +518,17 @@ async function openReader(source, quote) {
     }
   }
   $('#reader-body').className = 'rb'; $('#reader-body').innerHTML = html;
-  reader.classList.add('open');
+  reader.classList.remove('wide'); reader.classList.add('open');
+  if (reviewState) $('#reader-title').insertAdjacentHTML('beforeend', `<button type="button" class="btn ghost back" id="rv-back">${T('back_review')}</button>`);
   if (target) setTimeout(() => $('#mark')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 220); else $('#reader-body').scrollTop = 0;
 }
-$('#reader-close').onclick = () => $('#reader').classList.remove('open');
+$('#reader-close').onclick = () => $('#reader').classList.remove('open', 'wide');
 
 let readerSource = null;
 function clipButton() {
   const sel = window.getSelection(), btn = $('#clip'), body = $('#reader-body');
   const text = sel && !sel.isCollapsed ? sel.toString().trim() : '';
-  if (!text || !readerSource || body.classList.contains('report') || !body.contains(sel.anchorNode)) { btn.classList.remove('show'); return; }
+  if (!text || !readerSource || body.classList.contains('report') || body.classList.contains('review') || !body.contains(sel.anchorNode)) { btn.classList.remove('show'); return; }
   const rect = sel.getRangeAt(0).getBoundingClientRect(), host = $('#reader').getBoundingClientRect();
   btn.style.left = Math.max(8, rect.left - host.left) + 'px'; btn.style.top = (rect.bottom - host.top + 6) + 'px';
   btn.dataset.text = text; btn.classList.add('show');
@@ -531,7 +550,7 @@ function showReport(job) {
   body.innerHTML = md(r.report);
   body.dataset.sources = JSON.stringify(r.sources || []);
   body.querySelectorAll('.cite').forEach(c => { if ((r.sources || []).some(s => s.n === +c.dataset.n)) c.classList.add('link'); });
-  $('#reader').classList.add('open'); body.scrollTop = 0;
+  $('#reader').classList.remove('wide'); $('#reader').classList.add('open'); body.scrollTop = 0;
 }
 $('#reader-body').addEventListener('click', e => {
   const b = e.target.closest('.cite'); if (!b) return;
@@ -543,119 +562,101 @@ async function startAnalysis(source) {
   const goal = prompt(T('goal_prompt'), ''); if (goal === null) return;
   const r = await fetch('/api/documents/' + encodeURIComponent(source) + '/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ goal }) });
   if (!r.ok) { toast(T('analysis_failed')); return; }
-  const { job_id } = await r.json();
+  watchJob(source, (await r.json()).job_id, 'analysis');
+}
+async function startReview(req) {
+  const r = await fetch('/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...req, documents: [...selected], legal: true }) });
+  if (!r.ok) { toast(T('review_failed')); return; }
+  watchJob(req.name || req.source, (await r.json()).job_id, 'review');
+}
+function watchJob(label, job_id, kind) {
+  const verb = kind === 'review' ? 'reviewing' : 'analyzing';
   const li = document.createElement('li'); li.className = 'job';
-  li.innerHTML = `<span class="t">${esc(source)} · <span class="st">${T('analyzing')}…</span></span><div class="bar busy"><i></i></div>`;
+  li.innerHTML = `<span class="t">${esc(label)} · <span class="st">${T(verb)}…</span></span><div class="bar busy"><i></i></div>`;
   $('#jobs').appendChild(li);
   const st = li.querySelector('.st'), bar = li.querySelector('.bar'), fill = li.querySelector('i');
   const tick = async () => {
     const job = await (await fetch('/api/jobs/' + job_id)).json();
-    if (job.total) { bar.classList.remove('busy'); fill.style.width = Math.round(job.done / job.total * 100) + '%'; st.textContent = `${T('analyzing')} ${job.done}/${job.total}`; }
-    if (job.status === 'done') { li.remove(); toast(T('analysis_done')); history.replaceState(null, '', '#job=' + job_id); showReport(job); return; }
-    if (job.status === 'failed') { li.remove(); toast(`${T('analysis_failed')}: ${job.error || ''}`); return; }
+    if (job.total) { bar.classList.remove('busy'); fill.style.width = Math.round(job.done / job.total * 100) + '%'; st.textContent = `${T(verb)} ${job.done}/${job.total}`; }
+    if (job.status === 'done') { li.remove(); toast(T(kind === 'review' ? 'review_done' : 'analysis_done')); history.replaceState(null, '', '#job=' + job_id); (kind === 'review' ? showReview : showReport)(job); return; }
+    if (job.status === 'failed') { li.remove(); toast(`${T(kind === 'review' ? 'review_failed' : 'analysis_failed')}: ${job.error || ''}`); return; }
     setTimeout(tick, 1500);
   };
   tick();
 }
 
-/* ── events ────────────────────────────────────────────── */
-column.addEventListener('click', async e => {
-  const b = e.target.closest('button'); if (!b) return;
-  if (b.dataset.q) { $('#text').value = b.dataset.q; $('#form').requestSubmit(); return; }
-  if (b.classList.contains('cite')) {
-    const sources = JSON.parse(b.closest('.answer')?.dataset.sources || '[]');
-    const s = sources.find(x => x.n === +b.dataset.n);
-    if (s) openReader(s.file, s.quote); return;
-  }
-  if (b.dataset.path) {
-    const box = $('#path-' + b.dataset.path);
-    if (box.classList.contains('open')) { box.classList.remove('open'); return; }
-    const r = await fetch('/api/turns/' + b.dataset.path);
-    box.innerHTML = r.ok ? renderPath(await r.json()) : `<div class="sm">${T('no_path')}</div>`;
-    box.classList.add('open'); return;
-  }
-  if (b.dataset.fb) {
-    await fetch(`/api/turns/${b.dataset.turn}/feedback`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ score: +b.dataset.fb }) });
-    b.parentElement.querySelectorAll('.fb').forEach(x => x.classList.toggle('on', x === b));
-    toast(T('thanks')); loadStats();
-  }
+/* ── review: issues marked on the draft, changes accepted one by one ── */
+let reviewState = null;
+function nthIndex(text, needle, n) { let i = -1; for (let k = 0; k < n; k++) { i = text.indexOf(needle, i + 1); if (i < 0) return -1; } return i; }
+function showReview(job) {
+  const r = job.result, body = $('#reader-body'), reader = $('#reader');
+  if (!reviewState || reviewState.job.job_id !== job.job_id) reviewState = { job, decisions: new Map() };
+  $('#reader-title').innerHTML = `${esc(r.name)}<small>${r.paragraphs} ${T('paragraphs')} · ${r.quotes_checked} ${T('quotes_checked')} · ${r.citations_checked} ${T('citations_checked')} · ${r.seconds} s</small>`;
+  body.className = 'rb review';
+  const errs = r.issues.filter(i => i.severity === 'error').length, warns = r.issues.length - errs;
+  let html = `<div class="rv-sum"><b class="e">${errs} ${T('errors')}</b> · <b class="w">${warns} ${T('warnings')}</b></div>`;
+  for (const n of r.notes || []) html += `<div class="rv-note">${esc(n)}</div>`;
+  if (!r.issues.length) html += `<div class="rv-note ok">${T('no_issues')}</div>`;
+  html += `<div class="rv-acts"><button type="button" class="btn primary" id="rv-download">${T('download_fixed')}</button><button type="button" class="btn ghost" id="rv-copy">${T('copy_fixed')}</button><span class="rv-note" id="rv-count"></span></div>`;
+  html += `<div class="rv-issues">${r.issues.map(issueCard).join('')}</div><div class="rv-draft">${markedDraft(r)}</div>`;
+  body.innerHTML = html; updateCount();
+  reader.classList.add('open', 'wide'); body.scrollTop = 0;
+}
+function issueCard(i) {
+  const cut = t => esc(t.length > 240 ? t.slice(0, 240) + '…' : t), d = reviewState.decisions.get(i.n) || '';
+  return `<div class="issue ${i.severity === 'error' ? 'err' : 'warn'} ${d}" data-n="${i.n}">` +
+    `<div class="ih"><span class="num">[${i.n}]</span><span class="kind">${esc(T('issue_kinds')[i.kind] || i.kind)}</span><span class="par">${T('paragraph')} ${i.paragraph}</span></div>` +
+    `<div class="why">${esc(i.reason)}</div><blockquote>«${cut(i.passage)}»</blockquote>` +
+    (i.quote && i.kind !== 'articulo_equivocado' ? `<div class="orig">${T('original')}: «${cut(i.quote)}»${i.file ? ` <button type="button" class="cite link" data-open-src="${esc(i.file)}" data-q="${esc(i.quote)}">${T('open')}</button>` : ''}</div>` : '') +
+    (i.source && /^https?:/.test(i.source) ? `<a class="src" href="${esc(i.source)}" target="_blank" rel="noopener">${esc(i.source)}</a>` : '') +
+    (i.change ? `<div class="chg">${i.change.after === '' ? T('delete_paragraph') : '→ «' + esc(i.change.after) + '»'}</div><div class="acts"><button type="button" data-dec="accept">${T('accept')}</button><button type="button" data-dec="reject">${T('reject')}</button></div>` : '') + `</div>`;
+}
+function markedDraft(r) {
+  const text = r.draft, ranges = [];
+  for (const i of r.issues) { const at = nthIndex(text, i.passage, i.change ? i.change.occurrence : 1); if (at >= 0) ranges.push({ s: at, e: at + i.passage.length, i }); }
+  ranges.sort((a, b) => a.s - b.s);
+  let html = '', pos = 0;
+  for (const g of ranges) { if (g.s < pos) continue; html += esc(text.slice(pos, g.s)) + `<mark class="iss ${g.i.severity === 'error' ? 'err' : 'warn'}" data-n="${g.i.n}" id="iss-${g.i.n}">${esc(text.slice(g.s, g.e))}</mark>`; pos = g.e; }
+  return html + esc(text.slice(pos));
+}
+function correctedDraft(r) {
+  let text = r.draft; const located = [];
+  for (const i of r.issues) { if (!i.change || reviewState.decisions.get(i.n) !== 'accept') continue; const at = nthIndex(text, i.change.before, i.change.occurrence); if (at >= 0) located.push({ at, c: i.change }); }
+  located.sort((a, b) => b.at - a.at);
+  for (const { at, c } of located) { let end = at + c.before.length; if (c.after === '') while (end < text.length && text[end] === '\n') end++; text = text.slice(0, at) + c.after + text.slice(end); }
+  return text;
+}
+function updateCount() { const n = [...reviewState.decisions.values()].filter(v => v === 'accept').length; const el = $('#rv-count'); if (el) el.textContent = `${n} ${T('changes')}`; }
+$('#reader-body').addEventListener('click', e => {
+  const body = $('#reader-body'); if (!body.classList.contains('review') || !reviewState) return;
+  const r = reviewState.job.result;
+  const dec = e.target.closest('[data-dec]');
+  if (dec) { const card = dec.closest('.issue'); reviewState.decisions.set(+card.dataset.n, dec.dataset.dec); card.classList.remove('accept', 'reject'); card.classList.add(dec.dataset.dec); updateCount(); return; }
+  const src = e.target.closest('[data-open-src]'); if (src) { openReader(src.dataset.openSrc, src.dataset.q); return; }
+  if (e.target.id === 'rv-download') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([correctedDraft(r)], { type: 'text/markdown' })); a.download = (r.name || 'borrador').replace(/\.[^.]+$/, '') + '-revisado.md'; a.click(); URL.revokeObjectURL(a.href); return; }
+  if (e.target.id === 'rv-copy') { navigator.clipboard.writeText(correctedDraft(r)).then(() => toast(T('copied'))); return; }
+  if (e.target.closest('a')) return;
+  const card = e.target.closest('.issue'); if (card) { $('#iss-' + card.dataset.n)?.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
+  const mark = e.target.closest('mark.iss'); if (mark) body.querySelector(`.issue[data-n="${mark.dataset.n}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
 });
-
-async function loadThreads() {
-  threadsCache = await (await fetch('/api/threads')).json();
-  $('#threads-empty').hidden = threadsCache.length > 0;
-  $('#threads').innerHTML = threadsCache.map(r => `<li data-id="${esc(r.thread_id)}" class="${r.thread_id === thread ? 'active' : ''}"><div class="t">${esc(r.title || '…')}</div>` +
-    `<div class="m">${r.matter ? `<span class="chip">${esc(r.matter)}</span>` : ''}<span>${ago(r.updated_ts)}</span></div></li>`).join('');
-}
-$('#threads').addEventListener('click', e => { const li = e.target.closest('li'); if (li) { openThread(li.dataset.id); $('#side').classList.remove('open'); } });
-
-function setTitle() {
-  const row = threadsCache.find(r => r.thread_id === thread);
-  $('#title').textContent = row ? row.title : T('new_title');
-}
-
-async function openThread(t) {
-  thread = t; column.innerHTML = ''; history.replaceState(null, '', '#t=' + t); loadSelection();
-  const data = await (await fetch('/api/threads/' + t)).json();
-  $('#matter').value = data.matter || '';
-  if (!data.messages.length && !data.waiting) showWelcome();
-  for (const m of data.messages) m.role === 'user' ? addUser(m.text) : addAssistant(m.text, m);
-  if (data.waiting) addAssistant(data.waiting, { kind: 'question' });
-  await loadThreads(); setTitle();
-}
-
-$('#new').onclick = () => { thread = id(); history.replaceState(null, '', ' '); $('#matter').value = ''; selected.clear(); loadDocs(); showWelcome(); loadThreads().then(setTitle); $('#side').classList.remove('open'); $('#text').focus(); };
-$('#menu').onclick = () => $('#side').classList.toggle('open');
-
-async function send(text) {
-  if (!thread) thread = id();
-  if (column.querySelector('.welcome')) column.innerHTML = '';
-  busy = true; $('#send').disabled = true;
-  const ready = attachments.filter(a => a.text != null);
-  const keep = ready.filter(a => a.keep);
-  attachments = []; renderAttachments();
-  addUser(text + ready.map(a => `\n\n<attachment name="${a.name.replace(/"/g, "'")}">\n`).join(''));
-  for (const a of keep) indexFile(a.file); // in parallel with the turn; the text already travels with the message
-  const live = addLive(), crumbs = live.querySelector('.crumbs'), body = live.querySelector('.body');
-  let tokens = '', steps = [];
-  try {
-    const payload = { text, matter: $('#matter').value.trim(), attachments: ready.map(a => ({ name: a.name, text: a.text })), documents: [...selected] };
-    const res = await fetch(`/api/threads/${thread}/messages`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-    const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
-    while (true) {
-      const { value, done } = await reader.read(); if (done) break;
-      buf += dec.decode(value, { stream: true });
-      let i; while ((i = buf.indexOf('\n\n')) >= 0) {
-        const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
-        const ev = /event: (\w+)/.exec(chunk)?.[1]; const data = JSON.parse(chunk.slice(chunk.indexOf('data: ') + 6));
-        if (ev === 'token') { tokens += data; body.innerHTML = md(tokens); }
-        if (ev === 'node') { steps.push(data.title); crumbs.innerHTML = steps.slice(-4).map(s => `<span>${esc(s)}</span>`).join(''); }
-        if (ev === 'done') {
-          live.remove();
-          if (data.interrupted) addAssistant(data.interrupted, { kind: 'question' });
-          else addAssistant(data.reply, { kind: data.kind, turn_id: data.turn_id, verified: data.extras && data.extras.verified, sources: data.extras && data.extras.sources });
-        }
-        scrollDown();
-      }
-    }
-  } catch (err) { live.remove(); addAssistant(T('server_error') + err.message, { kind: 'blocked' }); }
-  busy = false; $('#send').disabled = false; $('#text').focus();
-  await loadThreads(); setTitle(); loadStats();
-}
-
-const ta = $('#text');
-function grow() { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 200) + 'px'; }
-ta.addEventListener('input', grow);
-ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#form').requestSubmit(); } });
-$('#form').onsubmit = e => { e.preventDefault(); const t = ta.value.trim(); if ((!t && !attachments.length) || busy || attachments.some(a => a.text == null)) return; ta.value = ''; grow(); send(t); };
+$('#reader-title').addEventListener('click', e => { if (e.target.id === 'rv-back' && reviewState) showReview(reviewState.job); });
 
 /* ── attachments (read for this turn; optionally indexed) ── */
 function renderAttachments() {
   $('#attach-list').innerHTML = attachments.map((a, i) => `<span class="att">📎 <span class="nm" title="${esc(a.name)}">${esc(a.name)}</span>` +
     (a.text == null ? `<span class="spinner"></span><span class="sz">${T('reading')}</span>` : `<span class="sz">${kchars(a.chars)}${a.truncated ? ' · ' + T('truncated') : ''}</span>`) +
-    `<label title="${T('keep_title')}"><input type="checkbox" data-keep="${i}" ${a.keep ? 'checked' : ''}>${T('keep')}</label><button type="button" class="x" data-rm="${i}">✕</button></span>`).join('');
+    `<label title="${T('keep_title')}"><input type="checkbox" data-keep="${i}" ${a.keep ? 'checked' : ''}>${T('keep')}</label>${a.text != null ? `<button type="button" class="x" data-rev-att="${i}" title="${T('review')}">✎</button>` : ''}<button type="button" class="x" data-rm="${i}">✕</button></span>`).join('');
 }
-$('#attach-list').addEventListener('click', e => { const b = e.target.closest('[data-rm]'); if (b) { attachments.splice(+b.dataset.rm, 1); renderAttachments(); } });
+$('#attach-list').addEventListener('click', async e => {
+  const b = e.target.closest('[data-rm]'); if (b) { attachments.splice(+b.dataset.rm, 1); renderAttachments(); return; }
+  const rv = e.target.closest('[data-rev-att]');
+  if (rv) {  // the full text, not the turn-sized excerpt
+    const a = attachments[+rv.dataset.revAtt];
+    const r = await fetch('/api/attachments?name=' + encodeURIComponent(a.name) + '&full=1', { method: 'POST', body: a.file });
+    if (!r.ok) { toast(T('review_failed')); return; }
+    startReview({ name: a.name, text: (await r.json()).text });
+  }
+});
 $('#attach-list').addEventListener('change', e => { const c = e.target.closest('[data-keep]'); if (c) attachments[+c.dataset.keep].keep = c.checked; });
 async function attach(files) {
   for (const file of files) {
@@ -678,7 +679,7 @@ async function loadDocs() {
   docsCache = await (await fetch('/api/documents')).json();
   $('#docs-empty').hidden = docsCache.length > 0;
   for (const s of selected) if (!docsCache.some(d => d.source === s)) selected.delete(s);
-  $('#docs').innerHTML = docsCache.map(d => `<li data-open="${esc(d.source)}" class="${selected.has(d.source) ? 'on' : ''}" title="${esc(d.source)}"><input type="checkbox" data-sel="${esc(d.source)}" ${selected.has(d.source) ? 'checked' : ''} title="${T('select_title')}"><span class="t">${esc(d.title)}</span><span class="n">${d.chunks}</span><button class="an" data-an="${esc(d.source)}" title="${T('analyze')}">⌕</button><button class="x" data-del="${esc(d.source)}" title="✕">✕</button></li>`).join('');
+  $('#docs').innerHTML = docsCache.map(d => `<li data-open="${esc(d.source)}" class="${selected.has(d.source) ? 'on' : ''}" title="${esc(d.source)}"><input type="checkbox" data-sel="${esc(d.source)}" ${selected.has(d.source) ? 'checked' : ''} title="${T('select_title')}"><span class="t">${esc(d.title)}</span><span class="n">${d.chunks}</span><button class="an" data-rev="${esc(d.source)}" title="${T('review')}">✎</button><button class="an" data-an="${esc(d.source)}" title="${T('analyze')}">⌕</button><button class="x" data-del="${esc(d.source)}" title="✕">✕</button></li>`).join('');
   renderSelection();
 }
 function renderSelection() {
@@ -701,6 +702,7 @@ $('#docs').addEventListener('change', e => {
 $('#docs').addEventListener('click', async e => {
   if (e.target.closest('[data-sel]')) return;
   const an = e.target.closest('[data-an]');
+  const rev = e.target.closest('[data-rev]'); if (rev) { startReview({ name: rev.dataset.rev, source: rev.dataset.rev }); return; }
   if (an) { startAnalysis(an.dataset.an); return; }
   const b = e.target.closest('[data-del]');
   if (!b) { const li = e.target.closest('[data-open]'); if (li) openReader(li.dataset.open); return; }
@@ -759,7 +761,7 @@ setInterval(() => { if (thread && !busy && !column.querySelector('.welcome')) op
 setInterval(loadStats, 60000);
 
 const deepJob = /^#job=([\w-]+)$/.exec(location.hash);
-if (deepJob) fetch('/api/jobs/' + deepJob[1]).then(r => r.ok ? r.json() : null).then(j => { if (j && j.status === 'done') showReport(j); });
+if (deepJob) fetch('/api/jobs/' + deepJob[1]).then(r => r.ok ? r.json() : null).then(j => { if (j && j.status === 'done') (j.kind === 'review' ? showReview : showReport)(j); });
 const deep = /^#t=([\w-]+)$/.exec(location.hash);
 if (deep) openThread(deep[1]); else { thread = id(); loadThreads().then(setTitle); }
 if (lang) applyLang(); else loadHealth(); // without a saved choice, the server's language decides

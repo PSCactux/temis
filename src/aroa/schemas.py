@@ -80,3 +80,12 @@ class Findings(BaseModel):
     findings: list[FindingItem] = Field(
         default_factory=list, description="Empty when the fragment has nothing for the goal."
     )
+
+
+class IssueItem(BaseModel):
+    quote: str = Field(description="The problematic passage copied verbatim from the draft, one sentence is enough.")
+    reason: str = Field(description="Why it is a problem, in one sentence, in the draft's language.")
+
+
+class Issues(BaseModel):
+    issues: list[IssueItem] = Field(default_factory=list, description="Empty when the draft has no concrete problem.")

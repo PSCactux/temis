@@ -59,6 +59,7 @@ class LawSource(Protocol):
     def find_norm(self, reference: str) -> tuple[str, str] | None: ...  # (norm id, title), or None
     def is_stored(self, norm_id: str) -> bool: ...
     def article(self, norm_id: str, number: str) -> dict | None: ...  # heading, text, vigencia, fetched_at
+    def articles(self, norm_id: str) -> list[dict]: ...  # every current article: number, heading, text
 
 
 @dataclass
@@ -290,6 +291,21 @@ class BoeArchive:
             "vigencia": row["fecha_vigencia"],
             "fetched_at": row["fetched_at"],
         }
+
+    def articles(self, norm_id: str) -> list[dict]:
+        """Every article of the norm in its current parse, latest version of each, for locating a quoted text."""
+        rows = self.conn.execute(
+            """SELECT v.bloque_id, v.bloque_titulo, v.text FROM norma_version v
+               JOIN parse_run p ON p.id = v.parse_run_id AND p.current = 1
+               WHERE v.norma_id = ? AND v.bloque_id LIKE 'a%' ORDER BY v.bloque_id, v.fecha_vigencia DESC""",
+            (norm_id,),
+        ).fetchall()
+        out: dict[str, dict] = {}
+        for row in rows:
+            number = row["bloque_id"][1:]
+            if number not in out:
+                out[number] = {"number": number, "heading": row["bloque_titulo"], "text": row["text"] or ""}
+        return list(out.values())
 
 
 def check_text(text: str, source: LawSource, aliases: Aliases) -> tuple[list[Verification], str]:

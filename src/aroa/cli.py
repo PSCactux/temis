@@ -187,6 +187,36 @@ def cmd_analizar(args) -> None:
     console.print(Markdown(assistant.reveal(result.as_dict()["report"])))
 
 
+def cmd_revisar(args) -> None:
+    """Review a draft file: repeats, quotes against the indexed documents, citations against the BOE archive."""
+    from .app import Assistant
+    from .lawcheck import Aliases, BoeArchive
+    from .review import apply_changes, review
+
+    assistant = Assistant(get_settings())
+    settings = assistant.settings
+    text = Path(args.file).read_text(encoding="utf-8", errors="replace")
+    if assistant.anonymizer:
+        text = assistant.anonymizer.anonymize(text)
+    sources = args.documentos or list(assistant.memory.indexed_sources())
+    chunks = [c for s in sources for c in assistant.memory.document_chunks(s)]
+    law_source = BoeArchive(settings.boe_archive_dir) if settings.boe_archive_dir else None
+    result = review(
+        text=text,
+        name=Path(args.file).name,
+        chunks=chunks,
+        law_source=law_source,
+        aliases=Aliases.load(settings.laws_path) if law_source else None,
+        llm=None if args.sin_modelo else assistant.llm,
+        progress=lambda done, total: console.print(f"[dim]{done}/{total} windows[/dim]", end="\r"),
+    )
+    console.print(Markdown(assistant.reveal(result.as_dict(text)["report"])))
+    if args.corregido:
+        fixed = apply_changes(text, [i.change for i in result.issues if i.change is not None])
+        Path(args.corregido).write_text(assistant.reveal(fixed), encoding="utf-8")
+        console.print(f"[dim]corrected draft written to {args.corregido}[/dim]")
+
+
 def cmd_serve(args) -> None:
     import uvicorn
 
@@ -245,6 +275,13 @@ def main() -> None:
     p.add_argument("--no-overview", action="store_true", help="skip the model-written overview")
 
     p.set_defaults(func=cmd_analizar)
+
+    p = sub.add_parser("revisar", help="review a draft: repeats, quotes against documents, citations against the BOE")
+    p.add_argument("file")
+    p.add_argument("--documentos", nargs="*", help="indexed documents to check the quotes against (default: all)")
+    p.add_argument("--sin-modelo", action="store_true", help="skip the model's legal-issue pass")
+    p.add_argument("--corregido", metavar="OUT", help="write the draft with every proposed change applied")
+    p.set_defaults(func=cmd_revisar)
 
     p = sub.add_parser("serve", help="web app and API")
     p.add_argument("--host", default="127.0.0.1")

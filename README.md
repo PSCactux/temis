@@ -39,6 +39,7 @@ and are never recalled while working on another matter.
 | **Deadlines are arithmetic, not opinion** | When a term ends is computed in code from the notification date, the jurisdiction and the firm's holiday calendar (working days, August, the Christmas break, months date-to-date, the 15:00 grace of art. 135.5 LEC). The model asks the tool and relays the result; the reply lists every excluded day and the rule behind it. |
 | **Citations are checked before anything is filed** | Every article, law or judgment cited in a draft is extracted with patterns and verified in code against the firm's own archive of the BOE (consolidated legislation, with the date the text was fetched): the norm exists, the article exists, here is its current text and official link, or a plain «no existe». Judgments are flagged as not automatically verifiable. |
 | **Long documents, whole** | A document of any length is read fragment by fragment, findings are merged in code (repeats folded, every location kept) and nothing is reported without a verbatim quote that opens where it came from. Runs as a background job with progress; the model-written overview is kept only if every sentence cites a finding. |
+| **The review pass** | A draft is checked in a separate job: repeated paragraphs, quotes that are not verbatim in the documents (with the original as the fix), citations against the BOE archive (inexistent article, wrong article number corrected when the quoted text sits elsewhere). The model only points at legal issues, as warnings, and only where it quotes the draft. Changes are accepted or rejected one by one. |
 | **Untrusted content is quarantined** | Documents, tool results, pages, attachments and memory reach the model inside tags that name their origin, never in a system prompt; facts are extracted from the user's words only when the reply carries external content; `run_command` runs one allowlisted command without a shell (ADR 6). |
 | **Keeps personal data out of models** | Identifiers by patterns, names by a model proposal filtered in code; stable placeholders; revealed only at the interface. `redact_file` produces black-box copies for sharing. |
 | **Applies the firm's policy** | Fabricating or altering evidence, deceiving, crossing matters, leaking data: blocked before any work, with the reason. |
@@ -97,8 +98,9 @@ running the evals from one's own machine, not for a deployment).
 
 `evals/dataset.jsonl` holds whole-turn cases by kind: identity, memory across threads, the wall
 between matters, privacy (identifiers never reach the model, the stores or the checkpoint), policy,
-documents (citations, abstention, prompt injection inside a document), alarms, web and matter-folder
-work. `aroa eval` runs them against the configured models in a separate data folder and stores every
+documents (citations, abstention, prompt injection inside a document), alarms, web, matter-folder
+work, deadlines, citation review, whole-document analysis and the review pass over a draft with planted
+problems (exactly those must be flagged, and the model must add no noise). `aroa eval` runs them against the configured models in a separate data folder and stores every
 reply and check in `evals/results/`.
 
 Two runs on the same code. The local 8B model ran the current 42 cases; Claude through the Claude Code CLI
@@ -161,6 +163,7 @@ cp .env.example .env            # defaults to Ollama; `ollama pull qwen3:8b`
 uv run aroa ingest              # indexes data/docs (a fictitious Spanish corpus is copied in on first run)
 uv run aroa chat --matter 2026-014
 uv run aroa serve               # http://127.0.0.1:8000
+uv run aroa revisar escrito.md --corregido escrito_revisado.md   # the review pass on a draft, no server needed
 ```
 
 Your documents go in `data/docs/` (or drop `.md`, `.txt` and `.pdf` files on the web UI, which saves
@@ -169,7 +172,8 @@ them there and indexes them pseudonymised), matter folders in `data/projects/<ma
 to confine a conversation to them: retrieval, hints and the writer see only those files, and a question
 they do not cover is answered with an abstention, not with another document. A file attached to a message is
 read for that turn only unless you tick "keep in documents"; clicking a citation opens the source with the
-quote highlighted. `ASSISTANT_LANGUAGE=es` puts the texts the code writes (sources, blocked replies, the
+quote highlighted. The ✎ button on an attachment or a document reviews it as a draft: issues are marked
+on the text, each proposed change is accepted or rejected, and the corrected draft is downloaded. `ASSISTANT_LANGUAGE=es` puts the texts the code writes (sources, blocked replies, the
 path of a turn) in Spanish; the UI has its own ES/EN switch.
 
 Tracing: run a collector (for example `uv run phoenix serve` from the `arize-phoenix` package) and set

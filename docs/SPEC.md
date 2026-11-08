@@ -113,6 +113,18 @@ open the fragment. `aroa analizar SOURCE` does the same synchronously. See ADR 0
 
 `clippings.py`: a passage selected in the reader is saved as `recorte-<doc>-<id>.md` in the documents folder, with a header naming the source document, the matter and an optional note, and the text verbatim. It is indexed, searched, cited and deleted like any document (`POST /api/clippings`).
 
+## The review pass
+
+`review.py`: a draft (pasted text, an attachment or an indexed document) is checked in a job separate
+from writing. In code: repeated paragraphs (delete the later one), quoted passages not verbatim in the
+indexed documents (the closest original sentence is the proposed fix), legal citations through
+`lawcheck` (inexistent article, unknown norm, norm not downloaded, case law unverifiable) and the
+article number corrected when the quoted text sits in another article of the same norm. The model
+reads the draft in windows and points at legal issues; only pointers that quote the draft verbatim
+survive, always as warnings. The result lists issues anchored to passages with a reason and, when
+derivable, a change the user accepts or rejects; the UI marks them on the draft and downloads the
+corrected text. `POST /api/reviews` queues it, `aroa revisar FILE` runs it synchronously. See ADR 010.
+
 ## Observability
 
 - **Traces**: OpenInference spans over OTLP/HTTP to any collector; contents hidden unless

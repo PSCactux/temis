@@ -64,4 +64,6 @@ testpaths = ["tests"]
 "src/aroa/analysis.py" = ["E501"]
 "tests/test_analysis.py" = ["E501"]
 "tests/test_clippings.py" = ["E501"]
+"src/aroa/review.py" = ["E501"]  # Spanish issue texts and verdicts
+"tests/test_review.py" = ["E501"]
 "scripts/*" = ["E501"]  # generators and checkers quote long sample text
