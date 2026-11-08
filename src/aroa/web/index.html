@@ -1,336 +1,445 @@
 <!doctype html>
-<html lang="en">
+<html lang="es">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Aroa Assistant</title>
+<meta name="color-scheme" content="light dark">
+<title>Aroa</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%231f5c4a'/%3E%3Ctext x='16' y='22' font-family='Georgia,serif' font-size='19' font-weight='700' fill='%23fff' text-anchor='middle'%3EA%3C/text%3E%3C/svg%3E">
 <style>
   :root {
-    --bg:#f3f2ee; --panel:#ffffff; --raised:#faf9f6; --ink:#1c1c1a; --ink-2:#4a4945; --muted:#7a7872; --line:#e4e2db; --line-2:#d4d1c8;
-    --accent:#245c4d; --accent-ink:#ffffff; --accent-soft:#e3efea; --warn:#9a5b00; --warn-soft:#fbf1dd; --bad:#9b2c2c; --bad-soft:#f9e4e4; --ok:#2f7a47; --mark:#fff1a8;
-    --shadow:0 1px 2px rgba(0,0,0,.05), 0 8px 24px -12px rgba(0,0,0,.12);
-    --mono:ui-monospace, "SF Mono", Menlo, monospace;
+    --bg:#f1f0eb; --panel:#f8f7f3; --paper:#ffffff; --line:#e3e0d8; --line-2:#cfcbc0; --hover:#ecebe5;
+    --ink:#1c1b18; --ink-2:#4a4843; --muted:#7b7872;
+    --accent:#1f5c4a; --accent-ink:#ffffff; --accent-soft:#e1ede7; --accent-line:#b9d4c8;
+    --warn:#9a5b00; --warn-soft:#fbf1dd; --bad:#9b2c2c; --bad-soft:#f9e4e4; --ok:#2f7a47; --ok-soft:#e3f1e7; --mark:#fff1a8;
+    --shadow:0 8px 28px rgba(20,20,15,.10), 0 1px 3px rgba(20,20,15,.06);
+    --ui:-apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
+    --serif:"Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, "Times New Roman", serif;
+    --mono:ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    --rail:72px; --side:280px; --r:10px;
   }
   @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-    --bg:#121211; --panel:#1a1a18; --raised:#212120; --ink:#ecebe6; --ink-2:#c6c4bc; --muted:#8f8d85; --line:#2b2b28; --line-2:#3a3a36;
-    --accent:#7fc0a8; --accent-ink:#0f1f1a; --accent-soft:#1d2f29; --warn:#e2a650; --warn-soft:#2d2415; --bad:#e58585; --bad-soft:#331c1c; --ok:#86cc97; --mark:#5a4d12;
-    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+    --bg:#151717; --panel:#1b1e1e; --paper:#1f2222; --line:#2b2f2f; --line-2:#3a3f3f; --hover:#242828;
+    --ink:#ebeae6; --ink-2:#bdbcb6; --muted:#8a8984;
+    --accent:#86c3ab; --accent-ink:#0f1f1a; --accent-soft:#1e2f29; --accent-line:#2f4a40;
+    --warn:#e0a650; --warn-soft:#2d2415; --bad:#e58585; --bad-soft:#331c1c; --ok:#86cc97; --ok-soft:#1d2e22; --mark:#5a4d12;
+    --shadow:0 10px 30px rgba(0,0,0,.45), 0 1px 3px rgba(0,0,0,.4);
   } }
   :root[data-theme="dark"] {
-    --bg:#121211; --panel:#1a1a18; --raised:#212120; --ink:#ecebe6; --ink-2:#c6c4bc; --muted:#8f8d85; --line:#2b2b28; --line-2:#3a3a36;
-    --accent:#7fc0a8; --accent-ink:#0f1f1a; --accent-soft:#1d2f29; --warn:#e2a650; --warn-soft:#2d2415; --bad:#e58585; --bad-soft:#331c1c; --ok:#86cc97; --mark:#5a4d12;
-    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+    --bg:#151717; --panel:#1b1e1e; --paper:#1f2222; --line:#2b2f2f; --line-2:#3a3f3f; --hover:#242828;
+    --ink:#ebeae6; --ink-2:#bdbcb6; --muted:#8a8984;
+    --accent:#86c3ab; --accent-ink:#0f1f1a; --accent-soft:#1e2f29; --accent-line:#2f4a40;
+    --warn:#e0a650; --warn-soft:#2d2415; --bad:#e58585; --bad-soft:#331c1c; --ok:#86cc97; --ok-soft:#1d2e22; --mark:#5a4d12;
+    --shadow:0 10px 30px rgba(0,0,0,.45), 0 1px 3px rgba(0,0,0,.4);
   }
   * { box-sizing:border-box; }
   html, body { height:100%; }
-  body { margin:0; font:15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif; background:var(--bg); color:var(--ink); display:grid; grid-template-columns:292px 1fr; -webkit-font-smoothing:antialiased; }
-  a { color:var(--accent); text-decoration:none; }
-  button { font:inherit; color:inherit; background:none; border:0; cursor:pointer; }
-  button:disabled { opacity:.45; cursor:default; }
-  .btn { display:inline-flex; align-items:center; gap:8px; border:1px solid var(--line-2); background:var(--panel); border-radius:10px; padding:8px 12px; font-weight:500; font-size:14px; transition:background .15s, border-color .15s; }
-  .btn:hover { background:var(--raised); border-color:var(--muted); }
+  body { margin:0; font:13.5px/1.5 var(--ui); color:var(--ink); background:var(--bg); display:grid; grid-template-columns:var(--rail) var(--side) 1fr; overflow:hidden; -webkit-font-smoothing:antialiased; }
+  button, input, textarea { font:inherit; color:inherit; }
+  button { cursor:pointer; }
+  a { color:var(--accent); }
+  ::selection { background:var(--accent-soft); }
+  svg.i { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none; }
+  [hidden] { display:none !important; }
+
+  /* ── buttons ── */
+  .btn { display:inline-flex; align-items:center; gap:7px; height:32px; padding:0 12px; border-radius:8px; border:1px solid var(--line-2); background:var(--paper); color:var(--ink); font-weight:500; white-space:nowrap; }
+  .btn:hover { background:var(--hover); }
   .btn.primary { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
-  .btn.primary:hover { filter:brightness(1.08); }
-  .btn.ghost { border-color:transparent; color:var(--ink-2); padding:6px 8px; }
-  .btn.ghost:hover { background:var(--raised); border-color:transparent; color:var(--ink); }
-  .btn svg, .icon svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+  .btn.primary:hover { filter:brightness(1.06); }
+  .btn.ghost { border-color:transparent; background:transparent; color:var(--ink-2); }
+  .btn.ghost:hover { background:var(--hover); color:var(--ink); }
+  .btn.sm { height:26px; padding:0 9px; font-size:12.5px; border-radius:7px; }
+  .btn.icon { width:32px; padding:0; justify-content:center; }
+  .btn.sm.icon { width:26px; }
+  .btn:disabled { opacity:.5; cursor:default; }
+  .btn.danger:hover { color:var(--bad); background:var(--bad-soft); }
 
-  /* ── sidebar ─────────────────────────────────────────── */
-  aside { display:flex; flex-direction:column; min-height:0; background:var(--panel); border-right:1px solid var(--line); }
-  .brand { padding:22px 20px 14px; display:flex; align-items:center; gap:12px; }
-  .mono { width:36px; height:36px; border-radius:10px; background:var(--accent); color:var(--accent-ink); display:grid; place-items:center; font-weight:700; font-size:17px; }
-  .brand h1 { font-size:17px; margin:0; font-weight:650; letter-spacing:-.01em; }
-  .brand .tag { font-size:12px; color:var(--muted); margin-top:1px; }
-  .side-actions { padding:0 16px 10px; }
-  .side-actions .btn { width:100%; justify-content:center; }
-  .section { padding:14px 20px 6px; font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); display:flex; justify-content:space-between; align-items:center; }
-  .section .btn { padding:2px 6px; font-size:12px; letter-spacing:0; text-transform:none; font-weight:500; }
-  .scroll { flex:1; min-height:0; overflow:auto; }
-  .threads, .docs { list-style:none; margin:0; padding:0 10px; }
-  .threads li { padding:9px 10px; border-radius:10px; cursor:pointer; display:grid; gap:2px; }
-  .threads li:hover { background:var(--raised); }
-  .threads li.active { background:var(--accent-soft); }
-  .threads .t { font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .threads .m { font-size:12px; color:var(--muted); display:flex; gap:8px; align-items:center; }
-  .chip { display:inline-block; font-size:11px; font-weight:600; padding:1px 7px; border-radius:999px; background:var(--accent-soft); color:var(--accent); font-family:var(--mono); }
-  .docs li { padding:7px 10px; border-radius:10px; display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer; }
-  .docs li.on { background:var(--accent-soft); }
-  .docs input { margin:0; accent-color:var(--accent); flex:none; }
-  .sel { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:3px 10px; }
-  .sel button { color:inherit; opacity:.7; padding:0 2px; }
-  .sel[hidden] { display:none; }
-  .sel button:hover { opacity:1; }
-  .docs li:hover { background:var(--raised); }
-  .docs .t { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .docs .n { font-size:11px; color:var(--muted); font-family:var(--mono); }
-  .docs .x { color:var(--muted); padding:0 4px; border-radius:6px; visibility:hidden; }
-  .docs li:hover .x { visibility:visible; }
-  .docs .x:hover { color:var(--bad); background:var(--bad-soft); }
-  .docs .an { color:var(--muted); padding:0 4px; border-radius:6px; visibility:hidden; font-size:12px; }
-  .docs li:hover .an { visibility:visible; }
-  .docs .an:hover { color:var(--accent); background:var(--accent-soft); }
-  .reader .rb.report { white-space:normal; }
-  .reader .rb.report h1 { font-size:17px; margin:0 0 10px; }
-  .reader .rb.report h2 { font-size:13px; text-transform:uppercase; letter-spacing:.06em; color:var(--accent); margin:16px 0 6px; }
-  .reader .rb.report blockquote { margin:2px 0 8px; padding:4px 10px; border-left:3px solid var(--line-2); color:var(--ink-2); font-size:13px; }
-  .reader .rb.report .cite { font-family:var(--mono); font-size:12px; color:var(--accent); font-weight:600; padding:0 3px; border-radius:4px; }
-  .reader .rb.report .cite.link:hover { background:var(--accent-soft); text-decoration:underline; }
-  .docs li.job { cursor:default; display:grid; gap:4px; }
-  .docs .job .t { font-size:12.5px; }
-  .bar { height:4px; border-radius:2px; background:var(--line); overflow:hidden; }
-  .bar i { display:block; height:100%; width:0; background:var(--accent); transition:width .2s; }
-  .bar.busy i { width:40%; animation:slide 1.1s ease-in-out infinite; }
-  @keyframes slide { 0% { margin-left:-40%; } 100% { margin-left:100%; } }
-  .empty-side { padding:6px 20px 10px; font-size:13px; color:var(--muted); }
-  .side-foot { border-top:1px solid var(--line); padding:12px 16px 14px; display:grid; gap:10px; }
-  .tiles { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; }
-  .tile { background:var(--raised); border:1px solid var(--line); border-radius:10px; padding:7px 9px; min-width:0; overflow:hidden; }
-  .tile b { display:block; font-size:15px; font-weight:650; font-variant-numeric:tabular-nums; }
-  .tile span { font-size:11px; color:var(--muted); white-space:nowrap; display:block; overflow:hidden; text-overflow:ellipsis; }
-  .status { font-size:12px; color:var(--muted); display:flex; flex-wrap:wrap; gap:4px 10px; align-items:center; }
-  .dot { width:7px; height:7px; border-radius:50%; background:var(--ok); display:inline-block; margin-right:5px; }
-  .links { display:flex; gap:12px; font-size:12px; align-items:center; }
-  .links a { color:var(--ink-2); }
-  .links a:hover { color:var(--accent); }
-  .links .lang { margin-left:auto; font-size:12px; color:var(--ink-2); border:1px solid var(--line-2); border-radius:999px; padding:2px 9px; }
-  .links .lang b { color:var(--accent); }
+  /* ── rail ── */
+  .rail { background:var(--panel); border-right:1px solid var(--line); display:flex; flex-direction:column; align-items:center; padding:12px 0 10px; gap:4px; }
+  .rail .brand { width:36px; height:36px; border-radius:9px; background:var(--accent); color:var(--accent-ink); display:grid; place-items:center; font:700 19px/1 var(--serif); margin-bottom:12px; }
+  .rail button { width:60px; height:54px; border:0; background:transparent; border-radius:10px; color:var(--muted); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px; font-size:10px; font-weight:500; letter-spacing:.01em; position:relative; }
+  .rail button svg.i { width:20px; height:20px; }
+  .rail button:hover { background:var(--hover); color:var(--ink); }
+  .rail button.active { background:var(--accent-soft); color:var(--accent); }
+  .rail .grow { flex:1; }
+  .rail .badge { position:absolute; top:6px; right:10px; min-width:16px; height:16px; border-radius:8px; background:var(--accent); color:var(--accent-ink); font-size:10px; line-height:16px; text-align:center; padding:0 4px; }
+  .rail .dot { position:absolute; top:9px; right:16px; width:7px; height:7px; border-radius:50%; background:var(--ok); }
+  .rail .dot.bad { background:var(--bad); }
 
-  /* ── main ────────────────────────────────────────────── */
-  main { display:flex; flex-direction:column; min-width:0; min-height:0; position:relative; }
-  .topbar { display:flex; align-items:center; gap:14px; padding:12px 24px; border-bottom:1px solid var(--line); background:var(--panel); }
-  .topbar .title { flex:1; font-weight:600; font-size:15px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .matter { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); }
-  .matter input { width:150px; font:inherit; font-family:var(--mono); font-size:13px; padding:6px 10px; border:1px solid var(--line-2); border-radius:8px; background:var(--bg); color:var(--ink); }
-  .matter input:focus { outline:2px solid var(--accent); outline-offset:-1px; border-color:transparent; }
+  /* ── side panel ── */
+  .side { background:var(--panel); border-right:1px solid var(--line); display:flex; flex-direction:column; min-width:0; }
+  .side .sh { display:flex; align-items:center; gap:8px; padding:16px 14px 8px; }
+  .side .sh h2 { margin:0; font-size:15px; font-weight:600; flex:1; letter-spacing:-.01em; }
+  .side .filter { margin:4px 12px 8px; position:relative; }
+  .side .filter input { width:100%; height:32px; border:1px solid var(--line); border-radius:8px; background:var(--paper); padding:0 10px 0 32px; outline:none; }
+  .side .filter input:focus { border-color:var(--accent-line); box-shadow:0 0 0 3px var(--accent-soft); }
+  .side .filter svg.i { position:absolute; left:10px; top:7px; width:16px; height:16px; color:var(--muted); }
+  .side .list { flex:1; overflow:auto; padding:0 8px 12px; }
+  .side .empty { padding:24px 16px; color:var(--muted); font-size:12.5px; text-align:center; line-height:1.5; }
+  .side .sec { padding:12px 8px 4px; font-size:11px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); }
+  .item { display:flex; gap:10px; align-items:flex-start; padding:9px 10px; border-radius:8px; cursor:pointer; position:relative; }
+  .item:hover { background:var(--hover); }
+  .item.active { background:var(--paper); box-shadow:inset 0 0 0 1px var(--line); }
+  .item .ic { width:28px; height:28px; border-radius:7px; background:var(--accent-soft); color:var(--accent); display:grid; place-items:center; flex:none; margin-top:1px; }
+  .item .ic svg.i { width:15px; height:15px; }
+  .item .ic.warn { background:var(--warn-soft); color:var(--warn); }
+  .item .ic.bad { background:var(--bad-soft); color:var(--bad); }
+  .item .ic.ok { background:var(--ok-soft); color:var(--ok); }
+  .item .tx { flex:1; min-width:0; }
+  .item .t { font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .item .m { display:flex; gap:6px; align-items:center; color:var(--muted); font-size:11.5px; margin-top:2px; white-space:nowrap; overflow:hidden; }
+  .item .m .chip { font-family:var(--mono); font-size:10.5px; background:var(--accent-soft); color:var(--accent); padding:0 6px; border-radius:5px; }
+  .item input[type=checkbox] { margin:7px 0 0; accent-color:var(--accent); flex:none; }
+  .item .bar { height:3px; border-radius:2px; background:var(--line); margin-top:6px; overflow:hidden; }
+  .item .bar i { display:block; height:100%; width:0; background:var(--accent); transition:width .3s; }
+  .item .bar.busy i { width:35%; animation:slide 1.2s infinite ease-in-out; }
+  @keyframes slide { 0% { margin-left:-35%; } 100% { margin-left:100%; } }
+  .side .note { margin:0 12px 8px; padding:8px 10px; border-radius:8px; background:var(--accent-soft); color:var(--accent); font-size:12px; display:flex; align-items:center; gap:8px; }
+  .side .note button { margin-left:auto; border:0; background:transparent; color:inherit; font-weight:600; font-size:12px; }
+
+  /* ── work area ── */
+  .work { display:flex; flex-direction:column; min-width:0; min-height:0; position:relative; }
+  .topbar { height:52px; display:flex; align-items:center; gap:10px; padding:0 18px; border-bottom:1px solid var(--line); background:var(--panel); flex:none; }
+  .topbar .title { font-weight:600; font-size:14.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; letter-spacing:-.01em; }
+  .topbar .sub { color:var(--muted); font-size:12px; white-space:nowrap; overflow:hidden; text-outline:none; text-overflow:ellipsis; }
+  .topbar .sp { flex:1; }
+  .topbar .matter { display:flex; align-items:center; gap:8px; font-size:12.5px; color:var(--muted); }
+  .topbar .matter input { width:130px; height:30px; border:1px solid var(--line-2); border-radius:7px; background:var(--paper); padding:0 9px; font-family:var(--mono); font-size:12px; outline:none; }
+  .topbar .matter input:focus { border-color:var(--accent-line); box-shadow:0 0 0 3px var(--accent-soft); }
+  .pill { display:inline-flex; align-items:center; gap:6px; height:26px; padding:0 10px; border-radius:13px; font-size:12px; background:var(--accent-soft); color:var(--accent); font-weight:500; }
+  .pill button { border:0; background:transparent; color:inherit; padding:0; display:flex; }
+  .pill.err { background:var(--bad-soft); color:var(--bad); } .pill.warn { background:var(--warn-soft); color:var(--warn); } .pill.ok { background:var(--ok-soft); color:var(--ok); } .pill.plain { background:var(--hover); color:var(--ink-2); }
   #menu { display:none; }
-  .body-wrap { flex:1; min-height:0; display:flex; }
-  .chat { flex:1; min-width:0; display:flex; flex-direction:column; }
+  .stage { flex:1; display:flex; min-height:0; }
+  .view { flex:1; min-width:0; min-height:0; display:flex; flex-direction:column; }
+  .center { flex:1; display:grid; place-items:center; padding:40px; }
+  .empty-state { max-width:420px; text-align:center; color:var(--muted); }
+  .empty-state .ic { width:48px; height:48px; border-radius:12px; background:var(--accent-soft); color:var(--accent); display:grid; place-items:center; margin:0 auto 14px; }
+  .empty-state .ic svg.i { width:22px; height:22px; }
+  .empty-state h3 { margin:0 0 6px; color:var(--ink); font-size:16px; font-weight:600; }
+  .empty-state p { margin:0 0 16px; font-size:13px; line-height:1.55; }
 
-  #log { flex:1; overflow:auto; padding:28px 24px 12px; }
-  .column { max-width:820px; margin:0 auto; display:flex; flex-direction:column; gap:22px; }
-
-  .welcome { margin:8vh auto 0; max-width:680px; text-align:center; }
-  .welcome h2 { font-size:26px; font-weight:650; letter-spacing:-.02em; margin:0 0 6px; }
-  .welcome p { color:var(--muted); margin:0 0 22px; }
-  .suggest { display:grid; grid-template-columns:repeat(2, 1fr); gap:10px; text-align:left; }
-  .suggest button { border:1px solid var(--line); background:var(--panel); border-radius:12px; padding:12px 14px; font-size:14px; line-height:1.4; transition:border-color .15s, transform .15s; }
-  .suggest button:hover { border-color:var(--accent); transform:translateY(-1px); }
-  .suggest button b { display:block; font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--accent); margin-bottom:3px; }
-
-  .row { display:flex; gap:12px; }
-  .row.user { justify-content:flex-end; }
-  .row.user .bubble { max-width:72%; background:var(--accent-soft); color:var(--ink); padding:11px 15px; border-radius:18px 18px 4px 18px; white-space:pre-wrap; overflow-wrap:anywhere; }
-  .row.notice { justify-content:center; }
-  .row.notice .bubble { font-size:13px; color:var(--warn); background:var(--warn-soft); padding:6px 12px; border-radius:999px; }
-  .files { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
-  .file { display:inline-flex; align-items:center; gap:6px; font-size:12.5px; padding:4px 10px; border-radius:999px; background:var(--panel); border:1px solid var(--line-2); color:var(--ink-2); }
-  .avatar { flex:none; width:30px; height:30px; border-radius:9px; background:var(--accent); color:var(--accent-ink); display:grid; place-items:center; font-weight:700; font-size:13px; margin-top:2px; }
-  .answer { flex:1; min-width:0; }
-  .answer .head { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); margin-bottom:4px; }
-  .answer .head b { color:var(--ink); font-weight:600; }
-  .kind { font-size:11px; font-weight:600; letter-spacing:.04em; text-transform:uppercase; padding:1px 7px; border-radius:999px; background:var(--raised); border:1px solid var(--line); color:var(--ink-2); }
-  .kind.blocked { color:var(--bad); background:var(--bad-soft); border-color:transparent; }
-  .kind.question { color:var(--warn); background:var(--warn-soft); border-color:transparent; }
-  .kind.ok { color:var(--ok); background:var(--accent-soft); border-color:transparent; }
-  .kind.fail { color:var(--bad); background:var(--bad-soft); border-color:transparent; }
-  .body { overflow-wrap:anywhere; }
+  /* ── chat ── */
+  #log { flex:1; overflow:auto; padding:28px 24px 8px; }
+  .column { max-width:780px; margin:0 auto; }
+  .msg { margin:0 0 22px; }
+  .msg.user { display:flex; justify-content:flex-end; }
+  .msg.user .bubble { max-width:78%; background:var(--paper); border:1px solid var(--line); border-radius:14px 14px 4px 14px; padding:10px 14px; white-space:pre-wrap; overflow-wrap:anywhere; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  .msg.notice { display:flex; justify-content:center; }
+  .msg.notice .bubble { background:var(--warn-soft); color:var(--warn); border-radius:10px; padding:8px 14px; font-size:13px; display:flex; gap:8px; align-items:center; }
+  .msg .files { display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+  .msg .file { display:inline-flex; align-items:center; gap:5px; font-size:12px; background:var(--hover); border-radius:6px; padding:3px 8px; }
+  .msg.ai { display:grid; grid-template-columns:30px 1fr; gap:12px; }
+  .msg.ai .av { width:30px; height:30px; border-radius:8px; background:var(--accent); color:var(--accent-ink); display:grid; place-items:center; font:700 15px/1 var(--serif); margin-top:2px; }
+  .msg.ai .head { display:flex; align-items:center; gap:8px; margin-bottom:4px; font-size:12.5px; color:var(--muted); flex-wrap:wrap; }
+  .msg.ai .head b { color:var(--ink); font-weight:600; }
+  .tag { font-size:10.5px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; padding:2px 7px; border-radius:5px; background:var(--hover); color:var(--ink-2); }
+  .tag.ok { background:var(--ok-soft); color:var(--ok); } .tag.fail { background:var(--warn-soft); color:var(--warn); } .tag.blocked { background:var(--bad-soft); color:var(--bad); } .tag.question { background:var(--accent-soft); color:var(--accent); }
+  .body { font-size:14.5px; line-height:1.6; overflow-wrap:anywhere; }
   .body p { margin:0 0 10px; } .body p:last-child { margin-bottom:0; }
-  .body ul, .body ol { margin:4px 0 10px; padding-left:22px; }
-  .body li { margin:2px 0; }
-  .body h3 { font-size:15px; margin:12px 0 6px; font-weight:650; }
-  .body blockquote { margin:6px 0 10px; padding:6px 14px; border-left:3px solid var(--accent); background:var(--raised); border-radius:0 8px 8px 0; color:var(--ink-2); }
-  .body code { font-family:var(--mono); font-size:13px; background:var(--raised); border:1px solid var(--line); border-radius:5px; padding:1px 5px; }
-  .body pre { background:var(--raised); border:1px solid var(--line); border-radius:10px; padding:12px 14px; overflow:auto; font-size:13px; }
-  .body pre code { border:0; background:none; padding:0; }
-  .body .cite { font-family:var(--mono); font-size:12px; color:var(--accent); font-weight:600; padding:0 3px; border-radius:4px; }
-  .body .cite.link:hover { background:var(--accent-soft); text-decoration:underline; }
-  .body a { text-decoration:underline; text-decoration-color:var(--line-2); }
-  .question-card { border:1px solid var(--warn); background:var(--warn-soft); border-radius:12px; padding:12px 14px; }
-  .question-card .lbl { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--warn); margin-bottom:4px; }
-
-  .live { display:flex; align-items:center; gap:10px; font-size:13px; color:var(--muted); margin:6px 0 2px; }
+  .body h3 { font-size:12px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin:16px 0 6px; font-weight:600; }
+  .body ul, .body ol { margin:4px 0 10px; padding-left:22px; } .body li { margin:3px 0; }
+  .body blockquote { margin:4px 0 10px; padding:6px 12px; border-left:3px solid var(--accent-line); background:var(--panel); border-radius:0 8px 8px 0; color:var(--ink-2); font-family:var(--serif); font-size:14px; }
+  .body code { font-family:var(--mono); font-size:12.5px; background:var(--hover); padding:1px 5px; border-radius:4px; }
+  .body pre { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 12px; overflow:auto; }
+  .body pre code { background:none; padding:0; }
+  .cite { font-family:var(--mono); font-size:11.5px; font-weight:600; color:var(--accent); background:transparent; border:0; padding:0 3px; border-radius:4px; cursor:default; }
+  .cite.link { cursor:pointer; background:var(--accent-soft); }
+  .cite.link:hover { text-decoration:underline; }
+  .question-card { border:1px solid var(--accent-line); background:var(--accent-soft); border-radius:10px; padding:10px 14px; }
+  .question-card .lbl { font-size:11px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--accent); margin-bottom:4px; }
+  .actions { display:flex; align-items:center; gap:2px; margin-top:8px; opacity:.55; transition:opacity .15s; }
+  .msg.ai:hover .actions { opacity:1; }
+  .actions .btn.on { color:var(--accent); background:var(--accent-soft); }
+  .live { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:12.5px; margin:4px 0 8px; }
+  .crumbs { display:flex; gap:6px; flex-wrap:wrap; }
+  .crumbs span { background:var(--hover); border-radius:5px; padding:2px 8px; }
   .spinner { width:14px; height:14px; border:2px solid var(--line-2); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; flex:none; }
   @keyframes spin { to { transform:rotate(360deg); } }
-  .live .crumbs span + span::before { content:"›"; margin:0 6px; color:var(--line-2); }
-
-  .actions { display:flex; align-items:center; gap:4px; margin-top:6px; opacity:.75; transition:opacity .15s; }
-  .answer:hover .actions { opacity:1; }
-  .actions .btn.ghost { font-size:12.5px; }
-  .actions .fb.on { color:var(--accent); background:var(--accent-soft); }
-
-  .path { margin-top:8px; border:1px solid var(--line); background:var(--panel); border-radius:12px; padding:14px 16px; display:none; box-shadow:var(--shadow); }
+  .path { display:none; margin-top:8px; border:1px solid var(--line); border-radius:10px; background:var(--panel); padding:10px 14px; font-size:12.5px; }
   .path.open { display:block; }
-  .path .sum { display:flex; flex-wrap:wrap; gap:6px 14px; font-size:12.5px; color:var(--ink-2); padding-bottom:10px; margin-bottom:10px; border-bottom:1px solid var(--line); }
-  .path .sum b { color:var(--ink); font-variant-numeric:tabular-nums; }
-  .step { position:relative; padding:0 0 12px 22px; font-size:13.5px; }
-  .step::before { content:""; position:absolute; left:5px; top:7px; width:8px; height:8px; border-radius:50%; background:var(--accent); }
-  .step::after { content:""; position:absolute; left:8.5px; top:17px; bottom:-2px; width:1px; background:var(--line-2); }
-  .step:last-child::after { display:none; }
-  .step .st { font-weight:600; }
-  .step .st small { color:var(--muted); font-weight:400; margin-left:6px; font-variant-numeric:tabular-nums; }
-  .step .sm { color:var(--ink-2); }
-  .step .items { margin:4px 0 0; padding:0; list-style:none; font-size:12.5px; color:var(--muted); }
-  .step .items li { padding:1px 0 1px 10px; border-left:2px solid var(--line); margin:2px 0; overflow-wrap:anywhere; }
-  .step.bad::before { background:var(--bad); }
-  .step.bad .sm { color:var(--bad); }
-  .step.audit::before { background:var(--muted); }
+  .path .sum { display:flex; flex-wrap:wrap; gap:6px 16px; color:var(--muted); padding-bottom:8px; border-bottom:1px solid var(--line); margin-bottom:6px; }
+  .path .sum b { color:var(--ink); }
+  .path .step { padding:6px 0 6px 14px; border-left:2px solid var(--line-2); margin-left:4px; }
+  .path .step.bad { border-left-color:var(--warn); }
+  .path .step.audit { border-left-color:var(--accent-line); }
+  .path .st { font-weight:600; display:flex; gap:8px; align-items:baseline; } .path .st small { color:var(--muted); font-weight:400; font-family:var(--mono); }
+  .path .sm { color:var(--ink-2); }
+  .path .items { margin:4px 0 0; padding-left:16px; color:var(--ink-2); font-family:var(--mono); font-size:11.5px; }
+  .welcome { padding:40px 0 20px; }
+  .welcome h2 { font:600 26px/1.2 var(--serif); letter-spacing:-.01em; margin:0 0 8px; text-align:center; }
+  .welcome p { margin:0 auto 22px; color:var(--muted); text-align:center; max-width:520px; }
+  .suggest { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; }
+  .suggest button { text-align:left; background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:12px 14px; line-height:1.45; color:var(--ink-2); transition:border-color .15s, transform .15s; }
+  .suggest button:hover { border-color:var(--accent-line); color:var(--ink); transform:translateY(-1px); }
+  .suggest b { display:block; font-size:10.5px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); margin-bottom:5px; }
+  .composer { padding:8px 24px 16px; flex:none; }
+  .composer form { max-width:780px; margin:0 auto; background:var(--paper); border:1px solid var(--line-2); border-radius:14px; box-shadow:0 1px 2px rgba(0,0,0,.04); transition:border-color .15s, box-shadow .15s; }
+  .composer form:focus-within { border-color:var(--accent-line); box-shadow:0 0 0 3px var(--accent-soft); }
+  .composer .atts { display:flex; flex-wrap:wrap; gap:6px; padding:10px 12px 0; }
+  .composer .atts:empty { display:none; }
+  .att { display:inline-flex; align-items:center; gap:8px; max-width:100%; font-size:12.5px; padding:5px 6px 5px 10px; border-radius:8px; background:var(--panel); border:1px solid var(--line); }
+  .att .nm { max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500; }
+  .att .sz { color:var(--muted); font-size:11.5px; }
+  .att label { display:inline-flex; align-items:center; gap:4px; color:var(--ink-2); cursor:pointer; font-size:12px; }
+  .att input[type=checkbox] { accent-color:var(--accent); margin:0; }
+  .composer .line { display:flex; align-items:flex-end; gap:6px; padding:8px 8px 8px 10px; }
+  .composer textarea { flex:1; border:0; outline:0; background:transparent; resize:none; max-height:200px; padding:7px 4px; font-size:14.5px; line-height:1.45; }
+  .composer .send { width:34px; height:34px; border-radius:9px; border:0; background:var(--accent); color:var(--accent-ink); display:grid; place-items:center; }
+  .composer .send:disabled { opacity:.45; }
+  .hint { max-width:780px; margin:8px auto 0; font-size:11.5px; color:var(--muted); text-align:center; }
 
-  /* ── reader ───────────────────────────────────────────── */
-  .reader { width:0; flex:none; border-left:1px solid var(--line); background:var(--panel); display:flex; flex-direction:column; overflow:hidden; transition:width .2s; }
-  .reader.open { width:min(460px, 45%); }
-  .reader .rh { display:flex; align-items:center; gap:8px; padding:12px 14px 12px 18px; border-bottom:1px solid var(--line); }
-  .reader .rh .t { flex:1; font-weight:600; font-size:14px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .reader .rh small { display:block; color:var(--muted); font-weight:400; font-size:12px; font-family:var(--mono); }
-  .reader .rb { flex:1; overflow:auto; padding:18px; font-size:13.5px; line-height:1.6; white-space:pre-wrap; overflow-wrap:anywhere; }
-  .reader mark { background:var(--mark); color:inherit; border-radius:3px; padding:1px 2px; }
-  .reader.open.wide { width:min(820px, 62%); }
-  .reader .rh .back { margin-left:auto; font-size:12px; }
-  .reader .rb.review { white-space:normal; }
-  .rv-sum { font-size:13px; color:var(--ink-2); margin-bottom:8px; } .rv-sum .e { color:var(--bad); } .rv-sum .w { color:var(--warn); }
-  .rv-note { font-size:12.5px; color:var(--muted); font-style:italic; margin:4px 0; } .rv-note.ok { color:var(--ok); font-style:normal; }
-  .rv-acts { display:flex; gap:8px; margin:10px 0 14px; flex-wrap:wrap; }
-  .issue { border:1px solid var(--line); border-left:3px solid var(--warn); border-radius:8px; padding:8px 10px; margin:0 0 8px; font-size:13px; cursor:pointer; background:var(--panel); }
-  .issue.err { border-left-color:var(--bad); }
-  .issue.accept { background:var(--accent-soft); } .issue.reject { opacity:.55; }
-  .issue .ih { display:flex; gap:8px; align-items:baseline; font-size:12px; color:var(--muted); flex-wrap:wrap; } .issue .num { font-family:var(--mono); color:var(--accent); font-weight:600; } .issue .kind { font-weight:600; color:var(--ink); }
-  .issue .why { margin:4px 0; }
-  .issue blockquote { margin:4px 0; padding:2px 8px; border-left:2px solid var(--line-2); color:var(--ink-2); font-size:12.5px; }
-  .issue .orig, .issue .chg { font-size:12.5px; color:var(--ink-2); margin:4px 0; } .issue .chg { color:var(--accent); }
-  .issue .src { font-family:var(--mono); font-size:11.5px; word-break:break-all; display:block; margin-top:2px; }
-  .issue .acts { display:flex; gap:6px; margin-top:6px; } .issue .acts button { font:inherit; font-size:12px; padding:3px 10px; border-radius:6px; border:1px solid var(--line-2); background:var(--panel); color:var(--ink); cursor:pointer; }
-  .issue.accept .acts [data-dec=accept], .issue.reject .acts [data-dec=reject] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
-  .rv-draft { white-space:pre-wrap; border-top:1px solid var(--line); padding-top:14px; margin-top:14px; }
-  .rv-draft mark.iss { background:var(--warn-soft); border-bottom:2px solid var(--warn); cursor:pointer; } .rv-draft mark.iss.err { background:var(--bad-soft); border-bottom-color:var(--bad); }
-  .clip { position:absolute; z-index:6; display:none; }
+  /* ── paper (documents, drafts, reports) ── */
+  .scrollv { flex:1; overflow:auto; min-height:0; }
+  .paper { max-width:820px; margin:24px auto 48px; background:var(--paper); border:1px solid var(--line); border-radius:12px; padding:40px 48px; font-family:var(--serif); font-size:15px; line-height:1.7; white-space:pre-wrap; overflow-wrap:anywhere; box-shadow:0 1px 2px rgba(0,0,0,.04); }
+  .paper.prose { white-space:normal; }
+  .paper.prose h1 { font-size:22px; margin:0 0 14px; font-weight:600; letter-spacing:-.01em; }
+  .paper.prose h2 { font-family:var(--ui); font-size:11.5px; letter-spacing:.09em; text-transform:uppercase; color:var(--accent); margin:26px 0 8px; font-weight:600; }
+  .paper.prose h3 { font-family:var(--ui); font-size:12px; letter-spacing:.07em; text-transform:uppercase; color:var(--muted); margin:18px 0 6px; }
+  .paper.prose p { margin:0 0 10px; }
+  .paper.prose ul { padding-left:20px; } .paper.prose li { margin:6px 0; }
+  .paper.prose blockquote { margin:4px 0 10px; padding:4px 12px; border-left:3px solid var(--accent-line); color:var(--ink-2); font-size:14px; }
+  .paper.prose .cite { font-size:11.5px; }
+  .mh { display:block; font-weight:600; letter-spacing:-.01em; } .mh1 { font-size:22px; line-height:1.3; } .mh2 { font-size:17px; } .mh3 { font-size:15.5px; }
+  .mq { display:block; padding-left:12px; border-left:3px solid var(--accent-line); color:var(--ink-2); font-style:italic; }
+  .paper mark { background:var(--mark); color:inherit; border-radius:3px; padding:1px 2px; }
+  .paper mark.iss { background:var(--warn-soft); border-bottom:2px solid var(--warn); cursor:pointer; }
+  .paper mark.iss.err { background:var(--bad-soft); border-bottom-color:var(--bad); }
+  .paper mark.iss.focus { outline:2px solid var(--accent); outline-offset:2px; }
+  .toolbar { display:flex; align-items:center; gap:8px; padding:10px 24px; border-bottom:1px solid var(--line); background:var(--panel); flex:none; font-size:12.5px; color:var(--muted); min-height:52px; }
+  .toolbar .stats { min-width:0; flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .toolbar .sp { flex:1; }
+  .clip { position:fixed; z-index:40; display:none; box-shadow:var(--shadow); }
   .clip.show { display:inline-flex; }
 
-  /* ── composer ─────────────────────────────────────────── */
-  .composer { padding:10px 24px 18px; background:linear-gradient(to top, var(--bg) 70%, transparent); }
-  .composer form { max-width:820px; margin:0 auto; background:var(--panel); border:1px solid var(--line-2); border-radius:16px; padding:8px 8px 8px 10px; box-shadow:var(--shadow); }
-  .composer form:focus-within { border-color:var(--accent); }
-  .attach-list { display:flex; flex-wrap:wrap; gap:6px; padding:2px 4px 8px; }
-  .attach-list:empty { display:none; }
-  .att { display:inline-flex; align-items:center; gap:8px; font-size:12.5px; padding:5px 8px 5px 10px; border-radius:10px; background:var(--raised); border:1px solid var(--line); }
-  .att .nm { max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-  .att .sz { color:var(--muted); font-family:var(--mono); font-size:11px; }
-  .att label { display:inline-flex; align-items:center; gap:4px; color:var(--ink-2); cursor:pointer; }
-  .att input { margin:0; accent-color:var(--accent); }
-  .att .x { color:var(--muted); padding:0 3px; border-radius:5px; }
-  .att .x:hover { color:var(--bad); background:var(--bad-soft); }
-  .att .spinner { width:11px; height:11px; }
-  .line { display:flex; align-items:flex-end; gap:6px; }
-  textarea { flex:1; resize:none; border:0; background:none; color:var(--ink); font:inherit; line-height:1.5; max-height:200px; padding:8px 4px; outline:none; }
-  textarea::placeholder { color:var(--muted); }
-  .icon { width:38px; height:38px; border-radius:11px; display:grid; place-items:center; flex:none; color:var(--muted); }
-  .icon:hover { background:var(--raised); color:var(--ink); }
-  .icon svg { width:18px; height:18px; }
-  .send { width:38px; height:38px; border-radius:11px; background:var(--accent); color:var(--accent-ink); display:grid; place-items:center; flex:none; }
-  .send svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:2; stroke-linecap:round; stroke-linejoin:round; }
-  .hint { max-width:820px; margin:8px auto 0; font-size:12px; color:var(--muted); text-align:center; }
+  /* ── review ── */
+  .rv { flex:1; display:flex; min-height:0; }
+  .rv .scrollv { flex:1; }
+  .rv .issues { width:400px; flex:none; border-left:1px solid var(--line); background:var(--panel); overflow:auto; padding:14px; }
+  .issue { border:1px solid var(--line); border-left:3px solid var(--warn); border-radius:10px; padding:10px 12px; margin:0 0 10px; font-size:13px; cursor:pointer; background:var(--paper); }
+  .issue.err { border-left-color:var(--bad); }
+  .issue.focus { box-shadow:0 0 0 2px var(--accent-line); }
+  .issue.accept { background:var(--accent-soft); } .issue.reject { opacity:.5; }
+  .issue .ih { display:flex; gap:8px; align-items:baseline; font-size:11.5px; color:var(--muted); flex-wrap:wrap; }
+  .issue .num { font-family:var(--mono); color:var(--accent); font-weight:600; } .issue .kind { font-weight:600; color:var(--ink); }
+  .issue .why { margin:5px 0; color:var(--ink-2); }
+  .issue blockquote { margin:5px 0; padding:3px 10px; border-left:2px solid var(--line-2); color:var(--ink-2); font-size:12.5px; font-family:var(--serif); }
+  .issue .orig, .issue .chg { font-size:12.5px; color:var(--ink-2); margin:5px 0; } .issue .chg { color:var(--accent); font-family:var(--serif); }
+  .issue .orig button { font-family:var(--ui); font-size:11.5px; }
+  .issue .src { font-family:var(--mono); font-size:11px; word-break:break-all; display:block; margin-top:3px; }
+  .issue .acts { display:flex; gap:6px; margin-top:8px; }
+  .issue .acts button { height:26px; padding:0 10px; font-size:12px; border-radius:7px; border:1px solid var(--line-2); background:var(--paper); color:var(--ink); display:inline-flex; align-items:center; gap:5px; }
+  .issue .acts button svg.i { width:13px; height:13px; }
+  .issue.accept .acts [data-dec=accept], .issue.reject .acts [data-dec=reject] { background:var(--accent); color:var(--accent-ink); border-color:var(--accent); }
+  .rv-note { font-size:12.5px; color:var(--muted); font-style:italic; margin:0 0 10px; }
+  .rv-note.ok { color:var(--ok); font-style:normal; }
 
-  .drop { position:absolute; inset:0; display:none; place-items:center; background:color-mix(in srgb, var(--bg) 80%, transparent); border:2px dashed var(--accent); z-index:10; font-weight:600; color:var(--accent); font-size:17px; backdrop-filter:blur(2px); }
-  main.dragging .drop { display:grid; }
-  .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--ink); color:var(--bg); padding:9px 16px; border-radius:999px; font-size:13px; box-shadow:var(--shadow); opacity:0; transition:opacity .2s; pointer-events:none; z-index:20; }
+  /* ── inspector ── */
+  .inspector { width:0; flex:none; border-left:1px solid var(--line); background:var(--panel); display:flex; flex-direction:column; overflow:hidden; transition:width .2s; }
+  .inspector.open { width:min(480px, 44%); }
+  .inspector .ih { display:flex; align-items:center; gap:8px; padding:10px 12px 10px 16px; border-bottom:1px solid var(--line); min-height:52px; }
+  .inspector .ih .t { flex:1; font-weight:600; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .inspector .ih small { display:block; color:var(--muted); font-weight:400; font-size:11.5px; font-family:var(--mono); }
+  .inspector .ib { flex:1; overflow:auto; padding:18px 20px; font-family:var(--serif); font-size:14px; line-height:1.65; white-space:pre-wrap; overflow-wrap:anywhere; }
+  .inspector .ib mark { background:var(--mark); color:inherit; border-radius:3px; padding:1px 2px; }
+
+  /* ── popovers ── */
+  .pop { position:fixed; left:80px; bottom:14px; width:320px; background:var(--paper); border:1px solid var(--line); border-radius:12px; box-shadow:var(--shadow); padding:14px 16px; z-index:50; display:none; }
+  .pop.open { display:block; }
+  .pop h4 { margin:0 0 10px; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; }
+  .pop h4 .sp { flex:1; }
+  .pop .row { display:flex; justify-content:space-between; gap:10px; padding:6px 0; border-top:1px solid var(--line); font-size:12.5px; }
+  .pop .row span:first-child { color:var(--muted); }
+  .pop .row b { font-weight:500; font-family:var(--mono); font-size:12px; }
+  .pop .tiles { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin:4px 0 10px; }
+  .pop .tile { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:7px 9px; }
+  .pop .tile b { display:block; font-size:15px; font-weight:600; } .pop .tile span { font-size:11px; color:var(--muted); }
+  .pop .links { display:flex; gap:12px; font-size:12px; margin-top:8px; }
+  .pop .alarm { padding:7px 0; border-top:1px solid var(--line); font-size:12.5px; } .pop .alarm small { display:block; color:var(--muted); font-family:var(--mono); font-size:11px; }
+  .pop .empty { color:var(--muted); font-size:12.5px; padding:4px 0; }
+
+  .drop { position:absolute; inset:0; display:none; place-items:center; background:color-mix(in srgb, var(--bg) 82%, transparent); border:2px dashed var(--accent); z-index:10; font-weight:600; color:var(--accent); font-size:16px; backdrop-filter:blur(2px); }
+  .work.dragging .drop { display:grid; }
+  .toast { position:fixed; left:50%; bottom:24px; transform:translateX(-50%); background:var(--ink); color:var(--bg); padding:9px 16px; border-radius:999px; font-size:13px; box-shadow:var(--shadow); opacity:0; transition:opacity .2s; pointer-events:none; z-index:60; }
   .toast.show { opacity:1; }
 
+  @media (max-width: 1100px) { .rv .issues { width:340px; } .suggest { grid-template-columns:repeat(2, 1fr); } }
   @media (max-width: 860px) {
-    body { grid-template-columns:1fr; }
-    aside { position:fixed; inset:0 25% 0 0; z-index:30; transform:translateX(-100%); transition:transform .2s; box-shadow:var(--shadow); }
-    aside.open { transform:none; }
+    body { grid-template-columns:var(--rail) 1fr; }
+    .side { position:fixed; left:var(--rail); top:0; bottom:0; width:min(320px, 85vw); z-index:30; transform:translateX(-110%); transition:transform .2s; box-shadow:var(--shadow); }
+    .side.open { transform:none; }
     #menu { display:inline-flex; }
-    .topbar { padding:10px 16px; }
-    .matter input { width:110px; }
-    #log { padding:20px 16px 8px; }
-    .suggest { grid-template-columns:1fr; }
-    .row.user .bubble { max-width:88%; }
-    .composer { padding:8px 16px 14px; }
-    .reader.open { position:absolute; inset:0; width:100%; z-index:5; }
+    .topbar { padding:0 12px; } .topbar .matter input { width:100px; }
+    #log { padding:20px 14px 8px; } .composer { padding:8px 12px 12px; } .suggest { grid-template-columns:1fr; }
+    .paper { padding:24px 20px; margin:12px; border-radius:10px; }
+    .rv { flex-direction:column; } .rv .issues { width:auto; border-left:0; border-top:1px solid var(--line); max-height:45%; }
+    .inspector.open { position:absolute; inset:0; width:100%; z-index:5; }
+    .pop { left:12px; right:12px; width:auto; }
   }
 </style>
 </head>
 <body>
-<aside id="side">
-  <div class="brand">
-    <div class="mono">A</div>
-    <div><h1>Aroa</h1><div class="tag" data-i18n="tag"></div></div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-8 8H6l-3 3V12a8 8 0 0 1 8-8h2a8 8 0 0 1 8 8z"/></symbol>
+  <symbol id="i-doc" viewBox="0 0 24 24"><path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5M9 13h6M9 17h6"/></symbol>
+  <symbol id="i-jobs" viewBox="0 0 24 24"><path d="M9 5h6a1 1 0 0 1 1 1v1H8V6a1 1 0 0 1 1-1z"/><path d="M8 6H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-2"/><path d="m9 14 2 2 4-4"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 16V11a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 21h4"/></symbol>
+  <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M3 12h4l3-8 4 16 3-8h4"/></symbol>
+  <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+  <symbol id="i-auto" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-clip" viewBox="0 0 24 24"><path d="M21 11.5l-8.5 8.5a5.5 5.5 0 0 1-7.8-7.8l9-9a3.5 3.5 0 0 1 5 5l-9 9a1.5 1.5 0 0 1-2.1-2.1l8.3-8.3"/></symbol>
+  <symbol id="i-send" viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
+  <symbol id="i-up" viewBox="0 0 24 24"><path d="M7 11v10H4V11zM7 11l4-8a2 2 0 0 1 3 2v4h5a2 2 0 0 1 2 2.3l-1.2 7A2 2 0 0 1 17.8 20H7"/></symbol>
+  <symbol id="i-down" viewBox="0 0 24 24"><path d="M17 13V3h3v10zM17 13l-4 8a2 2 0 0 1-3-2v-4H5a2 2 0 0 1-2-2.3l1.2-7A2 2 0 0 1 6.2 4H17"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/></symbol>
+  <symbol id="i-scissors" viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.1 15.9M14.5 14.5 20 20M8.1 8.1 12 12"/></symbol>
+  <symbol id="i-pen" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+  <symbol id="i-scan" viewBox="0 0 24 24"><path d="M3 8V5a2 2 0 0 1 2-2h3M16 3h3a2 2 0 0 1 2 2v3M21 16v3a2 2 0 0 1-2 2h-3M8 21H5a2 2 0 0 1-2-2v-3"/><circle cx="11.5" cy="11.5" r="3.5"/><path d="m14 14 3 3"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+  <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+  <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 21h20z"/><path d="M12 10v5M12 18h.01"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 8v6l-4-2v-4z"/></symbol>
+</svg>
+
+<nav class="rail" id="rail">
+  <div class="brand" title="Aroa">A</div>
+  <button data-sec="chat" class="active"><svg class="i"><use href="#i-chat"/></svg><span data-i18n="sec_chat"></span></button>
+  <button data-sec="docs"><svg class="i"><use href="#i-doc"/></svg><span data-i18n="sec_docs"></span></button>
+  <button data-sec="jobs"><svg class="i"><use href="#i-jobs"/></svg><span data-i18n="sec_jobs"></span><span class="badge" id="jobs-badge" hidden></span></button>
+  <div class="grow"></div>
+  <button id="b-alarms" data-i18n-title="alarms"><svg class="i"><use href="#i-bell"/></svg><span data-i18n="alarms"></span><span class="badge" id="alarms-badge" hidden></span></button>
+  <button id="b-status" data-i18n-title="status"><svg class="i"><use href="#i-pulse"/></svg><span data-i18n="status"></span><span class="dot" id="health-dot"></span></button>
+  <button id="b-theme" data-i18n-title="theme"><svg class="i"><use href="#i-auto" id="theme-icon"/></svg><span data-i18n="theme"></span></button>
+  <button id="lang"><span style="font-size:12px;font-weight:600">ES</span><span data-i18n="language"></span></button>
+</nav>
+
+<aside class="side" id="side">
+  <!-- conversations -->
+  <div class="sp-view" id="sp-chat">
+    <div class="sh"><h2 data-i18n="conversations"></h2><button class="btn primary sm" id="new"><svg class="i"><use href="#i-plus"/></svg><span data-i18n="new_short"></span></button></div>
+    <div class="filter"><svg class="i"><use href="#i-search"/></svg><input id="f-threads" data-i18n-placeholder="filter_threads"></div>
+    <div class="list" id="threads"></div>
+    <div class="empty" id="threads-empty" hidden data-i18n="no_threads"></div>
   </div>
-  <div class="side-actions">
-    <button class="btn primary" id="new"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg><span data-i18n="new"></span></button>
-  </div>
-  <div class="scroll">
-    <div class="section" data-i18n="conversations"></div>
-    <ul class="threads" id="threads"></ul>
-    <div class="empty-side" id="threads-empty" hidden data-i18n="no_threads"></div>
-    <div class="section"><span data-i18n="documents"></span><button class="btn ghost" id="add-doc" data-i18n="add" data-i18n-title="add_title"></button></div>
+  <!-- documents -->
+  <div class="sp-view" id="sp-docs" hidden>
+    <div class="sh"><h2 data-i18n="documents"></h2><button class="btn primary sm" id="add-doc" data-i18n-title="add_title"><svg class="i"><use href="#i-plus"/></svg><span data-i18n="add"></span></button></div>
     <input type="file" id="file" accept=".md,.txt,.pdf" multiple hidden>
-    <ul class="docs" id="jobs"></ul>
-    <ul class="docs" id="docs"></ul>
-    <div class="empty-side" id="docs-empty" hidden data-i18n="no_docs"></div>
+    <div class="filter"><svg class="i"><use href="#i-search"/></svg><input id="f-docs" data-i18n-placeholder="filter_docs"></div>
+    <div class="note" id="sel-note" hidden><svg class="i"><use href="#i-filter"/></svg><span id="sel-text"></span><button type="button" id="sel-clear" data-i18n="clear"></button></div>
+    <div class="list"><div id="uploads"></div><div id="docs"></div></div>
+    <div class="empty" id="docs-empty" hidden data-i18n="no_docs"></div>
   </div>
-  <div class="side-foot">
-    <div class="tiles" id="tiles"></div>
-    <div class="status" id="health"><span class="dot"></span>…</div>
-    <div class="links"><a href="/api/alarms" target="_blank" data-i18n="alarms"></a><a href="/api/report?days=7" target="_blank" data-i18n="report"></a><a href="/metrics" target="_blank">Metrics</a><button class="lang" id="lang"></button></div>
+  <!-- jobs -->
+  <div class="sp-view" id="sp-jobs" hidden>
+    <div class="sh"><h2 data-i18n="jobs"></h2></div>
+    <div class="list" id="jobs"></div>
+    <div class="empty" id="jobs-empty" hidden data-i18n="no_jobs"></div>
   </div>
 </aside>
 
-<main id="main">
+<main class="work" id="work">
   <div class="topbar">
-    <button class="btn ghost" id="menu" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <button class="btn ghost icon" id="menu" aria-label="Menu"><svg class="i"><use href="#i-menu"/></svg></button>
     <div class="title" id="title"></div>
-    <span class="sel" id="sel" hidden></span>
-    <label class="matter" data-i18n-title="matter_title"><span data-i18n="matter"></span> <input id="matter" data-i18n-placeholder="matter_ph" spellcheck="false"></label>
+    <div class="sub" id="subtitle"></div>
+    <div class="sp"></div>
+    <div id="top-actions" style="display:flex;gap:8px;align-items:center"></div>
+    <span class="pill" id="sel" hidden></span>
+    <label class="matter" id="matter-box" data-i18n-title="matter_title"><span data-i18n="matter"></span><input id="matter" data-i18n-placeholder="matter_ph" spellcheck="false"></label>
   </div>
-  <div class="body-wrap">
-    <div class="chat">
+  <div class="stage">
+    <!-- chat -->
+    <section class="view" id="view-chat">
       <div id="log"><div class="column" id="column"></div></div>
       <div class="composer">
         <form id="form">
-          <div class="attach-list" id="attach-list"></div>
+          <div class="atts" id="attach-list"></div>
           <div class="line">
-            <button type="button" class="icon" id="attach" data-i18n-title="attach_title"><svg viewBox="0 0 24 24"><path d="M21 11.5l-8.5 8.5a5.5 5.5 0 0 1-7.8-7.8l9-9a3.5 3.5 0 0 1 5 5l-9 9a1.5 1.5 0 0 1-2.1-2.1l8.3-8.3"/></svg></button>
+            <button type="button" class="btn ghost icon" id="attach" data-i18n-title="attach_title"><svg class="i"><use href="#i-clip"/></svg></button>
             <input type="file" id="attach-file" accept=".md,.txt,.pdf" multiple hidden>
             <textarea id="text" rows="1" data-i18n-placeholder="write"></textarea>
-            <button class="send" type="submit" id="send" aria-label="Send"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+            <button class="send" type="submit" id="send" aria-label="Send"><svg class="i"><use href="#i-send"/></svg></button>
           </div>
         </form>
         <div class="hint" data-i18n="hint"></div>
       </div>
-    </div>
-    <div class="reader" id="reader">
-      <div class="rh"><div class="t" id="reader-title"></div><button class="btn ghost" id="reader-close" data-i18n="close"></button></div>
-      <div class="rb" id="reader-body"></div>
-      <button type="button" class="btn primary clip" id="clip">✂ <span data-i18n="clip"></span></button>
-    </div>
+    </section>
+    <!-- document -->
+    <section class="view" id="view-doc" hidden>
+      <div class="center" id="doc-empty"><div class="empty-state"><div class="ic"><svg class="i"><use href="#i-doc"/></svg></div><h3 data-i18n="docs_empty_h"></h3><p data-i18n="docs_empty_p"></p><button class="btn primary" id="add-doc-2"><svg class="i"><use href="#i-plus"/></svg><span data-i18n="add_doc"></span></button></div></div>
+      <div class="toolbar" id="doc-tools" hidden></div>
+      <div class="scrollv" id="doc-scroll" hidden><div class="paper" id="doc-body"></div></div>
+    </section>
+    <!-- jobs: review / analysis -->
+    <section class="view" id="view-job" hidden>
+      <div class="center" id="job-empty"><div class="empty-state"><div class="ic"><svg class="i"><use href="#i-jobs"/></svg></div><h3 data-i18n="jobs_empty_h"></h3><p data-i18n="jobs_empty_p"></p></div></div>
+      <div class="toolbar" id="job-tools" hidden></div>
+      <div class="rv" id="rv" hidden><div class="scrollv"><div class="paper" id="rv-draft"></div></div><div class="issues" id="rv-issues"></div></div>
+      <div class="scrollv" id="an-scroll" hidden><div class="paper prose" id="an-body"></div></div>
+    </section>
+    <!-- inspector: the source a citation points at -->
+    <aside class="inspector" id="inspector">
+      <div class="ih"><div class="t" id="insp-title"></div><button class="btn ghost sm icon" id="insp-close" data-i18n-title="close"><svg class="i"><use href="#i-x"/></svg></button></div>
+      <div class="ib" id="insp-body"></div>
+    </aside>
   </div>
   <div class="drop" data-i18n="drop"></div>
 </main>
+
+<button type="button" class="btn primary sm clip" id="clip"><svg class="i"><use href="#i-scissors"/></svg><span data-i18n="clip"></span></button>
+<div class="pop" id="pop-alarms"></div>
+<div class="pop" id="pop-status"></div>
 <div class="toast" id="toast"></div>
 
 <script>
-const $ = s => document.querySelector(s);
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const column = $('#column'), log = $('#log');
-let thread = null, busy = false, threadsCache = [], docsCache = [], attachments = [], selected = new Set();
+let thread = null, busy = false, threadsCache = [], docsCache = [], jobsCache = [], attachments = [], selected = new Set();
+let section = 'chat', currentDoc = null, currentJob = null;
 
 /* ── language ──────────────────────────────────────────── */
 const L = {
   en: {
-    tag: 'Legal assistant · runs locally', new: 'New conversation', conversations: 'Conversations', no_threads: 'Nothing yet.',
-    documents: 'Documents', add: '+ Add', add_title: 'Markdown, text or PDF', no_docs: 'Drop .md, .txt or .pdf files on the chat to index them.',
-    selected: '{n} selected', selected_title: 'This conversation answers only from the selected documents', select_title: 'Work only on this document', clear: 'clear',
-    clip: 'Save clipping', clip_note: 'Note for this clipping (optional)', clipped: 'Clipping saved and indexed', analyze: 'Analyse the whole document', goal_prompt: 'What should the analysis look for? (empty = obligations, deadlines, amounts, penalties, risks)', analyzing: 'analysing', analysis_done: 'Analysis ready', analysis_failed: 'Analysis failed', last_analysis: 'last analysis', review: 'Review as a draft', reviewing: 'reviewing', review_done: 'Review ready', review_failed: 'Review failed', paragraphs: 'paragraphs', quotes_checked: 'quotes checked', citations_checked: 'legal citations checked', errors: 'errors', warnings: 'warnings', no_issues: 'No issues: nothing repeated, every quote verbatim, every legal reference resolved.', download_fixed: 'Download corrected draft', copy_fixed: 'Copy corrected draft', copied: 'Copied', accept: 'Accept', reject: 'Reject', original: 'Original', open: 'open', delete_paragraph: 'Proposed: delete this paragraph', paragraph: 'paragraph', back_review: '↩ Back to the review', changes: 'changes accepted', issue_kinds: { parrafo_repetido: 'repeated paragraph', cita_no_literal: 'quote not verbatim', cita_no_encontrada: 'quote not found in the documents', articulo_inexistente: 'inexistent article', articulo_equivocado: 'wrong article', norma_no_encontrada: 'norm not found', norma_sin_descargar: 'norm not downloaded in the archive', jurisprudencia_sin_verificar: 'case law not verified', cita_legal_no_literal: 'legal quote not verbatim', cuestion_legal: 'legal issue (model)' },
-    alarms: 'Alarms', report: 'Report', matter: 'Matter', matter_ph: 'e.g. 2026-014', matter_title: 'Memory wall: what is said in a matter is recalled only inside that matter',
-    new_title: 'New conversation', write: 'Write to Aroa…', hint: 'Enter to send · Shift+Enter for a new line · personal data is pseudonymised before the model sees it',
+    sec_chat: 'Chat', sec_docs: 'Documents', sec_jobs: 'Work', alarms: 'Alarms', status: 'Status', theme: 'Theme', language: 'Language',
+    conversations: 'Conversations', new_short: 'New', new_title: 'New conversation', no_threads: 'No conversations yet.', filter_threads: 'Filter conversations', filter_docs: 'Filter documents',
+    documents: 'Documents', add: 'Add', add_title: 'Markdown, text or PDF', add_doc: 'Add a document', no_docs: 'No documents yet. Add .md, .txt or .pdf files, or drop them anywhere.',
+    docs_empty_h: 'Document library', docs_empty_p: 'Documents are indexed pseudonymised and answered from with citations. Pick one on the left to read it, analyse it whole or review it as a draft.',
+    jobs: 'Reviews and analyses', no_jobs: 'Nothing yet. Start a review or an analysis from a document or an attachment.', jobs_empty_h: 'Reviews and analyses', jobs_empty_p: 'Long jobs run in the background: a whole-document analysis or the review pass over a draft. Pick one on the left to open its result.',
+    selected: '{n} selected', selected_one: 'Conversation confined to 1 document', selected_many: 'Conversation confined to {n} documents', selected_title: 'This conversation answers only from the selected documents', select_title: 'Confine the conversation to this document', clear: 'clear',
+    use_in_chat: 'Use in the conversation', using_in_chat: 'Used in the conversation', open_doc: 'Open', delete: 'Delete',
+    clip: 'Save clipping', clip_note: 'Note for this clipping (optional)', clipped: 'Clipping saved and indexed',
+    analyze: 'Analyse', analyze_long: 'Analyse the whole document', goal_prompt: 'What should the analysis look for? (empty = obligations, deadlines, amounts, penalties, risks)', analyzing: 'analysing', analysis_done: 'Analysis ready', analysis_failed: 'Analysis failed',
+    review: 'Review', review_long: 'Review as a draft', reviewing: 'reviewing', queued: 'queued', failed: 'failed', review_done: 'Review ready', review_failed: 'Review failed',
+    paragraphs: 'paragraphs', quotes_checked: 'quotes checked', citations_checked: 'legal citations checked', errors: 'errors', warnings: 'warnings', no_issues: 'No issues: nothing repeated, every quote verbatim, every legal reference resolved.',
+    download_fixed: 'Download corrected', copy_fixed: 'Copy', copied: 'Copied', accept: 'Accept', reject: 'Reject', original: 'Original', open: 'open', delete_paragraph: 'Proposed: delete this paragraph', paragraph: 'paragraph', changes: 'changes accepted',
+    kind_review: 'Review', kind_analysis: 'Analysis', chunks: 'fragments', findings: 'findings',
+    issue_kinds: { parrafo_repetido: 'repeated paragraph', cita_no_literal: 'quote not verbatim', cita_no_encontrada: 'quote not found in the documents', articulo_inexistente: 'inexistent article', articulo_equivocado: 'wrong article', norma_no_encontrada: 'norm not found', norma_sin_descargar: 'norm not downloaded in the archive', jurisprudencia_sin_verificar: 'case law not verified', cita_legal_no_literal: 'legal quote not verbatim', cuestion_legal: 'legal issue (model)' },
+    matter: 'Matter', matter_ph: 'e.g. 2026-014', matter_title: 'Memory wall: what is said in a matter is recalled only inside that matter',
+    write: 'Write to Aroa…', hint: 'Enter to send · Shift+Enter for a new line · personal data is pseudonymised before the model sees it',
     attach_title: 'Attach a document to this message', keep: 'keep in documents', keep_title: 'Also index it, so Aroa can find it in later conversations',
     drop: 'Drop documents to index them', close: 'Close', welcome: 'What can I help with?',
     welcome_p: 'Ask about the indexed documents, the web, your matters, or set an alarm. Try one of these with the sample corpus:',
     thinking: 'Thinking', path: 'Path', good: 'Good answer', bad: 'Bad answer', thanks: 'Thanks, feedback stored', no_path: 'No path recorded for this turn.',
     asking: 'Aroa is asking you', k_blocked: 'blocked by policy', k_question: 'needs your answer', k_abstain: 'not in the documents', k_verified: 'verified', k_unverified: 'unverified',
-    route: 'route', model_calls: 'model calls', model_calls_long: 'model calls', tools: 'tools', claims: 'claims', facts_stored: 'facts stored', audit_tools: 'Audit · tool calls', audit_memory: 'Audit · memory writes', feedback: 'Feedback',
-    stored: 'stored', duplicate: 'duplicate', server_error: 'The server did not answer: ', remove_q: 'Remove "{n}" from the index?', removed: 'Document removed', not_removed: 'Could not remove it',
+    route: 'route', model_calls: 'model calls', tools: 'tools', claims: 'claims', facts_stored: 'facts stored', audit_tools: 'Audit · tool calls', audit_memory: 'Audit · memory writes', feedback: 'Feedback',
+    stored: 'stored', duplicate: 'duplicate', server_error: 'The server did not answer: ', remove_q: 'Remove "{n}" from the index?', removed: 'Document removed', not_removed: 'Could not do it',
     uploading: 'uploading', indexing: 'indexing…', indexed: '{n} indexed', reading: 'reading…', truncated: 'cut at 12,000 characters',
-    kinds: {},
-    turns: 'turns today', p50: 'p50', claims_ok: 'claims ok', facts: 'facts', privacy: 'privacy', traced: 'traced', no_tracing: 'no tracing', unreachable: 'server unreachable', chunks: 'chunks',
+    kinds: { documents: 'documents', chat: 'chat', web: 'web', alarms: 'alarms', project: 'project', review: 'review' },
+    turns: 'turns today', p50: 'p50 latency', claims_ok: 'claims ok', facts: 'facts', privacy: 'privacy', traced: 'traced', no_tracing: 'no tracing', unreachable: 'server unreachable', model: 'model', memory: 'memory', report_link: 'Weekly report', metrics_link: 'Metrics', pending_alarms: 'Pending alarms', no_alarms: 'No pending alarms.', up_down: 'up / down',
+    theme_auto: 'system', theme_light: 'light', theme_dark: 'dark',
     suggestions: [
       ['Documents', 'How much is the deposit in the lease agreement and when is it returned?'],
       ['Privacy', 'My client Juan Pérez García, ID 12345678Z, phone 612345678, wants to claim the deposit back.'],
@@ -341,22 +450,33 @@ const L = {
     ],
   },
   es: {
-    tag: 'Asistente legal · funciona en local', new: 'Nueva conversación', conversations: 'Conversaciones', no_threads: 'Todavía nada.',
-    documents: 'Documentos', add: '+ Añadir', add_title: 'Markdown, texto o PDF', no_docs: 'Arrastra archivos .md, .txt o .pdf sobre el chat para indexarlos.',
-    selected: '{n} seleccionados', selected_title: 'Esta conversación responde solo desde los documentos seleccionados', select_title: 'Trabajar solo sobre este documento', clear: 'quitar',
-    clip: 'Guardar recorte', clip_note: 'Nota para este recorte (opcional)', clipped: 'Recorte guardado e indexado', analyze: 'Analizar el documento entero', goal_prompt: '¿Qué debe buscar el análisis? (vacío = obligaciones, plazos, importes, penalizaciones, riesgos)', analyzing: 'analizando', analysis_done: 'Análisis listo', analysis_failed: 'El análisis ha fallado', last_analysis: 'último análisis', review: 'Revisar como borrador', reviewing: 'revisando', review_done: 'Revisión lista', review_failed: 'La revisión ha fallado', paragraphs: 'párrafos', quotes_checked: 'citas de documentos comprobadas', citations_checked: 'citas legales comprobadas', errors: 'errores', warnings: 'avisos', no_issues: 'Sin hallazgos: nada repetido, todas las citas literales y todas las referencias legales resueltas.', download_fixed: 'Descargar borrador corregido', copy_fixed: 'Copiar borrador corregido', copied: 'Copiado', accept: 'Aceptar', reject: 'Rechazar', original: 'Original', open: 'abrir', delete_paragraph: 'Propuesta: eliminar este párrafo', paragraph: 'párrafo', back_review: '↩ Volver a la revisión', changes: 'cambios aceptados', issue_kinds: { parrafo_repetido: 'párrafo repetido', cita_no_literal: 'cita no literal', cita_no_encontrada: 'cita no encontrada en los documentos', articulo_inexistente: 'artículo inexistente', articulo_equivocado: 'artículo equivocado', norma_no_encontrada: 'norma no encontrada', norma_sin_descargar: 'norma no descargada en el archivo', jurisprudencia_sin_verificar: 'jurisprudencia sin verificar', cita_legal_no_literal: 'cita legal no literal', cuestion_legal: 'cuestión legal (modelo)' },
-    alarms: 'Alarmas', report: 'Informe', matter: 'Expediente', matter_ph: 'p. ej. 2026-014', matter_title: 'Muralla de memoria: lo dicho en un expediente solo se recuerda dentro de ese expediente',
-    new_title: 'Nueva conversación', write: 'Escribe a Aroa…', hint: 'Intro para enviar · Mayús+Intro para nueva línea · los datos personales se pseudonimizan antes de que el modelo los vea',
+    sec_chat: 'Chat', sec_docs: 'Documentos', sec_jobs: 'Trabajos', alarms: 'Alarmas', status: 'Estado', theme: 'Tema', language: 'Idioma',
+    conversations: 'Conversaciones', new_short: 'Nueva', new_title: 'Nueva conversación', no_threads: 'Todavía no hay conversaciones.', filter_threads: 'Filtrar conversaciones', filter_docs: 'Filtrar documentos',
+    documents: 'Documentos', add: 'Añadir', add_title: 'Markdown, texto o PDF', add_doc: 'Añadir un documento', no_docs: 'Todavía no hay documentos. Añade archivos .md, .txt o .pdf, o suéltalos en cualquier parte.',
+    docs_empty_h: 'Biblioteca de documentos', docs_empty_p: 'Los documentos se indexan pseudonimizados y se responde desde ellos con citas. Elige uno a la izquierda para leerlo, analizarlo entero o revisarlo como borrador.',
+    jobs: 'Revisiones y análisis', no_jobs: 'Todavía nada. Lanza una revisión o un análisis desde un documento o un adjunto.', jobs_empty_h: 'Revisiones y análisis', jobs_empty_p: 'Los trabajos largos corren en segundo plano: el análisis de un documento entero o el pase de revisión sobre un borrador. Elige uno a la izquierda para abrir su resultado.',
+    selected: '{n} seleccionados', selected_one: 'Conversación limitada a 1 documento', selected_many: 'Conversación limitada a {n} documentos', selected_title: 'Esta conversación responde solo desde los documentos seleccionados', select_title: 'Limitar la conversación a este documento', clear: 'quitar',
+    use_in_chat: 'Usar en la conversación', using_in_chat: 'En uso en la conversación', open_doc: 'Abrir', delete: 'Eliminar',
+    clip: 'Guardar recorte', clip_note: 'Nota para este recorte (opcional)', clipped: 'Recorte guardado e indexado',
+    analyze: 'Analizar', analyze_long: 'Analizar el documento entero', goal_prompt: '¿Qué debe buscar el análisis? (vacío = obligaciones, plazos, importes, penalizaciones, riesgos)', analyzing: 'analizando', analysis_done: 'Análisis listo', analysis_failed: 'El análisis ha fallado',
+    review: 'Revisar', review_long: 'Revisar como borrador', reviewing: 'revisando', queued: 'en cola', failed: 'fallido', review_done: 'Revisión lista', review_failed: 'La revisión ha fallado',
+    paragraphs: 'párrafos', quotes_checked: 'citas de documentos comprobadas', citations_checked: 'citas legales comprobadas', errors: 'errores', warnings: 'avisos', no_issues: 'Sin hallazgos: nada repetido, todas las citas literales y todas las referencias legales resueltas.',
+    download_fixed: 'Descargar corregido', copy_fixed: 'Copiar', copied: 'Copiado', accept: 'Aceptar', reject: 'Rechazar', original: 'Original', open: 'abrir', delete_paragraph: 'Propuesta: eliminar este párrafo', paragraph: 'párrafo', changes: 'cambios aceptados',
+    kind_review: 'Revisión', kind_analysis: 'Análisis', chunks: 'fragmentos', findings: 'hallazgos',
+    issue_kinds: { parrafo_repetido: 'párrafo repetido', cita_no_literal: 'cita no literal', cita_no_encontrada: 'cita no encontrada en los documentos', articulo_inexistente: 'artículo inexistente', articulo_equivocado: 'artículo equivocado', norma_no_encontrada: 'norma no encontrada', norma_sin_descargar: 'norma no descargada en el archivo', jurisprudencia_sin_verificar: 'jurisprudencia sin verificar', cita_legal_no_literal: 'cita legal no literal', cuestion_legal: 'cuestión legal (modelo)' },
+    matter: 'Expediente', matter_ph: 'p. ej. 2026-014', matter_title: 'Muralla de memoria: lo dicho en un expediente solo se recuerda dentro de ese expediente',
+    write: 'Escribe a Aroa…', hint: 'Intro para enviar · Mayús+Intro para nueva línea · los datos personales se pseudonimizan antes de que el modelo los vea',
     attach_title: 'Adjuntar un documento a este mensaje', keep: 'guardar en documentos', keep_title: 'Además lo indexa, para que Aroa lo encuentre en conversaciones futuras',
     drop: 'Suelta documentos para indexarlos', close: 'Cerrar', welcome: '¿En qué te ayudo?',
     welcome_p: 'Pregunta por los documentos indexados, la web, tus expedientes, o pon una alarma. Prueba con el corpus de muestra:',
-    thinking: 'Pensando', path: 'Camino', good: 'Buena respuesta', bad: 'Mala respuesta', thanks: 'Gracias, valoración guardada', no_path: 'No hay camino registrado para esta vuelta.',
+    thinking: 'Pensando', path: 'Recorrido', good: 'Buena respuesta', bad: 'Mala respuesta', thanks: 'Gracias, valoración guardada', no_path: 'No hay recorrido registrado para esta vuelta.',
     asking: 'Aroa te pregunta', k_blocked: 'bloqueado por política', k_question: 'necesita tu respuesta', k_abstain: 'no está en los documentos', k_verified: 'verificado', k_unverified: 'sin verificar',
-    route: 'ruta', model_calls: 'llamadas', model_calls_long: 'llamadas al modelo', tools: 'herramientas', claims: 'afirmaciones', facts_stored: 'hechos guardados', audit_tools: 'Auditoría · herramientas', audit_memory: 'Auditoría · memoria', feedback: 'Valoración',
-    stored: 'guardado', duplicate: 'duplicado', server_error: 'El servidor no ha respondido: ', remove_q: '¿Quitar «{n}» del índice?', removed: 'Documento quitado', not_removed: 'No se ha podido quitar',
+    route: 'ruta', model_calls: 'llamadas al modelo', tools: 'herramientas', claims: 'afirmaciones', facts_stored: 'hechos guardados', audit_tools: 'Auditoría · herramientas', audit_memory: 'Auditoría · memoria', feedback: 'Valoración',
+    stored: 'guardado', duplicate: 'duplicado', server_error: 'El servidor no ha respondido: ', remove_q: '¿Quitar «{n}» del índice?', removed: 'Documento quitado', not_removed: 'No se ha podido',
     uploading: 'subiendo', indexing: 'indexando…', indexed: '{n} indexado', reading: 'leyendo…', truncated: 'recortado a 12.000 caracteres',
-    kinds: { documents: 'documentos', chat: 'charla', web: 'web', alarms: 'alarmas', project: 'proyecto' },
-    turns: 'vueltas hoy', p50: 'p50', claims_ok: 'afirm. ok', facts: 'hechos', privacy: 'privacidad', traced: 'con trazas', no_tracing: 'sin trazas', unreachable: 'servidor inaccesible', chunks: 'fragmentos',
+    kinds: { documents: 'documentos', chat: 'charla', web: 'web', alarms: 'alarmas', project: 'proyecto', review: 'revisión' },
+    turns: 'vueltas hoy', p50: 'latencia p50', claims_ok: 'afirm. ok', facts: 'hechos', privacy: 'privacidad', traced: 'con trazas', no_tracing: 'sin trazas', unreachable: 'servidor inaccesible', model: 'modelo', memory: 'memoria', report_link: 'Informe semanal', metrics_link: 'Métricas', pending_alarms: 'Alarmas pendientes', no_alarms: 'No hay alarmas pendientes.', up_down: 'bien / mal',
+    theme_auto: 'sistema', theme_light: 'claro', theme_dark: 'oscuro',
     suggestions: [
       ['Documentos', '¿Cuánto es la fianza del contrato de arrendamiento y cuándo se devuelve?'],
       ['Privacidad', 'Mi cliente Juan Pérez García, DNI 12345678Z, teléfono 612345678, quiere reclamar la fianza.'],
@@ -367,31 +487,45 @@ const L = {
     ],
   },
 };
-let lang = 'en';
+let lang = '';
 try { lang = localStorage.getItem('aroa.lang') || ''; } catch {}
 const T = k => (L[lang] || L.en)[k] ?? L.en[k] ?? k;
+const loc = () => lang || 'en';
 function applyLang() {
-  document.documentElement.lang = lang;
-  document.querySelectorAll('[data-i18n]').forEach(el => el.textContent = T(el.dataset.i18n));
-  document.querySelectorAll('[data-i18n-title]').forEach(el => el.title = T(el.dataset.i18nTitle));
-  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => el.placeholder = T(el.dataset.i18nPlaceholder));
-  $('#lang').innerHTML = lang === 'es' ? '<b>ES</b> · EN' : 'ES · <b>EN</b>';
-  $('#reader-close').textContent = T('close');
+  document.documentElement.lang = loc();
+  $$('[data-i18n]').forEach(el => el.textContent = T(el.dataset.i18n));
+  $$('[data-i18n-title]').forEach(el => el.title = T(el.dataset.i18nTitle));
+  $$('[data-i18n-placeholder]').forEach(el => el.placeholder = T(el.dataset.i18nPlaceholder));
+  $('#lang').firstElementChild.textContent = loc().toUpperCase();
   if (column.querySelector('.welcome')) showWelcome();
-  setTitle(); renderAttachments(); loadStats(); loadHealth();
+  setTitle(); renderAttachments(); renderThreads(); renderDocs(); renderJobs(); loadHealth();
+  if (section === 'doc' && currentDoc) docToolbar(); if (currentJob) openJob(currentJob, true);
 }
-$('#lang').onclick = () => { lang = lang === 'es' ? 'en' : 'es'; try { localStorage.setItem('aroa.lang', lang); } catch {} applyLang(); if (thread && !column.querySelector('.welcome')) openThread(thread); };
+$('#lang').onclick = () => { lang = loc() === 'es' ? 'en' : 'es'; try { localStorage.setItem('aroa.lang', lang); } catch {} applyLang(); if (thread && !column.querySelector('.welcome')) openThread(thread); };
+
+/* ── theme ─────────────────────────────────────────────── */
+const THEMES = ['auto', 'light', 'dark'];
+let theme = 'auto'; try { theme = localStorage.getItem('aroa.theme') || 'auto'; } catch {}
+function applyTheme() {
+  if (theme === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.dataset.theme = theme;
+  $('#theme-icon').setAttribute('href', theme === 'light' ? '#i-sun' : theme === 'dark' ? '#i-moon' : '#i-auto');
+  $('#b-theme').title = `${T('theme')}: ${T('theme_' + theme)}`;
+}
+$('#b-theme').onclick = () => { theme = THEMES[(THEMES.indexOf(theme) + 1) % 3]; try { localStorage.setItem('aroa.theme', theme); } catch {} applyTheme(); toast(`${T('theme')}: ${T('theme_' + theme)}`); };
+applyTheme();
 
 /* ── helpers ───────────────────────────────────────────── */
 function id() { return Math.random().toString(36).slice(2, 10); }
-function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+function esc(s) { return String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); }
+function ico(name, cls = 'i') { return `<svg class="${cls}"><use href="#i-${name}"/></svg>`; }
 function ago(ts) {
   const d = (Date.now() - new Date(ts)) / 1000;
-  if (d < 60) return lang === 'es' ? 'ahora' : 'now'; if (d < 3600) return Math.round(d / 60) + ' min'; if (d < 86400) return Math.round(d / 3600) + ' h';
-  return new Date(ts).toLocaleDateString(lang, { day: 'numeric', month: 'short' });
+  if (d < 60) return loc() === 'es' ? 'ahora' : 'now'; if (d < 3600) return Math.round(d / 60) + ' min'; if (d < 86400) return Math.round(d / 3600) + ' h';
+  return new Date(ts).toLocaleDateString(loc(), { day: 'numeric', month: 'short' });
 }
 function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('show'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 2600); }
 function kchars(n) { return n >= 1000 ? (n / 1000).toFixed(1) + 'k' : String(n); }
+function nthIndex(text, needle, n) { let i = -1; for (let k = 0; k < n; k++) { i = text.indexOf(needle, i + 1); if (i < 0) return -1; } return i; }
 
 function inline(s) {
   return esc(s)
@@ -411,7 +545,7 @@ function md(text) {
     if (line.startsWith('```')) { flush(); code = []; continue; }
     if (!line.trim()) { flush(); continue; }
     let m;
-    if ((m = /^#{1,3}\s+(.*)/.exec(line))) { flush(); html += '<h3>' + inline(m[1]) + '</h3>'; continue; }
+    if ((m = /^(#{1,3})\s+(.*)/.exec(line))) { flush(); const h = m[1].length === 1 ? 'h1' : m[1].length === 2 ? 'h2' : 'h3'; html += `<${h}>` + inline(m[2]) + `</${h}>`; continue; }
     if ((m = /^\s*>\s?(.*)/.exec(line))) { flush(); html += '<blockquote>' + inline(m[1]) + '</blockquote>'; continue; }
     if ((m = /^\s*[-*•]\s+(.*)/.exec(line))) { if (list !== 'ul') { flush(); list = 'ul'; html += '<ul>'; } html += '<li>' + inline(m[1]) + '</li>'; continue; }
     if ((m = /^\s*\d+[.)]\s+(.*)/.exec(line))) { if (list !== 'ol') { flush(); list = 'ol'; html += '<ol>'; } html += '<li>' + inline(m[1]) + '</li>'; continue; }
@@ -422,54 +556,72 @@ function md(text) {
   return html || '<p></p>';
 }
 
-/* ── rendering ─────────────────────────────────────────── */
+/* ── sections ──────────────────────────────────────────── */
+function show(sec) {
+  section = sec;
+  $$('#rail [data-sec]').forEach(b => b.classList.toggle('active', b.dataset.sec === sec));
+  $$('.sp-view').forEach(v => v.hidden = v.id !== 'sp-' + sec);
+  $('#view-chat').hidden = sec !== 'chat'; $('#view-doc').hidden = sec !== 'docs'; $('#view-job').hidden = sec !== 'jobs';
+  $('#matter-box').hidden = sec !== 'chat'; $('#sel').hidden = sec !== 'chat' || !selected.size;
+  $('#side').classList.remove('open');
+  closeInspector();
+  setTitle();
+  if (sec === 'jobs') loadJobs();
+}
+$$('#rail [data-sec]').forEach(b => b.onclick = () => show(b.dataset.sec));
+$('#menu').onclick = () => $('#side').classList.toggle('open');
+
+function setTitle() {
+  const title = $('#title'), sub = $('#subtitle'), acts = $('#top-actions');
+  acts.innerHTML = '';
+  if (section === 'chat') { const row = threadsCache.find(r => r.thread_id === thread); title.textContent = row ? row.title : T('new_title'); sub.textContent = ''; }
+  else if (section === 'docs') { const d = docsCache.find(x => x.source === currentDoc); title.textContent = d ? d.title : T('documents'); sub.textContent = d ? d.source : ''; }
+  else { title.textContent = currentJob ? (currentJob.kind === 'review' ? T('kind_review') : T('kind_analysis')) : T('jobs'); sub.textContent = currentJob ? currentJob.source : ''; }
+}
+
+/* ── chat rendering ────────────────────────────────────── */
 function scrollDown() { log.scrollTop = log.scrollHeight; }
 const ATTACHED = /\n\n<attachment name="([^"\n]+)">\n/g;
-
 function addUser(text) {
   const el = document.createElement('div');
-  if (text.startsWith('[Alarm due now]')) { el.className = 'row notice'; el.innerHTML = `<div class="bubble">⏰ ${esc(text.replace('[Alarm due now]', '').trim())}</div>`; }
+  if (text.startsWith('[Alarm due now]')) { el.className = 'msg notice'; el.innerHTML = `<div class="bubble">${ico('bell')}${esc(text.replace('[Alarm due now]', '').trim())}</div>`; }
   else {
     const names = [...text.matchAll(ATTACHED)].map(m => m[1]);
     const shown = names.length ? text.slice(0, text.search(ATTACHED)) : text;
-    el.className = 'row user';
-    el.innerHTML = `<div class="bubble">${esc(shown)}${names.length ? '<div class="files">' + names.map(n => `<span class="file">📎 ${esc(n)}</span>`).join('') + '</div>' : ''}</div>`;
+    el.className = 'msg user';
+    el.innerHTML = `<div class="bubble">${esc(shown)}${names.length ? '<div class="files">' + names.map(n => `<span class="file">${ico('doc')}${esc(n)}</span>`).join('') + '</div>' : ''}</div>`;
   }
   column.appendChild(el); scrollDown(); return el;
 }
-
 function kindTag(m) {
   const k = m.kind || '';
-  if (k === 'blocked') return `<span class="kind blocked">${T('k_blocked')}</span>`;
-  if (k === 'question') return `<span class="kind question">${T('k_question')}</span>`;
-  if (k === 'abstain') return `<span class="kind">${T('k_abstain')}</span>`;
-  let tag = k ? `<span class="kind">${esc(T('kinds')[k] || k)}</span>` : '';
-  if (m.verified === true) tag += `<span class="kind ok">${T('k_verified')}</span>`;
-  if (m.verified === false) tag += `<span class="kind fail">${T('k_unverified')}</span>`;
+  if (k === 'blocked') return `<span class="tag blocked">${T('k_blocked')}</span>`;
+  if (k === 'question') return `<span class="tag question">${T('k_question')}</span>`;
+  if (k === 'abstain') return `<span class="tag">${T('k_abstain')}</span>`;
+  let tag = k ? `<span class="tag">${esc(T('kinds')[k] || k)}</span>` : '';
+  if (m.verified === true) tag += `<span class="tag ok">${T('k_verified')}</span>`;
+  if (m.verified === false) tag += `<span class="tag fail">${T('k_unverified')}</span>`;
   return tag;
 }
-
 function addAssistant(text, m = {}) {
-  const el = document.createElement('div'); el.className = 'row';
+  const el = document.createElement('div'); el.className = 'msg ai';
   const body = m.kind === 'question' ? `<div class="question-card"><div class="lbl">${T('asking')}</div>${md(text)}</div>` : md(text);
-  el.innerHTML = `<div class="avatar">A</div><div class="answer"><div class="head"><b>Aroa</b>${kindTag(m)}</div><div class="body">${body}</div>` +
-    (m.turn_id ? `<div class="actions"><button class="btn ghost" data-path="${esc(m.turn_id)}"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h10M4 18h7"/></svg>${T('path')}</button>` +
-      `<button class="btn ghost fb" data-fb="1" data-turn="${esc(m.turn_id)}" title="${T('good')}">👍</button><button class="btn ghost fb" data-fb="-1" data-turn="${esc(m.turn_id)}" title="${T('bad')}">👎</button></div><div class="path" id="path-${esc(m.turn_id)}"></div>` : '') + '</div>';
+  el.innerHTML = `<div class="av">A</div><div class="answer"><div class="head"><b>Aroa</b>${kindTag(m)}</div><div class="body">${body}</div>` +
+    (m.turn_id ? `<div class="actions"><button class="btn ghost sm" data-path="${esc(m.turn_id)}">${ico('list')}${T('path')}</button>` +
+      `<button class="btn ghost sm icon fb" data-fb="1" data-turn="${esc(m.turn_id)}" title="${T('good')}">${ico('up')}</button><button class="btn ghost sm icon fb" data-fb="-1" data-turn="${esc(m.turn_id)}" title="${T('bad')}">${ico('down')}</button></div><div class="path" id="path-${esc(m.turn_id)}"></div>` : '') + '</div>';
   const sources = Array.isArray(m.sources) ? m.sources : [];
   el.querySelector('.answer').dataset.sources = JSON.stringify(sources);
   if (sources.length) el.querySelectorAll('.cite').forEach(c => { if (sources.some(s => s.n === +c.dataset.n)) c.classList.add('link'); });
   column.appendChild(el); scrollDown(); return el;
 }
-
 function addLive() {
-  const el = document.createElement('div'); el.className = 'row';
-  el.innerHTML = `<div class="avatar">A</div><div class="answer"><div class="head"><b>Aroa</b></div><div class="live"><div class="spinner"></div><div class="crumbs"><span>${T('thinking')}</span></div></div><div class="body"></div></div>`;
+  const el = document.createElement('div'); el.className = 'msg ai';
+  el.innerHTML = `<div class="av">A</div><div class="answer"><div class="head"><b>Aroa</b></div><div class="live"><div class="spinner"></div><div class="crumbs"><span>${T('thinking')}</span></div></div><div class="body"></div></div>`;
   column.appendChild(el); scrollDown(); return el;
 }
-
 function renderPath(t) {
-  const fmt = n => (n ?? 0).toLocaleString(lang);
-  let html = `<div class="sum"><span>${T('route')} <b>${esc(t.route || '')}</b></span><span><b>${t.seconds}</b> s</span><span><b>${t.llm_calls}</b> ${T('model_calls_long')}</span>` +
+  const fmt = n => (n ?? 0).toLocaleString(loc());
+  let html = `<div class="sum"><span>${T('route')} <b>${esc(t.route || '')}</b></span><span><b>${t.seconds}</b> s</span><span><b>${t.llm_calls}</b> ${T('model_calls')}</span>` +
     `<span><b>${fmt(t.input_tokens)}</b> in · <b>${fmt(t.output_tokens)}</b> out</span><span><b>${t.tool_calls}</b> ${T('tools')}</span>` +
     (t.claims ? `<span>${T('claims')} <b>${t.claims - t.claims_failed}/${t.claims}</b></span>` : '') + (t.facts_written ? `<span><b>${t.facts_written}</b> ${T('facts_stored')}</span>` : '') + '</div>';
   for (const s of t.trace || []) {
@@ -478,179 +630,113 @@ function renderPath(t) {
       (s.items && s.items.length ? '<ul class="items">' + s.items.map(i => `<li>${esc(i)}</li>`).join('') + '</ul>' : '') + '</div>';
   }
   const a = t.audit || {};
-  if (a.tool_calls && a.tool_calls.length) {
-    html += `<div class="step audit"><div class="st">${T('audit_tools')}</div><ul class="items">` + a.tool_calls.map(c => `<li>${c.ok ? 'ok' : 'FAILED'} · <b>${esc(c.tool)}</b> ${esc(c.arguments)} · ${c.seconds} s · ${esc(c.result_hash)}</li>`).join('') + '</ul></div>';
-  }
-  if (a.memory_writes && a.memory_writes.length) {
-    html += `<div class="step audit"><div class="st">${T('audit_memory')}</div><ul class="items">` + a.memory_writes.map(w => `<li>${w.stored ? T('stored') : T('duplicate')} · ${esc(w.text)}</li>`).join('') + '</ul></div>';
-  }
-  if (t.feedback) html += `<div class="step audit"><div class="st">${T('feedback')}</div><div class="sm">${t.feedback.score > 0 ? '👍' : '👎'} ${esc(t.feedback.comment || '')}</div></div>`;
+  if (a.tool_calls && a.tool_calls.length) html += `<div class="step audit"><div class="st">${T('audit_tools')}</div><ul class="items">` + a.tool_calls.map(c => `<li>${c.ok ? 'ok' : 'FAILED'} · <b>${esc(c.tool)}</b> ${esc(c.arguments)} · ${c.seconds} s · ${esc(c.result_hash)}</li>`).join('') + '</ul></div>';
+  if (a.memory_writes && a.memory_writes.length) html += `<div class="step audit"><div class="st">${T('audit_memory')}</div><ul class="items">` + a.memory_writes.map(w => `<li>${w.stored ? T('stored') : T('duplicate')} · ${esc(w.text)}</li>`).join('') + '</ul></div>';
+  if (t.feedback) html += `<div class="step audit"><div class="st">${T('feedback')}</div><div class="sm">${t.feedback.score > 0 ? '+1' : '−1'} ${esc(t.feedback.comment || '')}</div></div>`;
   return html;
 }
-
 function showWelcome() {
   column.innerHTML = `<div class="welcome"><h2>${T('welcome')}</h2><p>${T('welcome_p')}</p>` +
     `<div class="suggest">${T('suggestions').map(([k, q]) => `<button type="button" data-q="${esc(q)}"><b>${esc(k)}</b>${esc(q)}</button>`).join('')}</div></div>`;
 }
-
-/* ── reader ────────────────────────────────────────────── */
-async function openReader(source, quote) {
-  const reader = $('#reader');
-  const r = await fetch('/api/documents/' + encodeURIComponent(source) + '/text');
-  if (!r.ok) { toast(T('not_removed')); return; }
-  const d = await r.json();
-  const doc = docsCache.find(x => x.source === source);
-  readerSource = source;
-  $('#reader-title').innerHTML = `${esc(doc ? doc.title : source)}<small>${esc(source)}</small>`;
-  let html = esc(d.text), target = null;
-  if (quote) {
-    const needle = quote.replace(/\s+/g, ' ').trim();
-    const probe = needle.length > 60 ? needle.slice(0, 60) : needle;
-    const idx = d.text.replace(/\s+/g, ' ').indexOf(probe);
-    if (idx >= 0) {
-      // map the index in the whitespace-collapsed text back to the original
-      let i = 0, j = 0; const txt = d.text;
-      while (j < idx && i < txt.length) { if (/\s/.test(txt[i]) && i > 0 && /\s/.test(txt[i - 1])) { i++; continue; } i++; j++; }
-      while (i < txt.length && /\s/.test(txt[i]) && i > 0 && /\s/.test(txt[i - 1])) i++;
-      let end = i, k = 0; while (end < txt.length && k < needle.length) { if (!(/\s/.test(txt[end]) && end > 0 && /\s/.test(txt[end - 1]))) k++; end++; }
-      html = esc(txt.slice(0, i)) + '<mark id="mark">' + esc(txt.slice(i, end)) + '</mark>' + esc(txt.slice(end));
-      target = true;
-    }
+column.addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.q) { $('#text').value = b.dataset.q; $('#form').requestSubmit(); return; }
+  if (b.classList.contains('cite')) {
+    const sources = JSON.parse(b.closest('.answer')?.dataset.sources || '[]');
+    const s = sources.find(x => x.n === +b.dataset.n);
+    if (s) openInspector(s.file, s.quote); return;
   }
-  $('#reader-body').className = 'rb'; $('#reader-body').innerHTML = html;
-  reader.classList.remove('wide'); reader.classList.add('open');
-  if (reviewState) $('#reader-title').insertAdjacentHTML('beforeend', `<button type="button" class="btn ghost back" id="rv-back">${T('back_review')}</button>`);
-  if (target) setTimeout(() => $('#mark')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 220); else $('#reader-body').scrollTop = 0;
-}
-$('#reader-close').onclick = () => $('#reader').classList.remove('open', 'wide');
-
-let readerSource = null;
-function clipButton() {
-  const sel = window.getSelection(), btn = $('#clip'), body = $('#reader-body');
-  const text = sel && !sel.isCollapsed ? sel.toString().trim() : '';
-  if (!text || !readerSource || body.classList.contains('report') || body.classList.contains('review') || !body.contains(sel.anchorNode)) { btn.classList.remove('show'); return; }
-  const rect = sel.getRangeAt(0).getBoundingClientRect(), host = $('#reader').getBoundingClientRect();
-  btn.style.left = Math.max(8, rect.left - host.left) + 'px'; btn.style.top = (rect.bottom - host.top + 6) + 'px';
-  btn.dataset.text = text; btn.classList.add('show');
-}
-document.addEventListener('selectionchange', () => setTimeout(clipButton, 0));
-$('#clip').addEventListener('mousedown', e => e.preventDefault());  // keep the selection
-$('#clip').onclick = async () => {
-  const text = $('#clip').dataset.text; if (!text) return;
-  const note = prompt(T('clip_note'), ''); if (note === null) return;
-  const r = await fetch('/api/clippings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ source: readerSource, text, note, matter: $('#matter').value.trim() }) });
-  $('#clip').classList.remove('show'); window.getSelection()?.removeAllRanges();
-  toast(r.ok ? T('clipped') : T('not_removed')); loadDocs(); loadHealth();
-};
-
-function showReport(job) {
-  const r = job.result, body = $('#reader-body');
-  $('#reader-title').innerHTML = `${esc(r.title)}<small>${esc(r.source)} · ${r.chunks} ${T('chunks')} · ${r.seconds} s</small>`;
-  body.className = 'rb report';
-  body.innerHTML = md(r.report);
-  body.dataset.sources = JSON.stringify(r.sources || []);
-  body.querySelectorAll('.cite').forEach(c => { if ((r.sources || []).some(s => s.n === +c.dataset.n)) c.classList.add('link'); });
-  $('#reader').classList.remove('wide'); $('#reader').classList.add('open'); body.scrollTop = 0;
-}
-$('#reader-body').addEventListener('click', e => {
-  const b = e.target.closest('.cite'); if (!b) return;
-  const s = JSON.parse($('#reader-body').dataset.sources || '[]').find(x => x.n === +b.dataset.n);
-  if (s) openReader(s.file, s.quote);
+  if (b.dataset.path) {
+    const box = $('#path-' + b.dataset.path);
+    if (box.classList.contains('open')) { box.classList.remove('open'); return; }
+    const r = await fetch('/api/turns/' + b.dataset.path);
+    box.innerHTML = r.ok ? renderPath(await r.json()) : `<div class="sm">${T('no_path')}</div>`;
+    box.classList.add('open'); return;
+  }
+  if (b.dataset.fb) {
+    await fetch(`/api/turns/${b.dataset.turn}/feedback`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ score: +b.dataset.fb }) });
+    b.parentElement.querySelectorAll('.fb').forEach(x => x.classList.toggle('on', x === b));
+    toast(T('thanks'));
+  }
 });
 
-async function startAnalysis(source) {
-  const goal = prompt(T('goal_prompt'), ''); if (goal === null) return;
-  const r = await fetch('/api/documents/' + encodeURIComponent(source) + '/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ goal }) });
-  if (!r.ok) { toast(T('analysis_failed')); return; }
-  watchJob(source, (await r.json()).job_id, 'analysis');
+/* ── threads ───────────────────────────────────────────── */
+async function loadThreads() { threadsCache = await (await fetch('/api/threads')).json(); renderThreads(); }
+function renderThreads() {
+  const q = ($('#f-threads').value || '').toLowerCase();
+  const rows = threadsCache.filter(r => !q || (r.title || '').toLowerCase().includes(q) || (r.matter || '').toLowerCase().includes(q));
+  $('#threads-empty').hidden = threadsCache.length > 0;
+  $('#threads').innerHTML = rows.map(r => `<div class="item ${r.thread_id === thread ? 'active' : ''}" data-id="${esc(r.thread_id)}"><div class="tx"><div class="t">${esc(r.title || '…')}</div>` +
+    `<div class="m">${r.matter ? `<span class="chip">${esc(r.matter)}</span>` : ''}<span>${ago(r.updated_ts)}</span></div></div></div>`).join('');
 }
-async function startReview(req) {
-  const r = await fetch('/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...req, documents: [...selected], legal: true }) });
-  if (!r.ok) { toast(T('review_failed')); return; }
-  watchJob(req.name || req.source, (await r.json()).job_id, 'review');
+$('#f-threads').addEventListener('input', renderThreads);
+$('#threads').addEventListener('click', e => { const it = e.target.closest('.item'); if (it) { openThread(it.dataset.id); $('#side').classList.remove('open'); } });
+async function openThread(t) {
+  show('chat');
+  thread = t; column.innerHTML = ''; history.replaceState(null, '', '#t=' + t); loadSelection();
+  const data = await (await fetch('/api/threads/' + t)).json();
+  $('#matter').value = data.matter || '';
+  if (!data.messages.length && !data.waiting) showWelcome();
+  for (const m of data.messages) m.role === 'user' ? addUser(m.text) : addAssistant(m.text, m);
+  if (data.waiting) addAssistant(data.waiting, { kind: 'question' });
+  await loadThreads(); setTitle();
 }
-function watchJob(label, job_id, kind) {
-  const verb = kind === 'review' ? 'reviewing' : 'analyzing';
-  const li = document.createElement('li'); li.className = 'job';
-  li.innerHTML = `<span class="t">${esc(label)} · <span class="st">${T(verb)}…</span></span><div class="bar busy"><i></i></div>`;
-  $('#jobs').appendChild(li);
-  const st = li.querySelector('.st'), bar = li.querySelector('.bar'), fill = li.querySelector('i');
-  const tick = async () => {
-    const job = await (await fetch('/api/jobs/' + job_id)).json();
-    if (job.total) { bar.classList.remove('busy'); fill.style.width = Math.round(job.done / job.total * 100) + '%'; st.textContent = `${T(verb)} ${job.done}/${job.total}`; }
-    if (job.status === 'done') { li.remove(); toast(T(kind === 'review' ? 'review_done' : 'analysis_done')); history.replaceState(null, '', '#job=' + job_id); (kind === 'review' ? showReview : showReport)(job); return; }
-    if (job.status === 'failed') { li.remove(); toast(`${T(kind === 'review' ? 'review_failed' : 'analysis_failed')}: ${job.error || ''}`); return; }
-    setTimeout(tick, 1500);
-  };
-  tick();
-}
+$('#new').onclick = () => { show('chat'); thread = id(); history.replaceState(null, '', ' '); $('#matter').value = ''; selected.clear(); renderDocs(); showWelcome(); loadThreads().then(setTitle); $('#text').focus(); };
 
-/* ── review: issues marked on the draft, changes accepted one by one ── */
-let reviewState = null;
-function nthIndex(text, needle, n) { let i = -1; for (let k = 0; k < n; k++) { i = text.indexOf(needle, i + 1); if (i < 0) return -1; } return i; }
-function showReview(job) {
-  const r = job.result, body = $('#reader-body'), reader = $('#reader');
-  if (!reviewState || reviewState.job.job_id !== job.job_id) reviewState = { job, decisions: new Map() };
-  $('#reader-title').innerHTML = `${esc(r.name)}<small>${r.paragraphs} ${T('paragraphs')} · ${r.quotes_checked} ${T('quotes_checked')} · ${r.citations_checked} ${T('citations_checked')} · ${r.seconds} s</small>`;
-  body.className = 'rb review';
-  const errs = r.issues.filter(i => i.severity === 'error').length, warns = r.issues.length - errs;
-  let html = `<div class="rv-sum"><b class="e">${errs} ${T('errors')}</b> · <b class="w">${warns} ${T('warnings')}</b></div>`;
-  for (const n of r.notes || []) html += `<div class="rv-note">${esc(n)}</div>`;
-  if (!r.issues.length) html += `<div class="rv-note ok">${T('no_issues')}</div>`;
-  html += `<div class="rv-acts"><button type="button" class="btn primary" id="rv-download">${T('download_fixed')}</button><button type="button" class="btn ghost" id="rv-copy">${T('copy_fixed')}</button><span class="rv-note" id="rv-count"></span></div>`;
-  html += `<div class="rv-issues">${r.issues.map(issueCard).join('')}</div><div class="rv-draft">${markedDraft(r)}</div>`;
-  body.innerHTML = html; updateCount();
-  reader.classList.add('open', 'wide'); body.scrollTop = 0;
+async function send(text) {
+  if (!thread) thread = id();
+  if (column.querySelector('.welcome')) column.innerHTML = '';
+  busy = true; $('#send').disabled = true;
+  const ready = attachments.filter(a => a.text != null);
+  const keep = ready.filter(a => a.keep);
+  attachments = []; renderAttachments();
+  addUser(text + ready.map(a => `\n\n<attachment name="${a.name.replace(/"/g, "'")}">\n`).join(''));
+  for (const a of keep) indexFile(a.file);
+  const live = addLive(), crumbs = live.querySelector('.crumbs'), body = live.querySelector('.body');
+  let tokens = '', steps = [];
+  try {
+    const payload = { text, matter: $('#matter').value.trim(), attachments: ready.map(a => ({ name: a.name, text: a.text })), documents: [...selected] };
+    const res = await fetch(`/api/threads/${thread}/messages`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+    const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
+    while (true) {
+      const { value, done } = await reader.read(); if (done) break;
+      buf += dec.decode(value, { stream: true });
+      let i; while ((i = buf.indexOf('\n\n')) >= 0) {
+        const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
+        const ev = /event: (\w+)/.exec(chunk)?.[1]; const data = JSON.parse(chunk.slice(chunk.indexOf('data: ') + 6));
+        if (ev === 'token') { tokens += data; body.innerHTML = md(tokens); }
+        if (ev === 'node') { steps.push(data.title); crumbs.innerHTML = steps.slice(-4).map(s => `<span>${esc(s)}</span>`).join(''); }
+        if (ev === 'done') {
+          live.remove();
+          if (data.interrupted) addAssistant(data.interrupted, { kind: 'question' });
+          else addAssistant(data.reply, { kind: data.kind, turn_id: data.turn_id, verified: data.extras && data.extras.verified, sources: data.extras && data.extras.sources });
+        }
+        scrollDown();
+      }
+    }
+  } catch (err) { live.remove(); addAssistant(T('server_error') + err.message, { kind: 'blocked' }); }
+  busy = false; $('#send').disabled = false; $('#text').focus();
+  await loadThreads(); setTitle();
 }
-function issueCard(i) {
-  const cut = t => esc(t.length > 240 ? t.slice(0, 240) + '…' : t), d = reviewState.decisions.get(i.n) || '';
-  return `<div class="issue ${i.severity === 'error' ? 'err' : 'warn'} ${d}" data-n="${i.n}">` +
-    `<div class="ih"><span class="num">[${i.n}]</span><span class="kind">${esc(T('issue_kinds')[i.kind] || i.kind)}</span><span class="par">${T('paragraph')} ${i.paragraph}</span></div>` +
-    `<div class="why">${esc(i.reason)}</div><blockquote>«${cut(i.passage)}»</blockquote>` +
-    (i.quote && i.kind !== 'articulo_equivocado' ? `<div class="orig">${T('original')}: «${cut(i.quote)}»${i.file ? ` <button type="button" class="cite link" data-open-src="${esc(i.file)}" data-q="${esc(i.quote)}">${T('open')}</button>` : ''}</div>` : '') +
-    (i.source && /^https?:/.test(i.source) ? `<a class="src" href="${esc(i.source)}" target="_blank" rel="noopener">${esc(i.source)}</a>` : '') +
-    (i.change ? `<div class="chg">${i.change.after === '' ? T('delete_paragraph') : '→ «' + esc(i.change.after) + '»'}</div><div class="acts"><button type="button" data-dec="accept">${T('accept')}</button><button type="button" data-dec="reject">${T('reject')}</button></div>` : '') + `</div>`;
-}
-function markedDraft(r) {
-  const text = r.draft, ranges = [];
-  for (const i of r.issues) { const at = nthIndex(text, i.passage, i.change ? i.change.occurrence : 1); if (at >= 0) ranges.push({ s: at, e: at + i.passage.length, i }); }
-  ranges.sort((a, b) => a.s - b.s);
-  let html = '', pos = 0;
-  for (const g of ranges) { if (g.s < pos) continue; html += esc(text.slice(pos, g.s)) + `<mark class="iss ${g.i.severity === 'error' ? 'err' : 'warn'}" data-n="${g.i.n}" id="iss-${g.i.n}">${esc(text.slice(g.s, g.e))}</mark>`; pos = g.e; }
-  return html + esc(text.slice(pos));
-}
-function correctedDraft(r) {
-  let text = r.draft; const located = [];
-  for (const i of r.issues) { if (!i.change || reviewState.decisions.get(i.n) !== 'accept') continue; const at = nthIndex(text, i.change.before, i.change.occurrence); if (at >= 0) located.push({ at, c: i.change }); }
-  located.sort((a, b) => b.at - a.at);
-  for (const { at, c } of located) { let end = at + c.before.length; if (c.after === '') while (end < text.length && text[end] === '\n') end++; text = text.slice(0, at) + c.after + text.slice(end); }
-  return text;
-}
-function updateCount() { const n = [...reviewState.decisions.values()].filter(v => v === 'accept').length; const el = $('#rv-count'); if (el) el.textContent = `${n} ${T('changes')}`; }
-$('#reader-body').addEventListener('click', e => {
-  const body = $('#reader-body'); if (!body.classList.contains('review') || !reviewState) return;
-  const r = reviewState.job.result;
-  const dec = e.target.closest('[data-dec]');
-  if (dec) { const card = dec.closest('.issue'); reviewState.decisions.set(+card.dataset.n, dec.dataset.dec); card.classList.remove('accept', 'reject'); card.classList.add(dec.dataset.dec); updateCount(); return; }
-  const src = e.target.closest('[data-open-src]'); if (src) { openReader(src.dataset.openSrc, src.dataset.q); return; }
-  if (e.target.id === 'rv-download') { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([correctedDraft(r)], { type: 'text/markdown' })); a.download = (r.name || 'borrador').replace(/\.[^.]+$/, '') + '-revisado.md'; a.click(); URL.revokeObjectURL(a.href); return; }
-  if (e.target.id === 'rv-copy') { navigator.clipboard.writeText(correctedDraft(r)).then(() => toast(T('copied'))); return; }
-  if (e.target.closest('a')) return;
-  const card = e.target.closest('.issue'); if (card) { $('#iss-' + card.dataset.n)?.scrollIntoView({ block: 'center', behavior: 'smooth' }); return; }
-  const mark = e.target.closest('mark.iss'); if (mark) body.querySelector(`.issue[data-n="${mark.dataset.n}"]`)?.scrollIntoView({ block: 'center', behavior: 'smooth' });
-});
-$('#reader-title').addEventListener('click', e => { if (e.target.id === 'rv-back' && reviewState) showReview(reviewState.job); });
+const ta = $('#text');
+function grow() { ta.style.height = 'auto'; ta.style.height = Math.min(ta.scrollHeight, 200) + 'px'; }
+ta.addEventListener('input', grow);
+ta.addEventListener('keydown', e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $('#form').requestSubmit(); } });
+$('#form').onsubmit = e => { e.preventDefault(); const t = ta.value.trim(); if ((!t && !attachments.length) || busy || attachments.some(a => a.text == null)) return; ta.value = ''; grow(); send(t); };
 
 /* ── attachments (read for this turn; optionally indexed) ── */
 function renderAttachments() {
-  $('#attach-list').innerHTML = attachments.map((a, i) => `<span class="att">📎 <span class="nm" title="${esc(a.name)}">${esc(a.name)}</span>` +
+  $('#attach-list').innerHTML = attachments.map((a, i) => `<span class="att">${ico('doc')}<span class="nm" title="${esc(a.name)}">${esc(a.name)}</span>` +
     (a.text == null ? `<span class="spinner"></span><span class="sz">${T('reading')}</span>` : `<span class="sz">${kchars(a.chars)}${a.truncated ? ' · ' + T('truncated') : ''}</span>`) +
-    `<label title="${T('keep_title')}"><input type="checkbox" data-keep="${i}" ${a.keep ? 'checked' : ''}>${T('keep')}</label>${a.text != null ? `<button type="button" class="x" data-rev-att="${i}" title="${T('review')}">✎</button>` : ''}<button type="button" class="x" data-rm="${i}">✕</button></span>`).join('');
+    `<label title="${T('keep_title')}"><input type="checkbox" data-keep="${i}" ${a.keep ? 'checked' : ''}>${T('keep')}</label>` +
+    (a.text != null ? `<button type="button" class="btn ghost sm" data-rev-att="${i}" title="${T('review_long')}">${ico('pen')}${T('review')}</button>` : '') +
+    `<button type="button" class="btn ghost sm icon" data-rm="${i}">${ico('x')}</button></span>`).join('');
 }
 $('#attach-list').addEventListener('click', async e => {
   const b = e.target.closest('[data-rm]'); if (b) { attachments.splice(+b.dataset.rm, 1); renderAttachments(); return; }
   const rv = e.target.closest('[data-rev-att]');
-  if (rv) {  // the full text, not the turn-sized excerpt
+  if (rv) {  // the whole text, not the turn-sized excerpt
     const a = attachments[+rv.dataset.revAtt];
     const r = await fetch('/api/attachments?name=' + encodeURIComponent(a.name) + '&full=1', { method: 'POST', body: a.file });
     if (!r.ok) { toast(T('review_failed')); return; }
@@ -674,47 +760,80 @@ async function attach(files) {
 $('#attach').onclick = () => $('#attach-file').click();
 $('#attach-file').onchange = e => { attach([...e.target.files]); e.target.value = ''; };
 
-/* ── documents (indexed) ───────────────────────────────── */
+/* ── documents ─────────────────────────────────────────── */
 async function loadDocs() {
   docsCache = await (await fetch('/api/documents')).json();
-  $('#docs-empty').hidden = docsCache.length > 0;
   for (const s of selected) if (!docsCache.some(d => d.source === s)) selected.delete(s);
-  $('#docs').innerHTML = docsCache.map(d => `<li data-open="${esc(d.source)}" class="${selected.has(d.source) ? 'on' : ''}" title="${esc(d.source)}"><input type="checkbox" data-sel="${esc(d.source)}" ${selected.has(d.source) ? 'checked' : ''} title="${T('select_title')}"><span class="t">${esc(d.title)}</span><span class="n">${d.chunks}</span><button class="an" data-rev="${esc(d.source)}" title="${T('review')}">✎</button><button class="an" data-an="${esc(d.source)}" title="${T('analyze')}">⌕</button><button class="x" data-del="${esc(d.source)}" title="✕">✕</button></li>`).join('');
+  if (currentDoc && !docsCache.some(d => d.source === currentDoc)) { currentDoc = null; docView(); }
+  renderDocs();
+}
+function renderDocs() {
+  const q = ($('#f-docs').value || '').toLowerCase();
+  const rows = docsCache.filter(d => !q || d.title.toLowerCase().includes(q) || d.source.toLowerCase().includes(q));
+  $('#docs-empty').hidden = docsCache.length > 0;
+  $('#docs').innerHTML = rows.map(d => `<div class="item ${d.source === currentDoc ? 'active' : ''}" data-open="${esc(d.source)}" title="${esc(d.source)}">` +
+    `<input type="checkbox" data-sel="${esc(d.source)}" ${selected.has(d.source) ? 'checked' : ''} title="${T('select_title')}">` +
+    `<div class="tx"><div class="t">${esc(d.title)}</div><div class="m"><span>${d.chunks} ${T('chunks')}</span>${d.source.startsWith('recorte-') ? `<span>· ${ico('scissors', 'i')}</span>` : ''}</div></div></div>`).join('');
   renderSelection();
 }
 function renderSelection() {
-  const el = $('#sel'); el.hidden = !selected.size;
-  el.title = T('selected_title');
-  el.innerHTML = `${T('selected').replace('{n}', selected.size)} <button type="button" id="sel-clear">✕ ${T('clear')}</button>`;
+  const n = selected.size, note = $('#sel-note'), pill = $('#sel');
+  note.hidden = !n; $('#sel-text').textContent = n === 1 ? T('selected_one') : T('selected_many').replace('{n}', n);
+  pill.hidden = !n || section !== 'chat'; pill.title = T('selected_title');
+  pill.innerHTML = `${ico('filter')}${T('selected').replace('{n}', n)}<button type="button" id="sel-clear-2" title="${T('clear')}">${ico('x')}</button>`;
   try { if (thread) localStorage.setItem('aroa.sel.' + thread, JSON.stringify([...selected])); } catch {}
+  if (section === 'docs' && currentDoc) docToolbar();
 }
 function loadSelection() {
   selected = new Set();
   try { selected = new Set(JSON.parse(localStorage.getItem('aroa.sel.' + thread) || '[]')); } catch {}
-  loadDocs();
+  renderDocs();
 }
-$('#sel').addEventListener('click', e => { if (e.target.closest('#sel-clear')) { selected.clear(); loadDocs(); } });
-$('#docs').addEventListener('change', e => {
-  const c = e.target.closest('[data-sel]'); if (!c) return;
-  c.checked ? selected.add(c.dataset.sel) : selected.delete(c.dataset.sel);
-  loadDocs();
+$('#sel').addEventListener('click', e => { if (e.target.closest('#sel-clear-2')) { selected.clear(); renderDocs(); } });
+$('#sel-clear').onclick = () => { selected.clear(); renderDocs(); };
+$('#f-docs').addEventListener('input', renderDocs);
+$('#docs').addEventListener('change', e => { const c = e.target.closest('[data-sel]'); if (!c) return; c.checked ? selected.add(c.dataset.sel) : selected.delete(c.dataset.sel); renderDocs(); });
+$('#docs').addEventListener('click', e => { if (e.target.closest('[data-sel]')) return; const it = e.target.closest('[data-open]'); if (it) openDoc(it.dataset.open); });
+
+async function openDoc(source, quote) {
+  show('docs'); currentDoc = source; renderDocs(); setTitle(); history.replaceState(null, '', '#doc=' + encodeURIComponent(source));
+  docView(); docToolbar();
+  const body = $('#doc-body'); body.innerHTML = `<div class="live"><div class="spinner"></div></div>`;
+  const r = await fetch('/api/documents/' + encodeURIComponent(source) + '/text');
+  if (!r.ok) { toast(T('not_removed')); return; }
+  const d = await r.json();
+  body.dataset.source = source;
+  body.innerHTML = pretty(highlight(d.text, quote));
+  const m = body.querySelector('#mark'); if (m) setTimeout(() => m.scrollIntoView({ block: 'center', behavior: 'smooth' }), 150); else $('#doc-scroll').scrollTop = 0;
+}
+function docView() { const has = !!currentDoc; $('#doc-empty').hidden = has; $('#doc-tools').hidden = !has; $('#doc-scroll').hidden = !has; }
+function docToolbar() {
+  const d = docsCache.find(x => x.source === currentDoc); if (!d) return;
+  const on = selected.has(currentDoc);
+  $('#doc-tools').innerHTML = `<span class="stats">${d.chunks} ${T('chunks')}</span>` +
+    `<button class="btn sm ${on ? 'primary' : ''}" id="d-use">${ico(on ? 'check' : 'filter')}${on ? T('using_in_chat') : T('use_in_chat')}</button>` +
+    `<button class="btn sm" id="d-an" title="${T('analyze_long')}">${ico('scan')}${T('analyze')}</button>` +
+    `<button class="btn sm" id="d-rev" title="${T('review_long')}">${ico('pen')}${T('review')}</button>` +
+    `<button class="btn ghost sm icon danger" id="d-del" title="${T('delete')}">${ico('trash')}</button>`;
+}
+$('#doc-tools').addEventListener('click', async e => {
+  const b = e.target.closest('button'); if (!b || !currentDoc) return;
+  if (b.id === 'd-use') { selected.has(currentDoc) ? selected.delete(currentDoc) : selected.add(currentDoc); renderDocs(); }
+  if (b.id === 'd-an') startAnalysis(currentDoc);
+  if (b.id === 'd-rev') startReview({ name: currentDoc, source: currentDoc });
+  if (b.id === 'd-del') {
+    if (!confirm(T('remove_q').replace('{n}', currentDoc))) return;
+    const r = await fetch('/api/documents/' + encodeURIComponent(currentDoc), { method: 'DELETE' });
+    toast(r.ok ? T('removed') : T('not_removed')); currentDoc = null; docView(); loadDocs(); loadHealth(); setTitle();
+  }
 });
-$('#docs').addEventListener('click', async e => {
-  if (e.target.closest('[data-sel]')) return;
-  const an = e.target.closest('[data-an]');
-  const rev = e.target.closest('[data-rev]'); if (rev) { startReview({ name: rev.dataset.rev, source: rev.dataset.rev }); return; }
-  if (an) { startAnalysis(an.dataset.an); return; }
-  const b = e.target.closest('[data-del]');
-  if (!b) { const li = e.target.closest('[data-open]'); if (li) openReader(li.dataset.open); return; }
-  if (!confirm(T('remove_q').replace('{n}', b.dataset.del))) return;
-  const r = await fetch('/api/documents/' + encodeURIComponent(b.dataset.del), { method: 'DELETE' });
-  toast(r.ok ? T('removed') : T('not_removed')); loadDocs(); loadHealth();
-});
+$('#add-doc').onclick = () => $('#file').click(); $('#add-doc-2').onclick = () => $('#file').click();
+$('#file').onchange = e => { upload([...e.target.files]); e.target.value = ''; };
 function indexFile(file) {
   return new Promise(resolve => {
-    const li = document.createElement('li'); li.className = 'job';
-    li.innerHTML = `<span class="t">${esc(file.name)} · <span class="st">${T('uploading')} 0%</span></span><div class="bar"><i></i></div>`;
-    $('#jobs').appendChild(li);
+    const li = document.createElement('div'); li.className = 'item';
+    li.innerHTML = `<div class="ic">${ico('doc')}</div><div class="tx"><div class="t">${esc(file.name)}</div><div class="m"><span class="st">${T('uploading')} 0%</span></div><div class="bar"><i></i></div></div>`;
+    $('#uploads').appendChild(li);
     const st = li.querySelector('.st'), bar = li.querySelector('.bar'), fill = li.querySelector('i');
     const xhr = new XMLHttpRequest();
     xhr.open('POST', '/api/documents?name=' + encodeURIComponent(file.name));
@@ -729,44 +848,248 @@ function indexFile(file) {
     xhr.send(file);
   });
 }
-async function upload(files) { for (const f of files) await indexFile(f); }
-$('#add-doc').onclick = () => $('#file').click();
-$('#file').onchange = e => { upload([...e.target.files]); e.target.value = ''; };
-const main = $('#main'); let dragDepth = 0;
-main.addEventListener('dragenter', e => { e.preventDefault(); if (++dragDepth === 1) main.classList.add('dragging'); });
-main.addEventListener('dragleave', () => { if (--dragDepth === 0) main.classList.remove('dragging'); });
-main.addEventListener('dragover', e => e.preventDefault());
-main.addEventListener('drop', e => {
-  e.preventDefault(); dragDepth = 0; main.classList.remove('dragging');
+async function upload(files) { if (files.length) show('docs'); for (const f of files) await indexFile(f); }
+const work = $('#work'); let dragDepth = 0;
+work.addEventListener('dragenter', e => { e.preventDefault(); if (++dragDepth === 1) work.classList.add('dragging'); });
+work.addEventListener('dragleave', () => { if (--dragDepth === 0) work.classList.remove('dragging'); });
+work.addEventListener('dragover', e => e.preventDefault());
+work.addEventListener('drop', e => {
+  e.preventDefault(); dragDepth = 0; work.classList.remove('dragging');
   const files = [...e.dataTransfer.files];
-  if (e.target.closest('.composer')) attach(files); else upload(files); // on the composer: attach to the message; elsewhere: index
+  if (e.target.closest('.composer')) attach(files); else upload(files);
 });
 
-/* ── status ─────────────────────────────────────────────── */
-async function loadStats() {
-  const r = await (await fetch('/api/report?days=1')).json();
-  const claims = r.claims_checked ? `${r.claims_checked - r.claims_failed}/${r.claims_checked}` : '–';
-  $('#tiles').innerHTML = [[r.turns, T('turns')], [r.latency_p50 + ' s', 'p50'], [r.llm_calls, T('model_calls')],
-    [claims, T('claims_ok')], [r.facts_written, T('facts')], [`${r.feedback.up} / ${r.feedback.down}`, '👍 / 👎']]
-    .map(([v, l]) => `<div class="tile"><b>${esc(v)}</b><span>${l}</span></div>`).join('');
+/* ── highlight + inspector + clippings ─────────────────── */
+function pretty(html) {
+  // escaped text with <mark>s: headings, bold and quotes shown as such, the words untouched
+  return html.split('\n').map(line => {
+    let m;
+    if ((m = /^(#{1,3}) (.*)$/.exec(line))) return `<span class="mh mh${m[1].length}">${m[2]}</span>`;
+    if ((m = /^&gt; ?(.*)$/.exec(line))) return `<span class="mq">${m[1]}</span>`;
+    return line;
+  }).join('\n').replace(/(<\/span>)\n/g, '$1').replace(/\*\*([^*\n]+?)\*\*/g, '<b>$1</b>');
 }
+function highlight(text, quote) {
+  let html = esc(text);
+  if (!quote) return html;
+  const needle = quote.replace(/\s+/g, ' ').trim();
+  const probe = needle.length > 60 ? needle.slice(0, 60) : needle;
+  const idx = text.replace(/\s+/g, ' ').indexOf(probe);
+  if (idx < 0) return html;
+  let i = 0, j = 0; const txt = text;
+  while (j < idx && i < txt.length) { if (/\s/.test(txt[i]) && i > 0 && /\s/.test(txt[i - 1])) { i++; continue; } i++; j++; }
+  while (i < txt.length && /\s/.test(txt[i]) && i > 0 && /\s/.test(txt[i - 1])) i++;
+  let end = i, k = 0; while (end < txt.length && k < needle.length) { if (!(/\s/.test(txt[end]) && end > 0 && /\s/.test(txt[end - 1]))) k++; end++; }
+  return esc(txt.slice(0, i)) + '<mark id="mark">' + esc(txt.slice(i, end)) + '</mark>' + esc(txt.slice(end));
+}
+async function openInspector(source, quote) {
+  const r = await fetch('/api/documents/' + encodeURIComponent(source) + '/text');
+  if (!r.ok) { toast(T('not_removed')); return; }
+  const d = await r.json(), doc = docsCache.find(x => x.source === source), body = $('#insp-body');
+  $('#insp-title').innerHTML = `${esc(doc ? doc.title : source)}<small>${esc(source)}</small>`;
+  body.dataset.source = source; body.innerHTML = pretty(highlight(d.text, quote));
+  $('#inspector').classList.add('open');
+  const m = body.querySelector('#mark'); if (m) setTimeout(() => m.scrollIntoView({ block: 'center', behavior: 'smooth' }), 220); else body.scrollTop = 0;
+}
+function closeInspector() { $('#inspector').classList.remove('open'); }
+$('#insp-close').onclick = closeInspector;
+
+function clipButton() {
+  const sel = window.getSelection(), btn = $('#clip');
+  const text = sel && !sel.isCollapsed ? sel.toString().trim() : '';
+  const host = text && sel.anchorNode ? (sel.anchorNode.nodeType === 1 ? sel.anchorNode : sel.anchorNode.parentElement).closest('[data-source]') : null;
+  if (!text || !host) { btn.classList.remove('show'); return; }
+  const rect = sel.getRangeAt(0).getBoundingClientRect();
+  btn.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - 180)) + 'px'; btn.style.top = (rect.bottom + 6) + 'px';
+  btn.dataset.text = text; btn.dataset.source = host.dataset.source; btn.classList.add('show');
+}
+document.addEventListener('selectionchange', () => setTimeout(clipButton, 0));
+$('#clip').addEventListener('mousedown', e => e.preventDefault());
+$('#clip').onclick = async () => {
+  const text = $('#clip').dataset.text, source = $('#clip').dataset.source; if (!text || !source) return;
+  const note = prompt(T('clip_note'), ''); if (note === null) return;
+  const r = await fetch('/api/clippings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ source, text, note, matter: $('#matter').value.trim() }) });
+  $('#clip').classList.remove('show'); window.getSelection()?.removeAllRanges();
+  toast(r.ok ? T('clipped') : T('not_removed')); loadDocs(); loadHealth();
+};
+
+/* ── jobs: reviews and analyses ────────────────────────── */
+async function startAnalysis(source) {
+  const goal = prompt(T('goal_prompt'), ''); if (goal === null) return;
+  const r = await fetch('/api/documents/' + encodeURIComponent(source) + '/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ goal }) });
+  if (!r.ok) { toast(T('analysis_failed')); return; }
+  watchJob((await r.json()).job_id, 'analysis');
+}
+async function startReview(req) {
+  const r = await fetch('/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...req, documents: [...selected], legal: true }) });
+  if (!r.ok) { toast(T('review_failed')); return; }
+  watchJob((await r.json()).job_id, 'review');
+}
+const watching = new Set();
+function watchJob(job_id, kind) {
+  if (watching.has(job_id)) return; watching.add(job_id);
+  show('jobs'); loadJobs();
+  const tick = async () => {
+    const job = await (await fetch('/api/jobs/' + job_id)).json();
+    const row = jobsCache.find(j => j.job_id === job_id); if (row) Object.assign(row, { status: job.status, done: job.done, total: job.total }); renderJobs();
+    if (job.status === 'done') { watching.delete(job_id); toast(T(kind === 'review' ? 'review_done' : 'analysis_done')); loadJobs(); openJob(job); return; }
+    if (job.status === 'failed') { watching.delete(job_id); toast(`${T(kind === 'review' ? 'review_failed' : 'analysis_failed')}: ${job.error || ''}`); loadJobs(); return; }
+    setTimeout(tick, 1500);
+  };
+  tick();
+}
+async function loadJobs() {
+  jobsCache = await (await fetch('/api/jobs')).json();
+  renderJobs();
+  const running = jobsCache.filter(j => j.status === 'queued' || j.status === 'running');
+  for (const j of running) watchJob(j.job_id, j.kind);
+}
+function renderJobs() {
+  const running = jobsCache.filter(j => j.status === 'queued' || j.status === 'running').length;
+  $('#jobs-badge').hidden = !running; $('#jobs-badge').textContent = running;
+  $('#jobs-empty').hidden = jobsCache.length > 0;
+  $('#jobs').innerHTML = jobsCache.map(j => {
+    const icon = j.kind === 'review' ? 'pen' : 'scan', live = j.status === 'queued' || j.status === 'running';
+    const cls = j.status === 'failed' ? 'bad' : j.status === 'done' ? '' : 'warn';
+    const state = j.status === 'done' ? ago(j.updated_ts) : j.status === 'failed' ? T('failed') : j.status === 'queued' ? T('queued') : `${T(j.kind === 'review' ? 'reviewing' : 'analyzing')}${j.total ? ` ${j.done}/${j.total}` : '…'}`;
+    return `<div class="item ${currentJob && currentJob.job_id === j.job_id ? 'active' : ''}" data-job="${esc(j.job_id)}"><div class="ic ${cls}">${ico(icon)}</div><div class="tx"><div class="t">${esc(j.source)}</div>` +
+      `<div class="m"><span>${j.kind === 'review' ? T('kind_review') : T('kind_analysis')}</span><span>· ${esc(state)}</span></div>` +
+      (live ? `<div class="bar ${j.total ? '' : 'busy'}"><i style="width:${j.total ? Math.round(j.done / j.total * 100) : 0}%"></i></div>` : '') + `</div></div>`;
+  }).join('');
+}
+$('#jobs').addEventListener('click', async e => {
+  const it = e.target.closest('[data-job]'); if (!it) return;
+  const job = await (await fetch('/api/jobs/' + it.dataset.job)).json();
+  if (job.status === 'done') openJob(job); else if (job.status === 'failed') toast(job.error || T('failed'));
+});
+function openJob(job, keepDecisions = false) {
+  show('jobs'); currentJob = job; renderJobs(); setTitle(); history.replaceState(null, '', '#job=' + job.job_id);
+  $('#job-empty').hidden = true; $('#job-tools').hidden = false;
+  if (job.kind === 'review') { $('#rv').hidden = false; $('#an-scroll').hidden = true; showReview(job, keepDecisions); }
+  else { $('#rv').hidden = true; $('#an-scroll').hidden = false; showReport(job); }
+}
+function showReport(job) {
+  const r = job.result, body = $('#an-body');
+  $('#job-tools').innerHTML = `<span class="stats">${esc(r.title)} · ${r.chunks} ${T('chunks')} · ${r.findings.length} ${T('findings')} · ${r.seconds} s</span>` +
+    `<button class="btn sm" id="an-open">${ico('doc')}${T('open_doc')}</button>`;
+  $('#an-open').onclick = () => openDoc(r.source);
+  body.innerHTML = md(r.report); body.dataset.sources = JSON.stringify(r.sources || []);
+  body.querySelectorAll('.cite').forEach(c => { if ((r.sources || []).some(s => s.n === +c.dataset.n)) c.classList.add('link'); });
+  $('#an-scroll').scrollTop = 0;
+}
+$('#an-body').addEventListener('click', e => {
+  const b = e.target.closest('.cite'); if (!b) return;
+  const s = JSON.parse($('#an-body').dataset.sources || '[]').find(x => x.n === +b.dataset.n);
+  if (s) openInspector(s.file, s.quote);
+});
+
+/* ── review: issues marked on the draft, changes accepted one by one ── */
+let reviewState = null;
+function showReview(job, keepDecisions) {
+  const r = job.result;
+  if (!keepDecisions || !reviewState || reviewState.job.job_id !== job.job_id) reviewState = { job, decisions: new Map() };
+  const errs = r.issues.filter(i => i.severity === 'error').length, warns = r.issues.length - errs;
+  $('#job-tools').innerHTML = `<span class="pill ${errs ? 'err' : 'ok'}">${errs ? ico('alert') : ico('check')}${errs} ${T('errors')}</span><span class="pill ${warns ? 'warn' : 'plain'}">${warns} ${T('warnings')}</span>` +
+    `<span class="stats">${r.paragraphs} ${T('paragraphs')} · ${r.quotes_checked} ${T('quotes_checked')} · ${r.citations_checked} ${T('citations_checked')} · ${r.seconds} s</span>` +
+    `<span id="rv-count" style="white-space:nowrap"></span><button class="btn sm" id="rv-copy">${ico('copy')}${T('copy_fixed')}</button><button class="btn primary sm" id="rv-download">${ico('download')}${T('download_fixed')}</button>`;
+  let side = '';
+  for (const n of r.notes || []) side += `<div class="rv-note">${esc(n)}</div>`;
+  if (!r.issues.length) side += `<div class="rv-note ok">${T('no_issues')}</div>`;
+  $('#rv-issues').innerHTML = side + r.issues.map(issueCard).join('');
+  $('#rv-draft').innerHTML = pretty(markedDraft(r)); $('#rv-draft').dataset.name = r.name;
+  updateCount();
+}
+function issueCard(i) {
+  const cut = t => esc(t.length > 240 ? t.slice(0, 240) + '…' : t), d = reviewState.decisions.get(i.n) || '';
+  return `<div class="issue ${i.severity === 'error' ? 'err' : 'warn'} ${d}" data-n="${i.n}">` +
+    `<div class="ih"><span class="num">[${i.n}]</span><span class="kind">${esc(T('issue_kinds')[i.kind] || i.kind)}</span><span>· ${T('paragraph')} ${i.paragraph}</span></div>` +
+    `<div class="why">${esc(i.reason)}</div><blockquote>«${cut(i.passage)}»</blockquote>` +
+    (i.quote && i.kind !== 'articulo_equivocado' ? `<div class="orig">${T('original')}: «${cut(i.quote)}»${i.file ? ` <button type="button" class="cite link" data-open-src="${esc(i.file)}" data-q="${esc(i.quote)}">${T('open')}</button>` : ''}</div>` : '') +
+    (i.source && /^https?:/.test(i.source) ? `<a class="src" href="${esc(i.source)}" target="_blank" rel="noopener">${esc(i.source.replace(/^https?:\/\//, ''))}</a>` : '') +
+    (i.change ? `<div class="chg">${i.change.after === '' ? T('delete_paragraph') : '→ «' + esc(i.change.after) + '»'}</div><div class="acts"><button type="button" data-dec="accept">${ico('check')}${T('accept')}</button><button type="button" data-dec="reject">${ico('x')}${T('reject')}</button></div>` : '') + `</div>`;
+}
+function markedDraft(r) {
+  const text = r.draft, ranges = [];
+  for (const i of r.issues) { const at = nthIndex(text, i.passage, i.change ? i.change.occurrence : 1); if (at >= 0) ranges.push({ s: at, e: at + i.passage.length, i }); }
+  ranges.sort((a, b) => a.s - b.s);
+  let html = '', pos = 0;
+  for (const g of ranges) { if (g.s < pos) continue; html += esc(text.slice(pos, g.s)) + `<mark class="iss ${g.i.severity === 'error' ? 'err' : 'warn'}" data-n="${g.i.n}" id="iss-${g.i.n}">${esc(text.slice(g.s, g.e))}</mark>`; pos = g.e; }
+  return html + esc(text.slice(pos));
+}
+function correctedDraft(r) {
+  let text = r.draft; const located = [];
+  for (const i of r.issues) { if (!i.change || reviewState.decisions.get(i.n) !== 'accept') continue; const at = nthIndex(text, i.change.before, i.change.occurrence); if (at >= 0) located.push({ at, c: i.change }); }
+  located.sort((a, b) => b.at - a.at);
+  for (const { at, c } of located) { let end = at + c.before.length; if (c.after === '') while (end < text.length && text[end] === '\n') end++; text = text.slice(0, at) + c.after + text.slice(end); }
+  return text;
+}
+function updateCount() { const n = [...reviewState.decisions.values()].filter(v => v === 'accept').length; const el = $('#rv-count'); if (el) el.textContent = `${n} ${T('changes')}`; }
+function focusIssue(n) {
+  $$('.issue.focus, mark.iss.focus').forEach(x => x.classList.remove('focus'));
+  const card = $(`.issue[data-n="${n}"]`), mark = $('#iss-' + n);
+  card?.classList.add('focus'); mark?.classList.add('focus');
+  return { card, mark };
+}
+$('#rv-issues').addEventListener('click', e => {
+  if (!reviewState) return;
+  const dec = e.target.closest('[data-dec]');
+  if (dec) { const card = dec.closest('.issue'); reviewState.decisions.set(+card.dataset.n, dec.dataset.dec); card.classList.remove('accept', 'reject'); card.classList.add(dec.dataset.dec); updateCount(); return; }
+  const src = e.target.closest('[data-open-src]'); if (src) { openInspector(src.dataset.openSrc, src.dataset.q); return; }
+  if (e.target.closest('a')) return;
+  const card = e.target.closest('.issue'); if (card) focusIssue(+card.dataset.n).mark?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+});
+$('#rv-draft').addEventListener('click', e => { const mark = e.target.closest('mark.iss'); if (mark) focusIssue(+mark.dataset.n).card?.scrollIntoView({ block: 'center', behavior: 'smooth' }); });
+$('#job-tools').addEventListener('click', e => {
+  if (!reviewState || !currentJob || currentJob.kind !== 'review') return;
+  const r = reviewState.job.result;
+  if (e.target.closest('#rv-download')) { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([correctedDraft(r)], { type: 'text/markdown' })); a.download = (r.name || 'borrador').replace(/\.[^.]+$/, '') + '-revisado.md'; a.click(); URL.revokeObjectURL(a.href); }
+  if (e.target.closest('#rv-copy')) navigator.clipboard.writeText(correctedDraft(r)).then(() => toast(T('copied')));
+});
+
+/* ── popovers: alarms and status ───────────────────────── */
+function togglePop(id) { const el = $(id), open = el.classList.contains('open'); $$('.pop').forEach(p => p.classList.remove('open')); if (!open) el.classList.add('open'); return !open; }
+document.addEventListener('click', e => { if (!e.target.closest('.pop') && !e.target.closest('#b-alarms') && !e.target.closest('#b-status')) $$('.pop').forEach(p => p.classList.remove('open')); });
+$('#b-alarms').onclick = async () => {
+  if (!togglePop('#pop-alarms')) return;
+  const rows = await (await fetch('/api/alarms')).json();
+  $('#pop-alarms').innerHTML = `<h4>${ico('bell')}${T('pending_alarms')}<span class="sp"></span><a href="/api/alarms" target="_blank" class="btn ghost sm icon">${ico('ext')}</a></h4>` +
+    (rows.length ? rows.map(a => `<div class="alarm">${esc(a.text)}<small>${esc(a.due_ts || a.due || a.fire_ts || '')}</small></div>`).join('') : `<div class="empty">${T('no_alarms')}</div>`);
+};
+$('#b-status').onclick = async () => {
+  if (!togglePop('#pop-status')) return;
+  const el = $('#pop-status'); el.innerHTML = `<h4>${ico('pulse')}${T('status')}</h4>`;
+  try {
+    const [h, r] = await Promise.all([(await fetch('/api/health')).json(), (await fetch('/api/report?days=1')).json()]);
+    const claims = r.claims_checked ? `${r.claims_checked - r.claims_failed}/${r.claims_checked}` : '–';
+    el.innerHTML += `<div class="tiles">${[[r.turns, T('turns')], [r.latency_p50 + ' s', T('p50')], [r.llm_calls, T('model_calls')], [claims, T('claims_ok')], [r.facts_written, T('facts')], [`${r.feedback.up} / ${r.feedback.down}`, T('up_down')]].map(([v, l]) => `<div class="tile"><b>${esc(v)}</b><span>${l}</span></div>`).join('')}</div>` +
+      `<div class="row"><span>${T('model')}</span><b>${esc(h.model)}</b></div><div class="row"><span>${T('privacy')}</span><b>${esc(h.privacy_mode)}</b></div>` +
+      `<div class="row"><span>${T('memory')}</span><b>${h.memory.facts} ${T('facts')} · ${h.memory.documents} ${T('chunks')}</b></div><div class="row"><span>Tracing</span><b>${h.traced ? T('traced') : T('no_tracing')}</b></div>` +
+      `<div class="links"><a href="/api/report?days=7" target="_blank">${T('report_link')}</a><a href="/metrics" target="_blank">${T('metrics_link')}</a></div>`;
+  } catch { el.innerHTML += `<div class="empty">${T('unreachable')}</div>`; }
+};
 async function loadHealth() {
   try {
     const h = await (await fetch('/api/health')).json();
     if (!lang) { lang = h.language === 'es' ? 'es' : 'en'; applyLang(); return; }
-    $('#health').innerHTML = `<span><span class="dot"></span>${esc(h.model)}</span><span>${T('privacy')} ${esc(h.privacy_mode)}</span><span>${h.traced ? T('traced') : T('no_tracing')}</span><span>${h.memory.facts} ${T('facts')} · ${h.memory.documents} ${T('chunks')}</span>`;
-  } catch { $('#health').innerHTML = `<span><span class="dot" style="background:var(--bad)"></span>${T('unreachable')}</span>`; }
+    $('#health-dot').classList.remove('bad'); $('#b-status').title = `${esc(h.model)} · ${T('privacy')} ${h.privacy_mode}`;
+  } catch { $('#health-dot').classList.add('bad'); $('#b-status').title = T('unreachable'); }
 }
-setInterval(() => { if (thread && !busy && !column.querySelector('.welcome')) openThread(thread); }, 20000); // alarms post into the thread on their own
-setInterval(loadStats, 60000);
+async function loadAlarmCount() { try { const rows = await (await fetch('/api/alarms')).json(); $('#alarms-badge').hidden = !rows.length; $('#alarms-badge').textContent = rows.length; } catch {} }
 
-const deepJob = /^#job=([\w-]+)$/.exec(location.hash);
-if (deepJob) fetch('/api/jobs/' + deepJob[1]).then(r => r.ok ? r.json() : null).then(j => { if (j && j.status === 'done') (j.kind === 'review' ? showReview : showReport)(j); });
-const deep = /^#t=([\w-]+)$/.exec(location.hash);
-if (deep) openThread(deep[1]); else { thread = id(); loadThreads().then(setTitle); }
-if (lang) applyLang(); else loadHealth(); // without a saved choice, the server's language decides
-if (!deep) showWelcome();
-loadDocs(); loadStats();
+/* ── boot ──────────────────────────────────────────────── */
+setInterval(() => { if (section === 'chat' && thread && !busy && !column.querySelector('.welcome')) openThread(thread); }, 20000); // alarms post into the thread on their own
+setInterval(loadAlarmCount, 30000);
+const deepJob = /^#job=([\w-]+)$/.exec(location.hash), deepDoc = /^#doc=(.+)$/.exec(location.hash), deep = /^#t=([\w-]+)$/.exec(location.hash);
+thread = deep ? deep[1] : id();
+if (lang) applyLang(); else loadHealth();
+loadDocs().then(() => {
+  if (deepJob) fetch('/api/jobs/' + deepJob[1]).then(r => r.ok ? r.json() : null).then(j => { if (j && j.status === 'done') openJob(j); else show('jobs'); });
+  else if (deepDoc) openDoc(decodeURIComponent(deepDoc[1]));
+  else if (deep) openThread(deep[1]);
+  else { showWelcome(); loadThreads().then(setTitle); }
+});
+if (!deep && !deepJob && !deepDoc) showWelcome();
+loadJobs(); loadAlarmCount();
 </script>
 </body>
 </html>
