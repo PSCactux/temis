@@ -113,3 +113,37 @@ def test_the_model_hands_the_message_to_the_checker(make_assistant, workdir, mon
     assert result.kind == "review"
     seen = assistant.model.calls[2][-1].content
     assert "✔ existe · artículo 135.5 de la LEC" in seen and "✘ no existe el artículo · artículo 999 LEC" in seen
+
+
+def test_law_names_stop_at_the_first_ordinary_word():
+    from aroa.lawcheck import trim_law_name
+
+    assert trim_law_name("LEC procede") == "LEC"
+    assert trim_law_name("Código Civil procede la nulidad") == "Código Civil"
+    assert trim_law_name("Ley de Enjuiciamiento Civil") == "Ley de Enjuiciamiento Civil"
+    assert trim_law_name("Ley 29/1994 de Arrendamientos") == "Ley 29/1994"
+    assert trim_law_name("de la") == ""
+
+
+def test_a_message_citing_an_article_is_routed_to_the_archive_not_the_web(make_assistant, workdir, monkeypatch):
+    from aroa.graph import cites_law
+    from aroa.schemas import Claim, Claims, Facts
+    from tests.test_graph import routing, tool_call
+
+    assert cites_law("¿qué dice el artículo 9 de la LAU?") and not cites_law("¿qué plazo tengo para apelar?")
+    from aroa.graph import wants_web
+
+    assert wants_web("busca en el BOE el artículo 1 de la LAU") and not wants_web("comprueba el artículo 1 de la LAU")
+    monkeypatch.setattr("aroa.lawcheck.BoeArchive", lambda _dir: FakeSource())
+    assistant = make_assistant(
+        [
+            routing("web"),  # the router wants to search the web; the archive has the law
+            tool_call("check_citations", {"path": "recurso.txt"}),  # a path the model made up, with no matter folder
+            "El artículo 135.5 LEC dice...",
+            Claims(claims=[Claim(kind="other", target="citas")]),
+            Facts(facts=[]),
+        ]
+    )
+    assistant.settings.boe_archive_dir = workdir
+    result = assistant.ask("t1", "¿qué dice el artículo 135.5 de la LEC?")
+    assert result.kind == "review" and "✔ existe · artículo 135.5 de la LEC" in assistant.model.calls[2][-1].content

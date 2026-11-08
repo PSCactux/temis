@@ -14,8 +14,11 @@ def make_tools(ctx: ToolContext) -> list:
     def check_citations(path: str = "") -> str:
         """Verify every legal citation (artículo X de la Ley Y, LEC, Código Civil, STS...) in a text against the
         firm's archive of the BOE: whether the norm exists, whether the article exists, and its current text.
-        Without `path`, checks the user's current message (attachments included); with `path`, a file of the
-        matter folder. ALWAYS use this instead of judging citations yourself; report its verdicts as they are."""
+        Call it WITHOUT arguments to check the user's current message (attachments included); give `path` only
+        for a file inside the matter folder. ALWAYS use this instead of judging citations or quoting articles
+        yourself; report its verdicts and texts as they are."""
+        if path and not ctx.project:
+            path = ""  # no matter folder in this route: the only text there is, is the message
         if path:
             target = safe_path(ctx.project_root, path)
             if not target.is_file():

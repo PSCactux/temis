@@ -22,7 +22,7 @@ ARTICLE = re.compile(
     r"((?:\d+(?:\.\d+)?(?:\s*(?:bis|ter|quáter|quater|quinquies))?)(?:\s*(?:,|y|e)\s*\d+(?:\.\d+)?(?:\s*(?:bis|ter))?)*)"
     r"\s*(?:,\s*)?(?:de\s+la|del|de\s+el|de)?\s*(?P<law>"
     + LAW_REF
-    + r"|[A-ZÁÉÍÓÚ][\w .áéíóúÁÉÍÓÚ-]{0,70}?)?(?=[.,;:()\n]|\s+(?:y|e|o|que|en|para|por|con)\s|$)",
+    + r"|[A-ZÁÉÍÓÚ][\w .áéíóúÁÉÍÓÚ-]{0,70}?)?(?=[.,;:()\n?!¿¡»\"']|\s+(?:y|e|o|que|en|para|por|con)\s|$)",
     re.IGNORECASE,
 )
 JUDGMENT = re.compile(
@@ -84,6 +84,27 @@ def _norm(text: str) -> str:
     return re.sub(r"\s+", " ", text.strip().strip(".,;:()").lower())
 
 
+CONNECTORS = {"de", "del", "la", "las", "los", "el", "y", "e"}
+
+
+def trim_law_name(raw: str) -> str:
+    """«LEC procede» → «LEC»; «Código Civil procede» → «Código Civil»; «Ley 29/1994» stays. A norm's name is capitalised
+    words, numbers and connectors; the first ordinary lowercase word ends it."""
+    if not raw:
+        return ""
+    if LAW_NUMBER.match(raw):
+        return LAW_NUMBER.match(raw).group(0)
+    kept: list[str] = []
+    for word in raw.split():
+        if word[0].isupper() or word[0].isdigit() or word.lower() in CONNECTORS:
+            kept.append(word)
+        else:
+            break
+    while kept and kept[-1].lower() in CONNECTORS:
+        kept.pop()
+    return " ".join(kept)
+
+
 def extract_citations(text: str) -> list[Citation]:
     """Every article, law and judgment the text cites, in order, without duplicates."""
     found: list[Citation] = []
@@ -96,9 +117,7 @@ def extract_citations(text: str) -> list[Citation]:
             found.append(c)
 
     for m in ARTICLE.finditer(text):
-        law = (m.group("law") or "").strip()
-        if law and not (LAW_NUMBER.fullmatch(law) or len(law) <= 12 or law[0].isupper()):
-            law = ""
+        law = trim_law_name((m.group("law") or "").strip())
         for number in re.split(r"\s*(?:,|\by\b|\be\b)\s*", m.group(1)):
             number = number.strip()
             if not number:

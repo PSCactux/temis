@@ -239,6 +239,9 @@ def build_graph(
             chosen = "documents"  # the user chose documents to work on: a question goes to them first
         if chosen == "chat" and deadline_in(state["messages"][-1].content):
             chosen = "alarms"  # a term from a concrete date is arithmetic: the deadline tool, never the model's count
+        text = state["messages"][-1].content
+        if chosen in ("chat", "web") and settings.boe_archive_dir and cites_law(text) and not wants_web(text):
+            chosen = "review"  # the law lives in the BOE archive: the checker reads it, the model does not recall it
         if chosen == "documents" and not memory.document_titles():
             chosen = "chat"
         query = result.search_query.strip() or state["query"]
@@ -579,6 +582,23 @@ DATE_WORDS = re.compile(
 TERM_WORDS = re.compile(
     r"\b(plazo|vence|vencimiento|recurrir|recurso|alegaciones|contestar|días?|mes(?:es)?|año|años)\b", re.IGNORECASE
 )
+
+
+def cites_law(text: str) -> bool:
+    """The message names an article of a norm («artículo 9 de la LAU», «art. 135.5 LEC»)."""
+    from .lawcheck import extract_citations
+
+    return any(c.kind == "article" and c.law for c in extract_citations(text))
+
+
+WEB_WORDS = re.compile(
+    r"\b(busca|buscar|búscalo|internet|web|en línea|online|boe\.es|https?://|noticias|actualidad)\b", re.IGNORECASE
+)
+
+
+def wants_web(text: str) -> bool:
+    """The user explicitly asks for a search or a page: the web route stays."""
+    return bool(WEB_WORDS.search(text))
 
 
 def deadline_in(text: str) -> bool:
