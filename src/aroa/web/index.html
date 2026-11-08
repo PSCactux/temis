@@ -528,7 +528,7 @@ async function startAnalysis(source) {
   const tick = async () => {
     const job = await (await fetch('/api/jobs/' + job_id)).json();
     if (job.total) { bar.classList.remove('busy'); fill.style.width = Math.round(job.done / job.total * 100) + '%'; st.textContent = `${T('analyzing')} ${job.done}/${job.total}`; }
-    if (job.status === 'done') { li.remove(); toast(T('analysis_done')); showReport(job); return; }
+    if (job.status === 'done') { li.remove(); toast(T('analysis_done')); history.replaceState(null, '', '#job=' + job_id); showReport(job); return; }
     if (job.status === 'failed') { li.remove(); toast(`${T('analysis_failed')}: ${job.error || ''}`); return; }
     setTimeout(tick, 1500);
   };
@@ -735,6 +735,8 @@ async function loadHealth() {
 setInterval(() => { if (thread && !busy && !column.querySelector('.welcome')) openThread(thread); }, 20000); // alarms post into the thread on their own
 setInterval(loadStats, 60000);
 
+const deepJob = /^#job=([\w-]+)$/.exec(location.hash);
+if (deepJob) fetch('/api/jobs/' + deepJob[1]).then(r => r.ok ? r.json() : null).then(j => { if (j && j.status === 'done') showReport(j); });
 const deep = /^#t=([\w-]+)$/.exec(location.hash);
 if (deep) openThread(deep[1]); else { thread = id(); loadThreads().then(setTitle); }
 if (lang) applyLang(); else loadHealth(); // without a saved choice, the server's language decides

@@ -10,6 +10,7 @@ Case kinds and what passes:
 - web        at least one tool was used and no claim failed (needs internet)
 - alarms     a pending alarm exists after the turn and the claim is verified
 - review     the verdict on each citation comes from the checker (a tool call happened) and is the right one
+- analysis   a long document analysed whole: planted facts found, repeats merged, every finding quoted
 - deadlines  the due date in the reply comes from the deadline tool (a tool call happened) and is the right one
 - project    the file the assistant says it created exists and no claim failed
 """
@@ -42,6 +43,8 @@ class Case:
     files: dict[str, str] = field(default_factory=dict)  # project files to create before the turn
     expect_file: str = ""
     documents: list[str] = field(default_factory=list)  # sources the turn is confined to
+    ingest: str = ""  # analysis cases: a file (relative to the repo) indexed for this case only
+    goal: str = ""  # analysis cases: what the analysis looks for
 
 
 def load_cases(path: Path) -> list[Case]:
@@ -118,6 +121,8 @@ def evaluate_case(assistant, case: Case) -> dict:
         for name, content in case.files.items():
             (root / name).write_text(content, encoding="utf-8")
     thread = f"eval-{case.id}-{uuid.uuid4().hex[:6]}"
+    if case.kind == "analysis":
+        return evaluate_analysis(assistant, case)
     result = assistant.ask(thread, case.question, matter=matter, source="eval", documents=case.documents)
     reply, lowered = result.reply, result.reply.lower()
     checks: dict = {"_reply": reply, "no_error": result.kind != "error"}
@@ -160,4 +165,42 @@ def evaluate_case(assistant, case: Case) -> dict:
     elif case.kind == "project":
         checks["file_exists"] = (assistant.settings.projects_dir / matter / case.expect_file).is_file()
         checks["claims_verified"] = result.metrics["claims_failed"] == 0
+    return checks
+
+
+def evaluate_analysis(assistant, case: Case) -> dict:
+    """Index the case's long document, analyse it whole, check the planted facts, then drop it again."""
+    import shutil
+
+    from .analysis import DEFAULT_GOAL, analyze
+
+    src = Path(case.ingest)
+    target = assistant.settings.docs_dir / src.name
+    shutil.copy(src, target)
+    assistant.ingest()
+    checks: dict = {}
+    try:
+        result = analyze(
+            memory=assistant.memory,
+            fast_llm=assistant.fast_llm,
+            llm=None,
+            source=src.name,
+            goal=case.goal or DEFAULT_GOAL,
+        )
+        report = assistant.reveal(result.as_dict()["report"])
+        lowered = report.lower()
+        checks["no_error"] = True
+        checks["includes"] = all(any(t.lower() in lowered for t in term.split("|")) for term in case.must_include)
+        checks["excludes"] = not any(term.lower() in lowered for term in case.must_not_include)
+        checks["all_quoted"] = all(f.quote and f.locations for f in result.findings)
+        checks["repeats_merged"] = result.merged >= 1  # the sample repeats two facts on purpose
+        checks["_reply"] = (
+            f"{len(result.findings)} findings, {result.merged} merged, {result.dropped} dropped, "
+            f"{result.chunks} fragments, {result.seconds}s"
+        )
+    except Exception as exc:  # noqa: BLE001
+        checks = {"no_error": False, "_reply": f"{type(exc).__name__}: {exc}"}
+    finally:
+        target.unlink(missing_ok=True)
+        assistant.ingest()
     return checks

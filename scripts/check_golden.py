@@ -156,7 +156,10 @@ def main() -> int:
     for doc_id in sorted({c.doc_id for c in chunks}):
         sections = {c.section for c in chunks if c.doc_id == doc_id}
         missing = sorted(sections - covered[doc_id])
-        print(f"  {doc_id}: {len(covered[doc_id])}/{len(sections)} sections covered" + (f"; missing {missing}" if missing else ""))
+        print(
+            f"  {doc_id}: {len(covered[doc_id])}/{len(sections)} sections covered"
+            + (f"; missing {missing}" if missing else "")
+        )
         if missing:
             problems.append(f"{doc_id}: sections without a case: {missing}")
 
