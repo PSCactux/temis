@@ -160,7 +160,9 @@ class Assistant:
                 trace=state.get("trace") or [],
                 metrics=metrics,
                 interrupted=self.reveal(waiting) if waiting else None,
-                extras={k: v for k, v in (getattr(last, "additional_kwargs", {}) or {}).items() if k != "turn_id"},
+                extras=self.reveal_all(
+                    {k: v for k, v in (getattr(last, "additional_kwargs", {}) or {}).items() if k != "turn_id"}
+                ),
             ),
         )
 
@@ -179,6 +181,16 @@ class Assistant:
     def reveal(self, text: str) -> str:
         return self.anonymizer.reveal(text) if self.anonymizer and text else text
 
+    def reveal_all(self, value):
+        """`reveal` on every string inside a structure (sources, quotes, labels), so nothing shown is a placeholder."""
+        if isinstance(value, str):
+            return self.reveal(value)
+        if isinstance(value, list):
+            return [self.reveal_all(v) for v in value]
+        if isinstance(value, dict):
+            return {k: self.reveal_all(v) for k, v in value.items()}
+        return value
+
     def history(self, thread_id: str) -> list[dict]:
         state = self.graph.get_state({"configurable": {"thread_id": thread_id}}).values
         rows = []
@@ -186,7 +198,13 @@ class Assistant:
             if isinstance(message, HumanMessage):
                 rows.append({"role": "user", "text": self.reveal(message.content)})
             elif isinstance(message, AIMessage) and not message.tool_calls:
-                rows.append({"role": "assistant", "text": self.reveal(message.content), **message.additional_kwargs})
+                rows.append(
+                    {
+                        "role": "assistant",
+                        "text": self.reveal(message.content),
+                        **self.reveal_all(message.additional_kwargs),
+                    }
+                )
         return rows
 
     def now(self) -> str:
