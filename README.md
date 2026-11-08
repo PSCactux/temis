@@ -98,28 +98,54 @@ documents (citations, abstention, prompt injection inside a document), alarms, w
 work. `aroa eval` runs them against the configured models in a separate data folder and stores every
 reply and check in `evals/results/`.
 
-Model `ollama:qwen3:8b` (fast: `ollama:qwen3:8b`), privacy mode `full`, 20261107.
+Two full runs on the same day and the same 37 cases, one on a local 8B model and one on Claude through
+the Claude Code CLI (`claude-cli:` provider, tool calls emulated):
+
+Model `ollama:qwen3:8b` (fast: `ollama:qwen3:8b`), privacy mode `full`, 20261108.
 
 | Kind | Passed | Median seconds |
 |---|---|---|
-| alarms | 2/2 | 15.4 |
-| chat | 2/2 | 12.8 |
-| documents | 15/18 | 19.6 |
-| identity | 1/1 | 3.8 |
-| memory | 1/3 | 26.2 |
-| policy | 3/3 | 5.2 |
-| privacy | 2/2 | 17.8 |
-| project | 2/2 | 15.9 |
-| wall | 1/1 | 9.8 |
-| web | 0/1 | 35.9 |
-| **total** | **29/35** (83%) | |
+| alarms | 2/2 | 12.8 |
+| chat | 2/2 | 9.6 |
+| documents | 17/20 | 12.3 |
+| identity | 1/1 | 5.2 |
+| memory | 1/3 | 21.0 |
+| policy | 3/3 | 3.4 |
+| privacy | 2/2 | 15.7 |
+| project | 2/2 | 14.4 |
+| wall | 1/1 | 8.0 |
+| web | 0/1 | 30.9 |
+| **total** | **31/37** (84%) | |
 
-All model calls run at temperature 0, yet an 8B model still varies between runs: full runs on the
-same code have scored between 74 % and 86 %. The failures move around the same places: the router
-choosing `chat` or `documents` when memory holds the answer, retrieval picking a neighbouring section,
-a quote that is not verbatim, and the web case, which passes or fails on how the model phrases what it
-read. A larger model improves the `documents`, `memory` and `web` rows; the privacy, policy, wall and
-verification rows depend on code and hold with any model.
+Model `claude-cli:sonnet` (fast: `claude-cli:haiku`), privacy mode `full`, 20261108.
+
+| Kind | Passed | Median seconds |
+|---|---|---|
+| alarms | 1/2 | 47.9 |
+| chat | 1/2 | 53.5 |
+| documents | 17/20 | 39.4 |
+| identity | 1/1 | 26.4 |
+| memory | 2/3 | 125.4 |
+| policy | 3/3 | 21.8 |
+| privacy | 2/2 | 34.6 |
+| project | 2/2 | 127.9 |
+| wall | 1/1 | 27.2 |
+| web | 1/1 | 116.6 |
+| **total** | **31/37** (84%) | |
+
+Same score, different failures. The local model misses on memory recall, a near-miss abstention and
+the web case; Claude misses on quotes that are not verbatim (it paraphrases inside the quote), one
+emulated tool call that failed, and one empty structured output from the fast model. Latency with the
+CLI is dominated by process start-up (about ten seconds per model call), so it is a way to run the
+evals on a subscription, not a deployment path. An 8B model still varies between runs: full runs on
+the same code have scored between 74 % and 86 %. The privacy, policy, wall and verification rows depend
+on code and hold with any model.
+
+`evals/golden.jsonl` is a second, stricter set of 119 cases covering every section of every sample
+document, multi-part and paraphrased questions, near-miss abstentions, selected-document cases,
+injections, privacy across identifier types, memory and the wall. `scripts/check_golden.py` proves
+in code that every expected section exists and every required term is in it; run it with
+`uv run aroa eval --dataset evals/golden.jsonl`.
 
 ## Run it
 

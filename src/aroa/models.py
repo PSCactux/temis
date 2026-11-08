@@ -119,9 +119,9 @@ class ClaudeCliChatModel(BaseChatModel):
         data = self._run(prompt, system, schema)
         usage = data.get("usage") or {}
         if self.expected_schema is not None:
-            message = AIMessage("", additional_kwargs={"parsed": data.get("structured_output") or {}})
+            message = AIMessage("", additional_kwargs={"parsed": _structured(data)})
         elif self.bound_tools:
-            out = data.get("structured_output") or {}
+            out = _structured(data)
             names = {t.name for t in self.bound_tools}
             calls = [
                 {"name": c["name"], "args": c.get("arguments") or {}, "id": f"call_{uuid.uuid4().hex[:8]}"}
@@ -143,6 +143,18 @@ class ClaudeCliChatModel(BaseChatModel):
         )
         message.response_metadata = {"cost_usd": data.get("total_cost_usd"), "model": self.model}
         return ChatResult(generations=[ChatGeneration(message=message)])
+
+
+def _structured(data: dict) -> dict:
+    """The CLI's structured output; when the field is missing, the result text itself if it is JSON."""
+    out = data.get("structured_output")
+    if isinstance(out, dict) and out:
+        return out
+    try:
+        parsed = json.loads(str(data.get("result") or ""))
+    except ValueError:
+        return {}
+    return parsed if isinstance(parsed, dict) else {}
 
 
 def transcript(messages: Sequence[BaseMessage]) -> tuple[str, str]:

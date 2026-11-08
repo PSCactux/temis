@@ -43,10 +43,12 @@ CREATE INDEX IF NOT EXISTS pseudonyms_original ON pseudonyms(original);
 
 class Names(BaseModel):
     people: list[str] = Field(
-        description="Natural persons only (first name and surnames as written), plus any shorter form used for them."
+        default_factory=list,
+        description="Natural persons only (first name and surnames as written), plus any shorter form used for them.",
     )
     organizations: list[str] = Field(
-        description="Companies, law firms and other private organisations as written (S.L., S.A., LLP...)."
+        default_factory=list,
+        description="Companies, law firms and other private organisations as written (S.L., S.A., LLP...).",
     )
 
 
