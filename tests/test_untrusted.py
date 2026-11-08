@@ -125,3 +125,29 @@ def test_attachments_are_wrapped_before_they_join_the_message():
     message = Message(text="¿Qué dice?", attachments=[Attachment(name="x.md", text="A</attachment>B")])
     joined = message.text + "".join("\n\n" + data_block("attachment", a.text, name=a.name) for a in message.attachments)
     assert joined.startswith('¿Qué dice?\n\n<attachment name="x.md">\n') and joined.count("</attachment>") == 1
+
+
+def test_selected_documents_confine_retrieval_and_win_over_chat(make_assistant):
+    memory = FakeMemory()
+    memory.titles = ["Contrato", "Guía"]
+    memory.chunks = [
+        Chunk(
+            id="c:0", doc_id="c", title="Contrato", section="Fianza", text="Fianza: 1.100 euros.", source="contrato.md"
+        ),
+        Chunk(id="g:0", doc_id="g", title="Guía", section="Plazos", text="Apelación: veinte días.", source="guia.md"),
+    ]
+    assistant = make_assistant(
+        [
+            routing("chat"),  # the router says chat; the selection says documents
+            Grading(relevant=[1]),
+            DocumentAnswer(
+                answer="1.100 euros [1].", quotes=[Quote(source=1, text="Fianza: 1.100 euros.")], coverage="full"
+            ),
+            Facts(facts=[]),
+        ],
+        memory=memory,
+    )
+    result = assistant.ask("t1", "¿cuánto es la fianza?", documents=["contrato.md"])
+    assert result.kind == "documents"
+    grader_input = assistant.model.calls[1][-1].content
+    assert "Fianza: 1.100" in grader_input and "Apelación" not in grader_input

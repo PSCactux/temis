@@ -39,6 +39,7 @@ class Case:
     must_not_include: list[str] = field(default_factory=list)
     files: dict[str, str] = field(default_factory=dict)  # project files to create before the turn
     expect_file: str = ""
+    documents: list[str] = field(default_factory=list)  # sources the turn is confined to
 
 
 def load_cases(path: Path) -> list[Case]:
@@ -115,7 +116,7 @@ def evaluate_case(assistant, case: Case) -> dict:
         for name, content in case.files.items():
             (root / name).write_text(content, encoding="utf-8")
     thread = f"eval-{case.id}-{uuid.uuid4().hex[:6]}"
-    result = assistant.ask(thread, case.question, matter=matter, source="eval")
+    result = assistant.ask(thread, case.question, matter=matter, source="eval", documents=case.documents)
     reply, lowered = result.reply, result.reply.lower()
     checks: dict = {"_reply": reply, "no_error": result.kind != "error"}
     if case.must_include:

@@ -173,8 +173,9 @@ def build_graph(
                 # Same id: add_messages replaces the message, so the original text never reaches a model or a store.
                 messages = [HumanMessage(question, id=incoming.id)]
         memories = memory.recall(question, exclude_thread=conf.get("thread_id"), matter=conf.get("matter", ""))
+        selected = conf.get("documents") or None
         hints = (
-            [f"{c.label()}: {c.text[:220]}" for c in memory.search_documents(question, k=3)]
+            [f"{c.label()}: {c.text[:220]}" for c in memory.search_documents(question, k=3, sources=selected)]
             if memory.document_titles()
             else []
         )
@@ -232,6 +233,8 @@ def build_graph(
             chosen, project = "project", mentioned  # a message that names a matter folder is work in that folder
         elif chosen == "project" and project not in projects():
             chosen, project = "chat", ""  # an unknown project is answered in conversation, not with tools
+        if chosen == "chat" and config.get("configurable", {}).get("documents"):
+            chosen = "documents"  # the user chose documents to work on: a question goes to them first
         if chosen == "documents" and not memory.document_titles():
             chosen = "chat"
         query = result.search_query.strip() or state["query"]
@@ -260,9 +263,10 @@ def build_graph(
     # ── documents ──────────────────────────────────────────────────────
     def retrieve(state: AgentState, config: RunnableConfig) -> dict:
         question = state["messages"][-1].content
-        chunks = memory.search_documents(state["query"])
+        selected = config.get("configurable", {}).get("documents") or None
+        chunks = memory.search_documents(state["query"], sources=selected)
         if state["query"] != question:
-            chunks = _fuse(chunks, memory.search_documents(question))
+            chunks = _fuse(chunks, memory.search_documents(question, sources=selected))
         return {
             "retrieved": [c.to_payload() for c in chunks],
             "trace": [*state["trace"], steps.retrieved(chunks, [state["query"], question])],

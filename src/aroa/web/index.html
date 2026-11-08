@@ -54,6 +54,12 @@
   .threads .m { font-size:12px; color:var(--muted); display:flex; gap:8px; align-items:center; }
   .chip { display:inline-block; font-size:11px; font-weight:600; padding:1px 7px; border-radius:999px; background:var(--accent-soft); color:var(--accent); font-family:var(--mono); }
   .docs li { padding:7px 10px; border-radius:10px; display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer; }
+  .docs li.on { background:var(--accent-soft); }
+  .docs input { margin:0; accent-color:var(--accent); flex:none; }
+  .sel { display:inline-flex; align-items:center; gap:6px; font-size:12px; color:var(--accent); background:var(--accent-soft); border-radius:999px; padding:3px 10px; }
+  .sel button { color:inherit; opacity:.7; padding:0 2px; }
+  .sel[hidden] { display:none; }
+  .sel button:hover { opacity:1; }
   .docs li:hover { background:var(--raised); }
   .docs .t { flex:1; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .docs .n { font-size:11px; color:var(--muted); font-family:var(--mono); }
@@ -243,6 +249,7 @@
   <div class="topbar">
     <button class="btn ghost" id="menu" aria-label="Menu"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
     <div class="title" id="title"></div>
+    <span class="sel" id="sel" hidden></span>
     <label class="matter" data-i18n-title="matter_title"><span data-i18n="matter"></span> <input id="matter" data-i18n-placeholder="matter_ph" spellcheck="false"></label>
   </div>
   <div class="body-wrap">
@@ -273,13 +280,14 @@
 <script>
 const $ = s => document.querySelector(s);
 const column = $('#column'), log = $('#log');
-let thread = null, busy = false, threadsCache = [], docsCache = [], attachments = [];
+let thread = null, busy = false, threadsCache = [], docsCache = [], attachments = [], selected = new Set();
 
 /* ── language ──────────────────────────────────────────── */
 const L = {
   en: {
     tag: 'Legal assistant · runs locally', new: 'New conversation', conversations: 'Conversations', no_threads: 'Nothing yet.',
     documents: 'Documents', add: '+ Add', add_title: 'Markdown, text or PDF', no_docs: 'Drop .md, .txt or .pdf files on the chat to index them.',
+    selected: '{n} selected', selected_title: 'This conversation answers only from the selected documents', select_title: 'Work only on this document', clear: 'clear',
     alarms: 'Alarms', report: 'Report', matter: 'Matter', matter_ph: 'e.g. 2026-014', matter_title: 'Memory wall: what is said in a matter is recalled only inside that matter',
     new_title: 'New conversation', write: 'Write to Aroa…', hint: 'Enter to send · Shift+Enter for a new line · personal data is pseudonymised before the model sees it',
     attach_title: 'Attach a document to this message', keep: 'keep in documents', keep_title: 'Also index it, so Aroa can find it in later conversations',
@@ -304,6 +312,7 @@ const L = {
   es: {
     tag: 'Asistente legal · funciona en local', new: 'Nueva conversación', conversations: 'Conversaciones', no_threads: 'Todavía nada.',
     documents: 'Documentos', add: '+ Añadir', add_title: 'Markdown, texto o PDF', no_docs: 'Arrastra archivos .md, .txt o .pdf sobre el chat para indexarlos.',
+    selected: '{n} seleccionados', selected_title: 'Esta conversación responde solo desde los documentos seleccionados', select_title: 'Trabajar solo sobre este documento', clear: 'quitar',
     alarms: 'Alarmas', report: 'Informe', matter: 'Expediente', matter_ph: 'p. ej. 2026-014', matter_title: 'Muralla de memoria: lo dicho en un expediente solo se recuerda dentro de ese expediente',
     new_title: 'Nueva conversación', write: 'Escribe a Aroa…', hint: 'Intro para enviar · Mayús+Intro para nueva línea · los datos personales se pseudonimizan antes de que el modelo los vea',
     attach_title: 'Adjuntar un documento a este mensaje', keep: 'guardar en documentos', keep_title: 'Además lo indexa, para que Aroa lo encuentre en conversaciones futuras',
@@ -518,7 +527,7 @@ function setTitle() {
 }
 
 async function openThread(t) {
-  thread = t; column.innerHTML = ''; history.replaceState(null, '', '#t=' + t);
+  thread = t; column.innerHTML = ''; history.replaceState(null, '', '#t=' + t); loadSelection();
   const data = await (await fetch('/api/threads/' + t)).json();
   $('#matter').value = data.matter || '';
   if (!data.messages.length && !data.waiting) showWelcome();
@@ -527,7 +536,7 @@ async function openThread(t) {
   await loadThreads(); setTitle();
 }
 
-$('#new').onclick = () => { thread = id(); history.replaceState(null, '', ' '); $('#matter').value = ''; showWelcome(); loadThreads().then(setTitle); $('#side').classList.remove('open'); $('#text').focus(); };
+$('#new').onclick = () => { thread = id(); history.replaceState(null, '', ' '); $('#matter').value = ''; selected.clear(); loadDocs(); showWelcome(); loadThreads().then(setTitle); $('#side').classList.remove('open'); $('#text').focus(); };
 $('#menu').onclick = () => $('#side').classList.toggle('open');
 
 async function send(text) {
@@ -542,7 +551,7 @@ async function send(text) {
   const live = addLive(), crumbs = live.querySelector('.crumbs'), body = live.querySelector('.body');
   let tokens = '', steps = [];
   try {
-    const payload = { text, matter: $('#matter').value.trim(), attachments: ready.map(a => ({ name: a.name, text: a.text })) };
+    const payload = { text, matter: $('#matter').value.trim(), attachments: ready.map(a => ({ name: a.name, text: a.text })), documents: [...selected] };
     const res = await fetch(`/api/threads/${thread}/messages`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
     const reader = res.body.getReader(); const dec = new TextDecoder(); let buf = '';
     while (true) {
@@ -600,9 +609,29 @@ $('#attach-file').onchange = e => { attach([...e.target.files]); e.target.value 
 async function loadDocs() {
   docsCache = await (await fetch('/api/documents')).json();
   $('#docs-empty').hidden = docsCache.length > 0;
-  $('#docs').innerHTML = docsCache.map(d => `<li data-open="${esc(d.source)}" title="${esc(d.source)}"><span class="t">${esc(d.title)}</span><span class="n">${d.chunks}</span><button class="x" data-del="${esc(d.source)}" title="✕">✕</button></li>`).join('');
+  for (const s of selected) if (!docsCache.some(d => d.source === s)) selected.delete(s);
+  $('#docs').innerHTML = docsCache.map(d => `<li data-open="${esc(d.source)}" class="${selected.has(d.source) ? 'on' : ''}" title="${esc(d.source)}"><input type="checkbox" data-sel="${esc(d.source)}" ${selected.has(d.source) ? 'checked' : ''} title="${T('select_title')}"><span class="t">${esc(d.title)}</span><span class="n">${d.chunks}</span><button class="x" data-del="${esc(d.source)}" title="✕">✕</button></li>`).join('');
+  renderSelection();
 }
+function renderSelection() {
+  const el = $('#sel'); el.hidden = !selected.size;
+  el.title = T('selected_title');
+  el.innerHTML = `${T('selected').replace('{n}', selected.size)} <button type="button" id="sel-clear">✕ ${T('clear')}</button>`;
+  try { if (thread) localStorage.setItem('aroa.sel.' + thread, JSON.stringify([...selected])); } catch {}
+}
+function loadSelection() {
+  selected = new Set();
+  try { selected = new Set(JSON.parse(localStorage.getItem('aroa.sel.' + thread) || '[]')); } catch {}
+  loadDocs();
+}
+$('#sel').addEventListener('click', e => { if (e.target.closest('#sel-clear')) { selected.clear(); loadDocs(); } });
+$('#docs').addEventListener('change', e => {
+  const c = e.target.closest('[data-sel]'); if (!c) return;
+  c.checked ? selected.add(c.dataset.sel) : selected.delete(c.dataset.sel);
+  loadDocs();
+});
 $('#docs').addEventListener('click', async e => {
+  if (e.target.closest('[data-sel]')) return;
   const b = e.target.closest('[data-del]');
   if (!b) { const li = e.target.closest('[data-open]'); if (li) openReader(li.dataset.open); return; }
   if (!confirm(T('remove_q').replace('{n}', b.dataset.del))) return;

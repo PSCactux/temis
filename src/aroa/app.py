@@ -76,9 +76,15 @@ class Assistant:
         return self.memory.sync_documents(anonymize)
 
     # ── turns ──────────────────────────────────────────────────────────
-    def config(self, thread_id: str, turn_id: str, source: str, matter: str, collector) -> dict:
+    def config(self, thread_id: str, turn_id: str, source: str, matter: str, collector, documents=()) -> dict:
         return {
-            "configurable": {"thread_id": thread_id, "turn_id": turn_id, "source": source, "matter": matter},
+            "configurable": {
+                "thread_id": thread_id,
+                "turn_id": turn_id,
+                "source": source,
+                "matter": matter,
+                "documents": list(documents),  # sources the turn is confined to; empty means all
+            },
             "callbacks": [collector],
             "metadata": {"turn_id": turn_id, "thread_id": thread_id, "matter": matter, "source": source},
             "recursion_limit": 60,
@@ -92,11 +98,11 @@ class Assistant:
                 return (item.value or {}).get("question", "")
         return None
 
-    def stream(self, thread_id: str, text: str, *, source: str = "user", matter: str = ""):
+    def stream(self, thread_id: str, text: str, *, source: str = "user", matter: str = "", documents=()):
         """Yield ("token", str) | ("node", dict) | ("done", TurnResult). Resumes the thread if it was waiting."""
         turn_id = uuid.uuid4().hex[:12]
         collector = TurnCollector()
-        config = self.config(thread_id, turn_id, source, matter, collector)
+        config = self.config(thread_id, turn_id, source, matter, collector, documents)
         payload: Any = Command(resume=text) if self.waiting_for(thread_id) else {"messages": [HumanMessage(text)]}
         started = time.perf_counter()
         state: dict = {}

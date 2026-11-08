@@ -36,6 +36,7 @@ class Message(BaseModel):
     text: str
     matter: str = ""
     attachments: list[Attachment] = []  # read for this turn only; indexing is a separate, explicit upload
+    documents: list[str] = []  # sources this turn is confined to; empty means every indexed document
 
 
 class Feedback(BaseModel):
@@ -156,7 +157,7 @@ async def send(thread_id: str, message: Message):
 
     def produce() -> None:
         with runtime.lock:
-            for kind, item in runtime.assistant.stream(thread_id, text, matter=matter):
+            for kind, item in runtime.assistant.stream(thread_id, text, matter=matter, documents=message.documents):
                 payload = item.__dict__ if kind == "done" else item
                 loop.call_soon_threadsafe(queue.put_nowait, (kind, payload))
         loop.call_soon_threadsafe(queue.put_nowait, None)

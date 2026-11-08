@@ -293,8 +293,12 @@ class MemoryStore:
             self._titles = sorted({info["title"] for info in self.indexed_sources().values()})
         return self._titles
 
-    def search_documents(self, query: str, k: int | None = None) -> list[Chunk]:
-        return [Chunk(**p.payload) for p in self._search(DOCUMENTS, query, k or self.settings.top_k)]
+    def search_documents(self, query: str, k: int | None = None, sources: list[str] | None = None) -> list[Chunk]:
+        """Fragments for the query; with `sources`, only from those files (filter on every prefetch)."""
+        flt = None
+        if sources:
+            flt = models.Filter(must=[models.FieldCondition(key="source", match=models.MatchAny(any=list(sources)))])
+        return [Chunk(**p.payload) for p in self._search(DOCUMENTS, query, k or self.settings.top_k, flt)]
 
     def stats(self) -> dict:
         return {name: self.count(name) for name in (FACTS, EPISODES, DOCUMENTS)}

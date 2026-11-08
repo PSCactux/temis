@@ -40,8 +40,8 @@ class FakeMemory:
     def document_titles(self):
         return self.titles
 
-    def search_documents(self, query, k=None):
-        return list(self.chunks)
+    def search_documents(self, query, k=None, sources=None):
+        return [c for c in self.chunks if not sources or c.source in sources]
 
     def sync_documents(self, anonymize=None):
         return {"added": [], "removed": [], "total": 0}
