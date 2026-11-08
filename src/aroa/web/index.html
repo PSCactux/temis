@@ -377,7 +377,7 @@ function inline(s) {
     .replace(/`([^`]+)`/g, '<code>$1</code>')
     .replace(/\*\*(.+?)\*\*/g, '<b>$1</b>')
     .replace(/(^|[\s(])_(.+?)_(?=[\s).,;:]|$)/g, '$1<i>$2</i>')
-    .replace(/\[(\d+)\]/g, '<button type="button" class="cite" data-n="$1">[$1]</button>')
+    .replace(/\[(\d+(?:\s*,\s*\d+)*)\]/g, (_, list) => list.split(/\s*,\s*/).map(n => `<button type="button" class="cite" data-n="${n}">[${n}]</button>`).join(''))
     .replace(/(https?:\/\/[^\s<)]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
 }
 function md(text) {
