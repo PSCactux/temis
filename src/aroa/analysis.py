@@ -185,6 +185,7 @@ def format_report(a: Analysis) -> str:
         f"# Análisis de «{a.title}»",
         "",
         f"Objetivo: {a.goal}",
+        "",
         f"Fragmentos leídos: {a.chunks} · hallazgos: {len(a.findings)} · repetidos fundidos: {a.merged} · sin cita verificable (descartados): {a.dropped}",
         "",
     ]
