@@ -29,7 +29,7 @@ def tools_for(route: str, ctx: ToolContext) -> list:
     elif route == "web":
         specific = web.make_tools(ctx)
     elif route == "project":
-        specific = project.make_tools(ctx) + lawcheck.make_tools(ctx)  # a draft in the matter folder can be checked too
+        specific = project.make_tools(ctx) + lawcheck.make_tools(ctx, files=True)  # drafts in the folder too
     elif route == "review":
         specific = lawcheck.make_tools(ctx)
     else:

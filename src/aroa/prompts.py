@@ -130,7 +130,8 @@ it is coverage none, not a near miss."""
 
 CLAIMS = """List every action the reply states as already done by the assistant in this turn: files written,
 edited or redacted, files read, commands run, web pages read, searches made, alarms created or deleted. Use kind
-"other" for any other completed action. Do not list intentions, suggestions or things the user did. Empty if none."""
+"other" for any other completed action, including checking citations or computing a deadline with a tool.
+"search_done" is only for web searches. Do not list intentions, suggestions or things the user did. Empty if none."""
 
 FACTS = """Extract durable facts worth remembering from this exchange: about the user, the matter, the people
 involved (by their placeholders), decisions, deadlines, preferences. Only what the user states or confirms

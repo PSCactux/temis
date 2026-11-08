@@ -15,6 +15,7 @@ from .tools import alarms
 
 WRITE_TOOLS = {"write_file", "edit_file", "redact_file"}
 READ_TOOLS = {"read_file", "grep", "list_files"}
+LOOKUP_TOOLS = {"search_web", "check_citations", "check_citations_in_file", "compute_deadline"}
 
 
 def _norm(text: str) -> str:
@@ -84,9 +85,10 @@ def check_claim(claim: Claim, evidence: list[dict], *, project_root: Path | None
             return f"says it read {target!r}, but it only searched; the page was never opened"
         return f"says it read {target!r}, but no page from that site was fetched"
     if kind == "search_done":
-        return (
-            None if any(e["tool"] == "search_web" for e in ok_calls) else "says it searched the web, but no search ran"
-        )
+        # "I looked it up" is proven by any lookup tool: a web search or the firm's own archives.
+        if any(e["tool"] in LOOKUP_TOOLS for e in ok_calls):
+            return None
+        return "says it searched or looked something up, but no search or lookup ran"
     if kind == "alarm_created":
         created = [e for e in ok_calls if e["tool"] == "create_alarm"]
         if not created:

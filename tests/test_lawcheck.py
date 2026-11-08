@@ -138,7 +138,7 @@ def test_a_message_citing_an_article_is_routed_to_the_archive_not_the_web(make_a
     assistant = make_assistant(
         [
             routing("web"),  # the router wants to search the web; the archive has the law
-            tool_call("check_citations", {"path": "recurso.txt"}),  # a path the model made up, with no matter folder
+            tool_call("check_citations", {}),
             "El artículo 135.5 LEC dice...",
             Claims(claims=[Claim(kind="other", target="citas")]),
             Facts(facts=[]),

@@ -85,3 +85,10 @@ def test_redacted_file_counts_as_written(tmp_path):
     claim = Claim(kind="file_written", target="declaracion.redacted.md")
     evidence = [ev("redact_file", path="declaracion.md")]
     assert check_claims([claim], evidence, project_root=tmp_path, conn=conn(), thread_id="t") == (1, [])
+
+
+def test_a_lookup_claim_is_proven_by_the_archive_checker_not_only_by_the_web():
+    claim = Claim(kind="search_done", target="BOE")
+    context = {"project_root": None, "conn": conn(), "thread_id": "t"}
+    assert check_claims([claim], [ev("check_citations")], **context) == (1, [])
+    assert check_claims([claim], [], **context)[1] != []
