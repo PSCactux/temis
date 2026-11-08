@@ -27,7 +27,7 @@ from langgraph.graph.message import add_messages
 from langgraph.types import Checkpointer, interrupt
 
 from . import prompts
-from .citations import check_answer, cited_numbers, tidy_markers
+from .citations import check_answer, citation_problems, cited_numbers, tidy_markers, unverified_numbers
 from .config import Settings
 from .i18n import t
 from .memory.chunking import Chunk
@@ -318,7 +318,7 @@ def build_graph(
 
     def check_citations(state: AgentState, config: RunnableConfig) -> dict:
         answer = DocumentAnswer(**state["answer"])
-        errors = [] if answer.coverage == "none" else check_answer(answer, _chunks(state["sources"]))
+        errors = [] if answer.coverage == "none" else check_answer(answer, _chunks(state["sources"]), lang)
         return {"citation_errors": errors, "trace": [*state["trace"], steps.citations_checked(errors)]}
 
     def after_citations(state: AgentState) -> Literal["finalize_documents", "answer_documents"]:
@@ -334,18 +334,26 @@ def build_graph(
             text = f"{t(lang, 'abstain')}\n\n{t(lang, 'documents_reviewed')}: {reviewed}."
             return {"messages": [_final(AIMessage(text), config, kind="abstain", sources=[])]}
         quotes = {q.source: q.text for q in answer.quotes}
+        bad = unverified_numbers(citation_problems(answer, sources)) if state["citation_errors"] else set()
         cited = [
-            {"n": n, "label": sources[n - 1].label(), "file": sources[n - 1].source, "quote": quotes.get(n)}
+            {
+                "n": n,
+                "label": sources[n - 1].label(),
+                "file": sources[n - 1].source,
+                "quote": quotes.get(n),
+                "verified": n not in bad,
+            }
             for n in sorted(cited_numbers(answer.answer))
             if 1 <= n <= len(sources)
         ]
         lines = [tidy_markers(answer.answer.strip()), "", f"**{t(lang, 'sources')}**", ""]
         for s in cited:
-            lines.append(f"- [{s['n']}] {s['label']} (`{s['file']}`)")
+            mark = "" if s["verified"] else f" — _{t(lang, 'unverified_mark')}_"
+            lines.append(f"- [{s['n']}] {s['label']} (`{s['file']}`){mark}")
             if s["quote"]:
                 lines.append(f"  > «{s['quote']}»")
         if state["citation_errors"]:
-            lines += ["", f"_{t(lang, 'unverified_note')}_"]
+            lines += ["", f"_{t(lang, 'unverified_note')}_", ""] + [f"- {e}" for e in state["citation_errors"]]
         message = _final(
             AIMessage("\n".join(lines)), config, kind="documents", sources=cited, verified=not state["citation_errors"]
         )

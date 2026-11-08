@@ -14,6 +14,7 @@ from langgraph.types import Command
 
 from .config import Settings
 from .graph import build_graph, load_persona
+from .i18n import TEXTS
 from .memory.store import MemoryStore
 from .models import make_chat_model
 from .privacy import NAMES_PROMPT, Anonymizer, Names
@@ -108,7 +109,13 @@ class Assistant:
         state: dict = {}
         error: str | None = None
         try:
-            for mode, chunk in self.graph.stream(payload, config, stream_mode=["messages", "updates"]):
+            for mode, chunk in self.graph.stream(payload, config, stream_mode=["messages", "updates", "debug"]):
+                if mode == "debug":
+                    if isinstance(chunk, dict) and chunk.get("type") == "task":
+                        name = (chunk.get("payload") or {}).get("name", "")
+                        if name and not name.startswith("__"):
+                            yield "start", {"step": name, "title": step_title(self.settings.assistant_language, name)}
+                    continue
                 if mode == "messages":
                     message, meta = chunk
                     if (
@@ -184,3 +191,8 @@ class Assistant:
 
     def now(self) -> str:
         return datetime.now().astimezone().isoformat(timespec="minutes")
+
+
+def step_title(lang: str, node: str) -> str:
+    """The plain-language title of a graph node, or its name when none is defined."""
+    return (TEXTS.get(lang) or {}).get(node) or TEXTS["en"].get(node) or node.replace("_", " ")

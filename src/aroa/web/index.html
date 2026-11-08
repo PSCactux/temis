@@ -147,12 +147,27 @@
   .cite { font-family:var(--mono); font-size:11.5px; font-weight:600; color:var(--accent); background:transparent; border:0; padding:0 3px; border-radius:4px; cursor:default; }
   .cite.link { cursor:pointer; background:var(--accent-soft); }
   .cite.link:hover { text-decoration:underline; }
+  .cite.unverified { color:var(--warn); background:var(--warn-soft); }
   .question-card { border:1px solid var(--accent-line); background:var(--accent-soft); border-radius:10px; padding:10px 14px; }
   .question-card .lbl { font-size:11px; font-weight:600; letter-spacing:.07em; text-transform:uppercase; color:var(--accent); margin-bottom:4px; }
   .actions { display:flex; align-items:center; gap:2px; margin-top:8px; opacity:.55; transition:opacity .15s; }
   .msg.ai:hover .actions { opacity:1; }
   .actions .btn.on { color:var(--accent); background:var(--accent-soft); }
   .live { display:flex; align-items:center; gap:10px; color:var(--muted); font-size:12.5px; margin:4px 0 8px; }
+  .steps { margin:2px 0 10px; border-left:2px solid var(--line-2); padding-left:12px; font-size:12.5px; }
+  .steps .stp { display:grid; grid-template-columns:16px 1fr; gap:8px; padding:3px 0; color:var(--ink-2); align-items:start; }
+  .steps .stp .dot { width:8px; height:8px; border-radius:50%; background:var(--ok); margin:6px 0 0 3px; }
+  .steps .stp.pending .dot { background:transparent; border:2px solid var(--line-2); border-top-color:var(--accent); width:10px; height:10px; margin:4px 0 0 1px; animation:spin .8s linear infinite; }
+  .steps .stp.bad .dot { background:var(--warn); }
+  .steps .stp .tt { font-weight:600; color:var(--ink); } .steps .stp .tt small { font-weight:400; color:var(--muted); margin-left:6px; font-family:var(--mono); font-size:11px; }
+  .steps .stp .sm { color:var(--ink-2); }
+  .steps .stp .its { margin:2px 0 0; padding-left:14px; color:var(--muted); font-size:11.5px; }
+  .steps .stp .its li { margin:1px 0; }
+  .steps.done .stp.pending { display:none; }
+  .joblog { font-family:var(--ui); font-size:13px; white-space:normal; }
+  .joblog .ln { display:grid; grid-template-columns:64px 1fr; gap:10px; padding:5px 0; border-bottom:1px solid var(--line); } .joblog .ln:last-child { border:0; }
+  .joblog .ln time { font-family:var(--mono); font-size:11.5px; color:var(--muted); padding-top:2px; }
+  .joblog .ln.last { color:var(--ink); font-weight:500; }
   .crumbs { display:flex; gap:6px; flex-wrap:wrap; }
   .crumbs span { background:var(--hover); border-radius:5px; padding:2px 8px; }
   .spinner { width:14px; height:14px; border:2px solid var(--line-2); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; flex:none; }
@@ -447,7 +462,7 @@ const L = {
     attach_title: 'Attach a document to this message', keep: 'keep in documents', keep_title: 'Also index it, so Aroa can find it in later conversations',
     drop: 'Drop documents to index them', close: 'Close', welcome: 'What can I help with?',
     welcome_p: 'Ask about the indexed documents, the web, your matters, or set an alarm. Try one of these with the sample corpus:',
-    thinking: 'Thinking', path: 'Path', good: 'Good answer', bad: 'Bad answer', thanks: 'Thanks, feedback stored', no_path: 'No path recorded for this turn.',
+    thinking: 'Thinking', path: 'Path', steps_n: '{n} steps · {s} s', working: 'working', log: 'Progress', show_details: 'details', in_progress: 'In progress', good: 'Good answer', bad: 'Bad answer', thanks: 'Thanks, feedback stored', no_path: 'No path recorded for this turn.',
     asking: 'Aroa is asking you', k_blocked: 'blocked by policy', k_question: 'needs your answer', k_abstain: 'not in the documents', k_verified: 'verified', k_unverified: 'unverified',
     route: 'route', model_calls: 'model calls', tools: 'tools', claims: 'claims', facts_stored: 'facts stored', audit_tools: 'Audit · tool calls', audit_memory: 'Audit · memory writes', feedback: 'Feedback',
     stored: 'stored', duplicate: 'duplicate', server_error: 'The server did not answer: ', remove_q: 'Remove "{n}" from the index?', removed: 'Document removed', not_removed: 'Could not do it',
@@ -485,7 +500,7 @@ const L = {
     attach_title: 'Adjuntar un documento a este mensaje', keep: 'guardar en documentos', keep_title: 'Además lo indexa, para que Aroa lo encuentre en conversaciones futuras',
     drop: 'Suelta documentos para indexarlos', close: 'Cerrar', welcome: '¿En qué te ayudo?',
     welcome_p: 'Pregunta por los documentos indexados, la web, tus expedientes, o pon una alarma. Prueba con el corpus de muestra:',
-    thinking: 'Pensando', path: 'Recorrido', good: 'Buena respuesta', bad: 'Mala respuesta', thanks: 'Gracias, valoración guardada', no_path: 'No hay recorrido registrado para esta vuelta.',
+    thinking: 'Pensando', path: 'Recorrido', steps_n: '{n} pasos · {s} s', working: 'en curso', log: 'Progreso', show_details: 'detalles', in_progress: 'En curso', good: 'Buena respuesta', bad: 'Mala respuesta', thanks: 'Gracias, valoración guardada', no_path: 'No hay recorrido registrado para esta vuelta.',
     asking: 'Aroa te pregunta', k_blocked: 'bloqueado por política', k_question: 'necesita tu respuesta', k_abstain: 'no está en los documentos', k_verified: 'verificado', k_unverified: 'sin verificar',
     route: 'ruta', model_calls: 'llamadas al modelo', tools: 'herramientas', claims: 'afirmaciones', facts_stored: 'hechos guardados', audit_tools: 'Auditoría · herramientas', audit_memory: 'Auditoría · memoria', feedback: 'Valoración',
     stored: 'guardado', duplicate: 'duplicado', server_error: 'El servidor no ha respondido: ', remove_q: '¿Quitar «{n}» del índice?', removed: 'Documento quitado', not_removed: 'No se ha podido',
@@ -627,24 +642,35 @@ function addAssistant(text, m = {}) {
       `<button class="btn ghost sm icon fb" data-fb="1" data-turn="${esc(m.turn_id)}" title="${T('good')}">${ico('up')}</button><button class="btn ghost sm icon fb" data-fb="-1" data-turn="${esc(m.turn_id)}" title="${T('bad')}">${ico('down')}</button></div><div class="path" id="path-${esc(m.turn_id)}"></div>` : '') + '</div>';
   const sources = Array.isArray(m.sources) ? m.sources : [];
   el.querySelector('.answer').dataset.sources = JSON.stringify(sources);
-  if (sources.length) el.querySelectorAll('.cite').forEach(c => { if (sources.some(s => s.n === +c.dataset.n)) c.classList.add('link'); });
+  if (sources.length) el.querySelectorAll('.cite').forEach(c => { const s = sources.find(x => x.n === +c.dataset.n); if (s) { c.classList.add('link'); if (s.verified === false) { c.classList.add('unverified'); c.title = T('k_unverified'); } } });
   column.appendChild(el); scrollDown(); return el;
 }
 function addLive() {
   const el = document.createElement('div'); el.className = 'msg ai';
-  el.innerHTML = `<div class="av">A</div><div class="answer"><div class="head"><b>Aroa</b></div><div class="live"><div class="spinner"></div><div class="crumbs"><span>${T('thinking')}</span></div></div><div class="body"></div></div>`;
+  el.innerHTML = `<div class="av">A</div><div class="answer"><div class="head"><b>Aroa</b></div><div class="live"><div class="spinner"></div><div class="crumbs"><span>${T('thinking')}</span></div></div><div class="steps" id="live-steps"></div><div class="body"></div></div>`;
   column.appendChild(el); scrollDown(); return el;
+}
+const BAD_STEP = /blocked|unproven|problems|FAILED|None of|Bloqueado|sin probar|Problemas|FALLÓ|Ninguno|no existe|not appear|no aparece/i;
+function stepRow(step, title, summary, items, pending, seconds) {
+  return `<div class="stp ${pending ? 'pending' : ''} ${!pending && BAD_STEP.test(summary || '') ? 'bad' : ''}" data-step="${esc(step)}"><span class="dot"></span><div><div class="tt">${esc(title)}${seconds != null ? `<small>${seconds} s</small>` : ''}</div>` +
+    (summary ? `<div class="sm">${esc(summary)}</div>` : '') + (items && items.length ? `<ul class="its">${items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>` : '') + `</div></div>`;
+}
+function stepStart(box, data) {  // a node began: a pending row until its account arrives
+  if (box.querySelector(`.stp.pending[data-step="${CSS.escape(data.step)}"]`)) return;
+  box.insertAdjacentHTML('beforeend', stepRow(data.step, data.title, '', [], true)); scrollDown();
+}
+function stepDone(box, entry) {  // the node's own account replaces its pending row
+  const pending = box.querySelector(`.stp.pending[data-step="${CSS.escape(entry.step)}"]`);
+  const html = stepRow(entry.step, entry.title, entry.summary, entry.items, false);
+  if (pending) pending.outerHTML = html; else box.insertAdjacentHTML('beforeend', html);
+  scrollDown();
 }
 function renderPath(t) {
   const fmt = n => (n ?? 0).toLocaleString(loc());
   let html = `<div class="sum"><span>${T('route')} <b>${esc(t.route || '')}</b></span><span><b>${t.seconds}</b> s</span><span><b>${t.llm_calls}</b> ${T('model_calls')}</span>` +
     `<span><b>${fmt(t.input_tokens)}</b> in · <b>${fmt(t.output_tokens)}</b> out</span><span><b>${t.tool_calls}</b> ${T('tools')}</span>` +
     (t.claims ? `<span>${T('claims')} <b>${t.claims - t.claims_failed}/${t.claims}</b></span>` : '') + (t.facts_written ? `<span><b>${t.facts_written}</b> ${T('facts_stored')}</span>` : '') + '</div>';
-  for (const s of t.trace || []) {
-    const bad = /blocked|unproven|problems|FAILED|None of|Bloqueado|sin probar|Problemas|FALLÓ|Ninguno/i.test(s.summary);
-    html += `<div class="step${bad ? ' bad' : ''}"><div class="st">${esc(s.title)}${t.nodes && t.nodes[s.step] != null ? `<small>${t.nodes[s.step]} s</small>` : ''}</div><div class="sm">${esc(s.summary)}</div>` +
-      (s.items && s.items.length ? '<ul class="items">' + s.items.map(i => `<li>${esc(i)}</li>`).join('') + '</ul>' : '') + '</div>';
-  }
+  html += `<div class="steps done">${(t.trace || []).map(s => stepRow(s.step, s.title, s.summary, s.items, false, t.nodes && t.nodes[s.step] != null ? t.nodes[s.step] : null)).join('')}</div>`;
   const a = t.audit || {};
   if (a.tool_calls && a.tool_calls.length) html += `<div class="step audit"><div class="st">${T('audit_tools')}</div><ul class="items">` + a.tool_calls.map(c => `<li>${c.ok ? 'ok' : 'FAILED'} · <b>${esc(c.tool)}</b> ${esc(c.arguments)} · ${c.seconds} s · ${esc(c.result_hash)}</li>`).join('') + '</ul></div>';
   if (a.memory_writes && a.memory_writes.length) html += `<div class="step audit"><div class="st">${T('audit_memory')}</div><ul class="items">` + a.memory_writes.map(w => `<li>${w.stored ? T('stored') : T('duplicate')} · ${esc(w.text)}</li>`).join('') + '</ul></div>';
@@ -667,9 +693,11 @@ column.addEventListener('click', async e => {
   if (b.dataset.path) {
     const box = $('#path-' + b.dataset.path);
     if (box.classList.contains('open')) { box.classList.remove('open'); return; }
+    box.classList.add('open');
+    if (box.dataset.prefilled) { delete box.dataset.prefilled; fetch('/api/turns/' + b.dataset.path).then(async r => { if (r.ok) box.innerHTML = renderPath(await r.json()); }); return; }
     const r = await fetch('/api/turns/' + b.dataset.path);
     box.innerHTML = r.ok ? renderPath(await r.json()) : `<div class="sm">${T('no_path')}</div>`;
-    box.classList.add('open'); return;
+    return;
   }
   if (b.dataset.fb) {
     await fetch(`/api/turns/${b.dataset.turn}/feedback`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ score: +b.dataset.fb }) });
@@ -710,8 +738,8 @@ async function send(text) {
   attachments = []; renderAttachments();
   addUser(text + ready.map(a => `\n\n<attachment name="${a.name.replace(/"/g, "'")}">\n`).join(''));
   for (const a of keep) indexFile(a.file);
-  const live = addLive(), crumbs = live.querySelector('.crumbs'), body = live.querySelector('.body');
-  let tokens = '', steps = [];
+  const live = addLive(), crumbs = live.querySelector('.crumbs'), body = live.querySelector('.body'), stepsBox = live.querySelector('.steps');
+  let tokens = '', steps = []; const t0 = Date.now();
   try {
     const payload = { text, matter: $('#matter').value.trim(), attachments: ready.map(a => ({ name: a.name, text: a.text })), documents: [...selected] };
     const res = await fetch(`/api/threads/${thread}/messages`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -723,11 +751,14 @@ async function send(text) {
         const chunk = buf.slice(0, i); buf = buf.slice(i + 2);
         const ev = /event: (\w+)/.exec(chunk)?.[1]; const data = JSON.parse(chunk.slice(chunk.indexOf('data: ') + 6));
         if (ev === 'token') { tokens += data; body.innerHTML = md(tokens); }
-        if (ev === 'node') { steps.push(data.title); crumbs.innerHTML = steps.slice(-4).map(s => `<span>${esc(s)}</span>`).join(''); }
+        if (ev === 'start') { crumbs.innerHTML = `<span>${esc(data.title)}…</span>`; stepStart(stepsBox, data); }
+        if (ev === 'node') { steps.push(data); stepDone(stepsBox, data); }
         if (ev === 'done') {
           live.remove();
-          if (data.interrupted) addAssistant(data.interrupted, { kind: 'question' });
-          else addAssistant(data.reply, { kind: data.kind, turn_id: data.turn_id, verified: data.extras && data.extras.verified, sources: data.extras && data.extras.sources });
+          const el = data.interrupted ? addAssistant(data.interrupted, { kind: 'question' })
+            : addAssistant(data.reply, { kind: data.kind, turn_id: data.turn_id, verified: data.extras && data.extras.verified, sources: data.extras && data.extras.sources });
+          const box = el.querySelector('.path');  // what you just watched stays one click away, no fetch needed
+          if (box && steps.length) { box.innerHTML = `<div class="steps done">${steps.map(e => stepRow(e.step, e.title, e.summary, e.items, false)).join('')}</div>`; box.dataset.prefilled = '1'; const b = el.querySelector('[data-path]'); if (b) b.insertAdjacentHTML('beforeend', ` <small>${T('steps_n').replace('{n}', steps.length).replace('{s}', ((Date.now() - t0) / 1000).toFixed(1))}</small>`); }
         }
         scrollDown();
       }
@@ -1056,20 +1087,22 @@ async function startAnalysis(source) {
   const goal = prompt(T('goal_prompt'), ''); if (goal === null) return;
   const r = await fetch('/api/documents/' + encodeURIComponent(source) + '/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ goal }) });
   if (!r.ok) { toast(T('analysis_failed')); return; }
-  watchJob((await r.json()).job_id, 'analysis');
+  watchJob((await r.json()).job_id, 'analysis', true);
 }
 async function startReview(req) {
   const r = await fetch('/api/reviews', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...req, documents: [...selected], legal: true }) });
   if (!r.ok) { toast(T('review_failed')); return; }
-  watchJob((await r.json()).job_id, 'review');
+  watchJob((await r.json()).job_id, 'review', true);
 }
 const watching = new Set();
-function watchJob(job_id, kind) {
+function watchJob(job_id, kind, open = false) {
   if (watching.has(job_id)) return; watching.add(job_id);
   show('jobs'); loadJobs();
+  if (open) fetch('/api/jobs/' + job_id).then(r => r.json()).then(showJobLog);
   const tick = async () => {
     const job = await (await fetch('/api/jobs/' + job_id)).json();
-    const row = jobsCache.find(j => j.job_id === job_id); if (row) Object.assign(row, { status: job.status, done: job.done, total: job.total }); renderJobs();
+    const row = jobsCache.find(j => j.job_id === job_id); if (row) Object.assign(row, { status: job.status, done: job.done, total: job.total, last_line: (job.log || []).slice(-1)[0] || '' }); renderJobs();
+    if (currentJob && currentJob.job_id === job_id && job.status !== 'done') showJobLog(job);
     if (job.status === 'done') { watching.delete(job_id); toast(T(kind === 'review' ? 'review_done' : 'analysis_done')); loadJobs(); openJob(job); return; }
     if (job.status === 'failed') { watching.delete(job_id); toast(`${T(kind === 'review' ? 'review_failed' : 'analysis_failed')}: ${job.error || ''}`); loadJobs(); return; }
     setTimeout(tick, 1500);
@@ -1092,14 +1125,25 @@ function renderJobs() {
     const state = j.status === 'done' ? ago(j.updated_ts) : j.status === 'failed' ? T('failed') : j.status === 'queued' ? T('queued') : `${T(j.kind === 'review' ? 'reviewing' : 'analyzing')}${j.total ? ` ${j.done}/${j.total}` : '…'}`;
     return `<div class="item ${currentJob && currentJob.job_id === j.job_id ? 'active' : ''}" data-job="${esc(j.job_id)}"><div class="ic ${cls}">${ico(icon)}</div><div class="tx"><div class="t">${esc(j.source)}</div>` +
       `<div class="m"><span>${j.kind === 'review' ? T('kind_review') : T('kind_analysis')}</span><span>· ${esc(state)}</span></div>` +
-      (live ? `<div class="bar ${j.total ? '' : 'busy'}"><i style="width:${j.total ? Math.round(j.done / j.total * 100) : 0}%"></i></div>` : '') + `</div></div>`;
+      (live ? `<div class="bar ${j.total ? '' : 'busy'}"><i style="width:${j.total ? Math.round(j.done / j.total * 100) : 0}%"></i></div>${j.last_line ? `<div class="m" title="${esc(j.last_line)}"><span>${esc(j.last_line.replace(/^\d\d:\d\d:\d\d /, ''))}</span></div>` : ''}` : '') + `</div></div>`;
   }).join('');
 }
 $('#jobs').addEventListener('click', async e => {
   const it = e.target.closest('[data-job]'); if (!it) return;
   const job = await (await fetch('/api/jobs/' + it.dataset.job)).json();
-  if (job.status === 'done') openJob(job); else if (job.status === 'failed') toast(job.error || T('failed'));
+  if (job.status === 'done') openJob(job); else showJobLog(job);
 });
+function showJobLog(job) {  // a running (or failed) job: its readable progress, line by line
+  currentJob = job; renderJobs(); setTitle();
+  $('#job-empty').hidden = true; $('#job-tools').hidden = false; $('#rv').hidden = true; $('#an-scroll').hidden = false;
+  const live = job.status === 'queued' || job.status === 'running';
+  $('#job-tools').innerHTML = `<span class="pill ${job.status === 'failed' ? 'err' : 'warn'}">${live ? `<span class="spinner"></span>` : ico('alert')}${live ? T('in_progress') : T('failed')}</span><span class="stats">${esc(job.source)}${job.total ? ` · ${job.done}/${job.total}` : ''}</span>`;
+  const lines = job.log || [];
+  const body = $('#an-body'); body.className = 'paper prose joblog';
+  body.innerHTML = (lines.length ? lines.map((l, i) => { const m = /^(\d\d:\d\d:\d\d) (.*)$/s.exec(l); return `<div class="ln ${i === lines.length - 1 ? 'last' : ''}"><time>${m ? m[1] : ''}</time><span>${esc(m ? m[2] : l)}</span></div>`; }).join('') : `<div class="ln"><time></time><span>${T('queued')}…</span></div>`) +
+    (job.error ? `<div class="ln last"><time></time><span>${esc(job.error)}</span></div>` : '');
+  $('#an-scroll').scrollTop = $('#an-scroll').scrollHeight;
+}
 function openJob(job, keepDecisions = false) {
   show('jobs'); currentJob = job; renderJobs(); setTitle(); history.replaceState(null, '', '#job=' + job.job_id);
   $('#job-empty').hidden = true; $('#job-tools').hidden = false;
@@ -1107,7 +1151,7 @@ function openJob(job, keepDecisions = false) {
   else { $('#rv').hidden = true; $('#an-scroll').hidden = false; showReport(job); }
 }
 function showReport(job) {
-  const r = job.result, body = $('#an-body');
+  const r = job.result, body = $('#an-body'); body.className = 'paper prose';
   $('#job-tools').innerHTML = `<span class="stats">${esc(r.title)} · ${r.chunks} ${T('chunks')} · ${r.findings.length} ${T('findings')} · ${r.seconds} s</span>` +
     `<button class="btn sm" id="an-open">${ico('doc')}${T('open_doc')}</button>`;
   $('#an-open').onclick = () => openDoc(r.source);
@@ -1216,7 +1260,13 @@ async function loadHealth() {
 async function loadAlarmCount() { try { const rows = await (await fetch('/api/alarms')).json(); $('#alarms-badge').hidden = !rows.length; $('#alarms-badge').textContent = rows.length; } catch {} }
 
 /* ── boot ──────────────────────────────────────────────── */
-setInterval(() => { if (section === 'chat' && thread && !busy && !column.querySelector('.welcome')) openThread(thread); }, 20000); // alarms post into the thread on their own
+async function refreshThread() {  // alarms post into the thread on their own; re-render only when something new arrived
+  if (section !== 'chat' || !thread || busy || column.querySelector('.welcome')) return;
+  const r = await fetch('/api/threads/' + thread); if (!r.ok) return;
+  const data = await r.json();
+  if (data.messages.length !== column.querySelectorAll('.msg').length) openThread(thread);
+}
+setInterval(refreshThread, 20000);
 setInterval(loadAlarmCount, 30000);
 const deepJob = /^#job=([\w-]+)$/.exec(location.hash), deepDoc = /^#doc=(.+)$/.exec(location.hash), deep = /^#t=([\w-]+)$/.exec(location.hash);
 thread = deep ? deep[1] : id();

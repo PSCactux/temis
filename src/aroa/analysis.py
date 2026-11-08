@@ -106,12 +106,16 @@ def analyze(
     goal: str = DEFAULT_GOAL,
     progress=None,
     lock=None,
+    log=None,
 ) -> Analysis:
-    """Read every fragment of `source`, extract findings for `goal`, verify and merge them in code."""
+    """Read every fragment of `source`, extract findings for `goal`, verify and merge them in code.
+    `progress(done, total)` reports the loop; `log(line)` receives a readable account of each step."""
     started = time.perf_counter()
+    say = log or (lambda _line: None)
     chunks: list[Chunk] = memory.document_chunks(source)
     if not chunks:
         raise ValueError(f"no indexed document named {source!r}")
+    say(f"Leyendo {len(chunks)} fragmentos de «{chunks[0].title}» · objetivo: {goal}")
     mapper = fast_llm.with_structured_output(Findings, method="json_schema")
     guard = lock if lock is not None else nullcontext()
     found: list[tuple[Finding, Chunk]] = []
@@ -124,19 +128,32 @@ def analyze(
                     HumanMessage(prompts.data_block("fragment", chunk.text, id=chunk.id, source=chunk.label())),
                 ]
             )
+        kept_here, dropped_here = [], 0
         for item in result.findings:
             quote = item.quote.strip()
             if not quote or not quote_in(quote, chunk.text) or from_injection(quote, chunk.text):
                 dropped += 1  # no verbatim quote, no finding
+                dropped_here += 1
                 continue
             kind = item.kind if item.kind in KINDS else "otro"
             found.append((Finding(0, kind, item.statement.strip(), quote), chunk))
+            kept_here.append(kind)
         if progress:
             progress(i, len(chunks))
+        detail = ", ".join(kept_here) if kept_here else "nada para el objetivo"
+        say(
+            f"{i}/{len(chunks)} {chunk.label()}: {detail}"
+            + (f" · {dropped_here} sin cita literal, descartado(s)" if dropped_here else "")
+        )
     findings, merged = merge(found)
+    say(
+        f"Hallazgos: {len(found)} leídos → {len(findings)} distintos ({merged} repetidos fundidos, {dropped} descartados por cita no literal)"
+    )
     overview, note = None, None
     if findings and llm is not None:
+        say("Escribiendo la visión general a partir de los hallazgos numerados…")
         overview, note = write_overview(llm, goal, findings, guard)
+        say(note or "Visión general escrita: cada frase cita un hallazgo existente")
     title = chunks[0].title
     return Analysis(
         source,
@@ -235,18 +252,36 @@ def get_job(conn: sqlite3.Connection, job_id: str) -> dict | None:
     data = dict(row)
     if data.get("result"):
         data["result"] = json.loads(data["result"])
+    data["log"] = json.loads(data.get("log") or "[]")
     return data
 
 
 def list_jobs(conn: sqlite3.Connection, source: str | None = None, limit: int = 20) -> list[dict]:
     query, params = (
-        "SELECT job_id, kind, source, goal, status, done, total, created_ts, updated_ts, error FROM jobs",
+        "SELECT job_id, kind, source, goal, status, done, total, created_ts, updated_ts, error, log FROM jobs",
         (),
     )
     if source:
         query, params = query + " WHERE source = ?", (source,)
     rows = conn.execute(query + " ORDER BY created_ts DESC LIMIT ?", (*params, limit)).fetchall()
-    return [dict(r) for r in rows]
+    out = []
+    for r in rows:
+        row = dict(r)
+        lines = json.loads(row.pop("log") or "[]")
+        row["last_line"] = lines[-1] if lines else ""
+        out.append(row)
+    return out
+
+
+class JobLog:
+    """Collects readable progress lines and writes them to the job row as they arrive."""
+
+    def __init__(self, conn: sqlite3.Connection, job_id: str, keep: int = 400) -> None:
+        self.conn, self.job_id, self.keep, self.lines = conn, job_id, keep, []
+
+    def __call__(self, line: str) -> None:
+        self.lines.append(f"{now_iso()[11:19]} {line}")
+        update_job(self.conn, self.job_id, log=json.dumps(self.lines[-self.keep :], ensure_ascii=False))
 
 
 def run_job(conn: sqlite3.Connection, job_id: str, *, memory, fast_llm, llm, lock=None, reveal=None) -> None:
@@ -255,6 +290,7 @@ def run_job(conn: sqlite3.Connection, job_id: str, *, memory, fast_llm, llm, loc
     if job is None:
         return
     update_job(conn, job_id, status="running")
+    log = JobLog(conn, job_id)
     try:
         result = analyze(
             memory=memory,
@@ -264,7 +300,9 @@ def run_job(conn: sqlite3.Connection, job_id: str, *, memory, fast_llm, llm, loc
             goal=job["goal"] or DEFAULT_GOAL,
             lock=lock,
             progress=lambda done, total: update_job(conn, job_id, done=done, total=total),
+            log=log,
         )
+        log(f"Terminado en {result.seconds} s")
         data = result.as_dict()
         if reveal:
             data["report"] = reveal(data["report"])

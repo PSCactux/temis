@@ -70,7 +70,8 @@ CREATE TABLE IF NOT EXISTS jobs (
     created_ts TEXT NOT NULL,
     updated_ts TEXT NOT NULL,
     result TEXT,                      -- JSON
-    error TEXT
+    error TEXT,
+    log TEXT                          -- JSON list of progress lines
 );
 CREATE TABLE IF NOT EXISTS alarms (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -89,4 +90,7 @@ def connect(path: Path) -> sqlite3.Connection:
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
     conn.executescript(SCHEMA)
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(jobs)")}
+    if "log" not in columns:  # databases created before jobs kept a readable log
+        conn.execute("ALTER TABLE jobs ADD COLUMN log TEXT")
     return conn

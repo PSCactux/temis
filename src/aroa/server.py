@@ -228,8 +228,15 @@ async def send(thread_id: str, message: Message):
 
     def produce() -> None:
         with runtime.lock:
-            for kind, item in runtime.assistant.stream(thread_id, text, matter=matter, documents=message.documents):
+            a = runtime.assistant
+            for kind, item in a.stream(thread_id, text, matter=matter, documents=message.documents):
                 payload = item.__dict__ if kind == "done" else item
+                if kind == "node":
+                    payload = {
+                        **item,
+                        "summary": a.reveal(item.get("summary", "")),
+                        "items": [a.reveal(i) for i in item.get("items", [])],
+                    }
                 loop.call_soon_threadsafe(queue.put_nowait, (kind, payload))
         loop.call_soon_threadsafe(queue.put_nowait, None)
 
@@ -254,7 +261,11 @@ def turn(turn_id: str):
         raise HTTPException(404, "unknown turn")
     data = dict(row)
     data["nodes"] = json.loads(data["nodes"] or "{}")
-    data["trace"] = json.loads(data["trace"] or "[]")
+    reveal = runtime.assistant.reveal
+    data["trace"] = [
+        {**e, "summary": reveal(e.get("summary", "")), "items": [reveal(i) for i in e.get("items", [])]}
+        for e in json.loads(data["trace"] or "[]")
+    ]
     data["audit"] = turn_audit(conn, turn_id)
     feedback = conn.execute("SELECT score, comment FROM feedback WHERE turn_id = ?", (turn_id,)).fetchone()
     data["feedback"] = dict(feedback) if feedback else None

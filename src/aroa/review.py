@@ -343,16 +343,17 @@ def windows_of(paragraphs: list[tuple[int, int, str]], size: int = WINDOW_CHARS)
     return out
 
 
-def find_legal_issues(llm, text: str, paragraphs, guard, progress=None) -> tuple[list[Issue], int]:
+def find_legal_issues(llm, text: str, paragraphs, guard, progress=None, log=None) -> tuple[list[Issue], int]:
     """The model reads the draft in windows and points at legal issues; only pointers quoting the draft survive."""
     issues: list[Issue] = []
     finder = llm.with_structured_output(Issues, method="json_schema")
     windows = windows_of(paragraphs)
-    for k, (_, window) in enumerate(windows, start=1):
+    for k, (first, window) in enumerate(windows, start=1):
         with guard:
             result: Issues = finder.invoke(
                 [SystemMessage(prompts.REVIEW_ISSUES), HumanMessage(prompts.data_block("draft", window))]
             )
+        before, dropped_here = len(issues), 0
         for item in result.issues:
             passage = item.quote.strip()
             if (
@@ -361,6 +362,7 @@ def find_legal_issues(llm, text: str, paragraphs, guard, progress=None) -> tuple
                 or from_injection(passage, window)
                 or not item.reason.strip()
             ):
+                dropped_here += 1
                 continue
             position = text.find(passage)
             issues.append(
@@ -375,6 +377,11 @@ def find_legal_issues(llm, text: str, paragraphs, guard, progress=None) -> tuple
             )
         if progress:
             progress(k, len(windows))
+        if log:
+            log(
+                f"Ventana {k}/{len(windows)} (desde el párrafo {first}): {len(issues) - before} cuestión(es) con pasaje literal"
+                + (f", {dropped_here} descartada(s) por no citar el borrador" if dropped_here else "")
+            )
     return issues, len(windows)
 
 
@@ -389,31 +396,51 @@ def review(
     llm=None,
     lock=None,
     progress=None,
+    log=None,
 ) -> Review:
-    """Review a draft: repeats and quotes in code, citations against the archive, legal issues by the model."""
+    """Review a draft: repeats and quotes in code, citations against the archive, legal issues by the model.
+    `log(line)` receives a readable account of each phase as it finishes."""
     started = time.perf_counter()
+    say = log or (lambda _line: None)
     if not text.strip():
         raise ValueError("the draft is empty")
     paragraphs = paragraphs_of(text)
+    say(f"Borrador «{name}»: {len(paragraphs)} párrafos, {len(text):,} caracteres")
     notes: list[str] = []
     issues = find_repeats(text, paragraphs)
+    say(f"Párrafos repetidos: {len(issues)}" + "".join(f" · el {i.paragraph} {i.reason}" for i in issues))
     law_quotes: set[int] = set()
     citations_checked = 0
     if law_source is not None and aliases is not None:
         law_issues, citations_checked, law_quotes = check_law(text, paragraphs, law_source, aliases)
         issues += law_issues
+        say(
+            f"Citas legales comprobadas contra el archivo del BOE: {citations_checked}"
+            + "".join(f" · {KINDS.get(i.kind, i.kind)}: {i.passage[:80]}" for i in law_issues)
+        )
     else:
         notes.append("citas legales no comprobadas: el archivo del BOE no está configurado")
+        say("Citas legales: sin comprobar (archivo del BOE no configurado)")
     quotes_checked = 0
     if chunks:
         quote_issues, quotes_checked = check_quotes(text, paragraphs, chunks, skip=law_quotes)
         issues += quote_issues
+        say(
+            f"Citas entrecomilladas cotejadas con {len(chunks)} fragmentos de documentos: {quotes_checked}"
+            + "".join(
+                f" · {KINDS.get(i.kind, i.kind)} (párrafo {i.paragraph}): «{i.passage[:80]}»" for i in quote_issues
+            )
+        )
     else:
         notes.append("citas de documentos no comprobadas: no hay documentos indexados con los que cotejar")
+        say("Citas de documentos: sin comprobar (no hay documentos indexados)")
     windows = 0
     if llm is not None:
-        legal, windows = find_legal_issues(llm, text, paragraphs, lock if lock is not None else nullcontext(), progress)
+        say("El modelo lee el borrador por ventanas en busca de cuestiones legales concretas…")
+        guard = lock if lock is not None else nullcontext()
+        legal, windows = find_legal_issues(llm, text, paragraphs, guard, progress, log=say)
         issues += legal
+        say(f"Cuestiones legales señaladas por el modelo (avisos): {len(legal)}")
     issues.sort(key=lambda i: (i.paragraph, text.find(i.passage)))
     for n, issue in enumerate(issues, start=1):
         issue.n = n
@@ -508,10 +535,14 @@ def run_review_job(
     if job is None:
         return
     update_job(conn, job_id, status="running")
+    from .analysis import JobLog
+
+    log = JobLog(conn, job_id)
     try:
         spec = json.loads(job["goal"] or "{}")
         text = spec.get("text", "")
         if anonymize:
+            log("Pseudonimizando el borrador como el índice (nombres e identificadores → marcadores)…")
             with lock if lock is not None else nullcontext():
                 text = anonymize(text)
         sources = spec.get("documents") or [s for s in memory.indexed_sources()]
@@ -527,6 +558,10 @@ def run_review_job(
             llm=llm if spec.get("legal", True) else None,
             lock=lock,
             progress=lambda done, total: update_job(conn, job_id, done=done, total=total),
+            log=log,
+        )
+        log(
+            f"Terminado en {result.seconds} s: {result.errors()} errores, {len(result.issues) - result.errors()} avisos"
         )
         data = result.as_dict(text)
         if reveal:

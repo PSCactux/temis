@@ -139,6 +139,15 @@ def test_job_records_progress_result_and_failure():
     job = get_job(conn, job_id)
     assert job["status"] == "done" and job["done"] == 3 and job["total"] == 3
     assert "4.500 (revelado)" in job["result"]["report"] and job["result"]["findings"][0]["n"] == 1
+    log = job["log"]  # a readable account of the run, one line per fragment plus the reduce
+    assert log[0].endswith("Leyendo 3 fragmentos de «Contrato marco» · objetivo: importes")
+    assert any("1/3 Contrato marco — Cláusula 1: importe" in line for line in log)
+    assert any("3 distintos" in line or "1 distintos" in line for line in log) and log[-1].split(" ", 1)[1].startswith(
+        "Terminado en"
+    )
+    from aroa.analysis import list_jobs
+
+    assert list_jobs(conn)[0]["last_line"] == log[-1]
     missing = create_job(conn, "analysis", "nope.md", "x")
     run_job(conn, missing, memory=memory, fast_llm=fast, llm=None)
     assert get_job(conn, missing)["status"] == "failed" and "nope.md" in get_job(conn, missing)["error"]

@@ -57,27 +57,49 @@ def from_injection(quote: str, text: str) -> bool:
     return any(INJECTION.search(s) and quote_in(quote, s) for s in sentences)
 
 
-def check_answer(answer: DocumentAnswer, sources: list[Chunk]) -> list[str]:
-    """Problems found; empty means the answer is grounded."""
+def citation_problems(answer: DocumentAnswer, sources: list[Chunk]) -> list[dict]:
+    """What is wrong with each citation, as data: kind, fragment number and the quote involved."""
     cited = cited_numbers(answer.answer)
-    errors: list[str] = []
+    problems: list[dict] = []
     if not cited:
-        errors.append("The answer cites no fragment.")
+        problems.append({"kind": "none"})
     unknown = sorted(n for n in cited if not 1 <= n <= len(sources))
     if unknown:
-        errors.append(f"It cites fragments that do not exist: {unknown}.")
+        problems.append({"kind": "unknown", "numbers": unknown})
     quoted = set()
     for quote in answer.quotes:
         if not 1 <= quote.source <= len(sources):
             continue
-        source_text = sources[quote.source - 1].text
-        if from_injection(quote.text, source_text):
-            errors.append(f"The quote for [{quote.source}] comes from text that instructs an AI assistant.")
-        elif quote_in(quote.text, source_text):
+        chunk = sources[quote.source - 1]
+        if from_injection(quote.text, chunk.text):
+            problems.append({"kind": "injection", "n": quote.source, "label": chunk.label(), "quote": quote.text})
+        elif quote_in(quote.text, chunk.text):
             quoted.add(quote.source)
         else:
-            errors.append(f"The quote attributed to [{quote.source}] does not appear in that fragment.")
-    missing = sorted(n for n in cited - quoted if 1 <= n <= len(sources))
-    if missing:
-        errors.append(f"Missing verifiable quotes for {missing}.")
-    return errors
+            problems.append({"kind": "not_in_fragment", "n": quote.source, "label": chunk.label(), "quote": quote.text})
+    for n in sorted(cited - quoted):
+        if 1 <= n <= len(sources) and not any(p.get("n") == n for p in problems):
+            problems.append({"kind": "no_quote", "n": n, "label": sources[n - 1].label()})
+    return problems
+
+
+def unverified_numbers(problems: list[dict]) -> set[int]:
+    return {p["n"] for p in problems if "n" in p} | {n for p in problems for n in p.get("numbers", [])}
+
+
+def check_answer(answer: DocumentAnswer, sources: list[Chunk], lang: str = "en") -> list[str]:
+    """Problems found, one sentence each in the configured language; empty means the answer is grounded."""
+    from .i18n import t
+
+    out: list[str] = []
+    for p in citation_problems(answer, sources):
+        kind = p["kind"]
+        if kind == "none":
+            out.append(t(lang, "cite_none"))
+        elif kind == "unknown":
+            out.append(t(lang, "cite_unknown", numbers=", ".join(f"[{n}]" for n in p["numbers"])))
+        else:
+            quote = p.get("quote", "")
+            short = quote if len(quote) <= 160 else quote[:160] + "…"
+            out.append(t(lang, "cite_" + kind, n=p["n"], label=f"«{p['label']}»", quote=short))
+    return out

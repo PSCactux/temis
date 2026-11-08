@@ -69,5 +69,6 @@ testpaths = ["tests"]
 "src/aroa/review.py" = ["E501"]  # Spanish issue texts and verdicts
 "tests/test_review.py" = ["E501"]
 "src/aroa/documents.py" = ["E501"]
+"src/aroa/i18n.py" = ["E501"]  # user-facing sentences in two languages
 "tests/test_documents.py" = ["E501"]
 "scripts/*" = ["E501"]  # generators and checkers quote long sample text

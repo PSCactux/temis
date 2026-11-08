@@ -151,3 +151,45 @@ def test_selected_documents_confine_retrieval_and_win_over_chat(make_assistant):
     assert result.kind == "documents"
     grader_input = assistant.model.calls[1][-1].content
     assert "Fianza: 1.100" in grader_input and "Apelación" not in grader_input
+
+
+def test_citation_problems_name_the_citation_the_fragment_and_the_quote():
+    from aroa.citations import check_answer, citation_problems, unverified_numbers
+    from aroa.memory.chunking import Chunk
+    from aroa.schemas import DocumentAnswer, Quote
+
+    sources = [
+        Chunk(
+            id="a:0",
+            doc_id="a",
+            title="Contrato",
+            section="Cláusula 5.ª",
+            text="La fianza es de 1.100 euros.",
+            source="a.md",
+        ),
+        Chunk(
+            id="a:1",
+            doc_id="a",
+            title="Contrato",
+            section="Cláusula 8.ª",
+            text="Podrá desistir a los seis meses.",
+            source="a.md",
+        ),
+    ]
+    answer = DocumentAnswer(
+        answer="La fianza es de 1.100 euros [1] y puede desistir [2]; ver [7].",
+        quotes=[Quote(source=1, text="La fianza es de 2.200 euros.")],
+        coverage="full",
+    )
+    problems = citation_problems(answer, sources)
+    assert [p["kind"] for p in problems] == ["unknown", "not_in_fragment", "no_quote"]
+    assert unverified_numbers(problems) == {1, 2, 7}
+    es = check_answer(answer, sources, "es")
+    assert es[0] == "Cita fragmentos que no existen: [7]."
+    expected = (
+        "La cita atribuida a [1] no aparece literalmente en «Contrato — Cláusula 5.ª»: «La fianza es de 2.200 euros.»"
+    )
+    assert es[1] == expected
+    assert es[2] == "[2] («Contrato — Cláusula 8.ª») se cita sin una cita literal que lo respalde."
+    en = check_answer(answer, sources, "en")[1]
+    assert en.startswith("The quote attributed to [1] does not appear verbatim in")
