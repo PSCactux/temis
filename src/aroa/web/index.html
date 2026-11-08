@@ -183,6 +183,8 @@
   .reader .rh small { display:block; color:var(--muted); font-weight:400; font-size:12px; font-family:var(--mono); }
   .reader .rb { flex:1; overflow:auto; padding:18px; font-size:13.5px; line-height:1.6; white-space:pre-wrap; overflow-wrap:anywhere; }
   .reader mark { background:var(--mark); color:inherit; border-radius:3px; padding:1px 2px; }
+  .clip { position:absolute; z-index:6; display:none; }
+  .clip.show { display:inline-flex; }
 
   /* ── composer ─────────────────────────────────────────── */
   .composer { padding:10px 24px 18px; background:linear-gradient(to top, var(--bg) 70%, transparent); }
@@ -280,6 +282,7 @@
     <div class="reader" id="reader">
       <div class="rh"><div class="t" id="reader-title"></div><button class="btn ghost" id="reader-close" data-i18n="close"></button></div>
       <div class="rb" id="reader-body"></div>
+      <button type="button" class="btn primary clip" id="clip">✂ <span data-i18n="clip"></span></button>
     </div>
   </div>
   <div class="drop" data-i18n="drop"></div>
@@ -297,7 +300,7 @@ const L = {
     tag: 'Legal assistant · runs locally', new: 'New conversation', conversations: 'Conversations', no_threads: 'Nothing yet.',
     documents: 'Documents', add: '+ Add', add_title: 'Markdown, text or PDF', no_docs: 'Drop .md, .txt or .pdf files on the chat to index them.',
     selected: '{n} selected', selected_title: 'This conversation answers only from the selected documents', select_title: 'Work only on this document', clear: 'clear',
-    analyze: 'Analyse the whole document', goal_prompt: 'What should the analysis look for? (empty = obligations, deadlines, amounts, penalties, risks)', analyzing: 'analysing', analysis_done: 'Analysis ready', analysis_failed: 'Analysis failed', last_analysis: 'last analysis',
+    clip: 'Save clipping', clip_note: 'Note for this clipping (optional)', clipped: 'Clipping saved and indexed', analyze: 'Analyse the whole document', goal_prompt: 'What should the analysis look for? (empty = obligations, deadlines, amounts, penalties, risks)', analyzing: 'analysing', analysis_done: 'Analysis ready', analysis_failed: 'Analysis failed', last_analysis: 'last analysis',
     alarms: 'Alarms', report: 'Report', matter: 'Matter', matter_ph: 'e.g. 2026-014', matter_title: 'Memory wall: what is said in a matter is recalled only inside that matter',
     new_title: 'New conversation', write: 'Write to Aroa…', hint: 'Enter to send · Shift+Enter for a new line · personal data is pseudonymised before the model sees it',
     attach_title: 'Attach a document to this message', keep: 'keep in documents', keep_title: 'Also index it, so Aroa can find it in later conversations',
@@ -323,7 +326,7 @@ const L = {
     tag: 'Asistente legal · funciona en local', new: 'Nueva conversación', conversations: 'Conversaciones', no_threads: 'Todavía nada.',
     documents: 'Documentos', add: '+ Añadir', add_title: 'Markdown, texto o PDF', no_docs: 'Arrastra archivos .md, .txt o .pdf sobre el chat para indexarlos.',
     selected: '{n} seleccionados', selected_title: 'Esta conversación responde solo desde los documentos seleccionados', select_title: 'Trabajar solo sobre este documento', clear: 'quitar',
-    analyze: 'Analizar el documento entero', goal_prompt: '¿Qué debe buscar el análisis? (vacío = obligaciones, plazos, importes, penalizaciones, riesgos)', analyzing: 'analizando', analysis_done: 'Análisis listo', analysis_failed: 'El análisis ha fallado', last_analysis: 'último análisis',
+    clip: 'Guardar recorte', clip_note: 'Nota para este recorte (opcional)', clipped: 'Recorte guardado e indexado', analyze: 'Analizar el documento entero', goal_prompt: '¿Qué debe buscar el análisis? (vacío = obligaciones, plazos, importes, penalizaciones, riesgos)', analyzing: 'analizando', analysis_done: 'Análisis listo', analysis_failed: 'El análisis ha fallado', last_analysis: 'último análisis',
     alarms: 'Alarmas', report: 'Informe', matter: 'Expediente', matter_ph: 'p. ej. 2026-014', matter_title: 'Muralla de memoria: lo dicho en un expediente solo se recuerda dentro de ese expediente',
     new_title: 'Nueva conversación', write: 'Escribe a Aroa…', hint: 'Intro para enviar · Mayús+Intro para nueva línea · los datos personales se pseudonimizan antes de que el modelo los vea',
     attach_title: 'Adjuntar un documento a este mensaje', keep: 'guardar en documentos', keep_title: 'Además lo indexa, para que Aroa lo encuentre en conversaciones futuras',
@@ -479,6 +482,7 @@ async function openReader(source, quote) {
   if (!r.ok) { toast(T('not_removed')); return; }
   const d = await r.json();
   const doc = docsCache.find(x => x.source === source);
+  readerSource = source;
   $('#reader-title').innerHTML = `${esc(doc ? doc.title : source)}<small>${esc(source)}</small>`;
   let html = esc(d.text), target = null;
   if (quote) {
@@ -500,6 +504,25 @@ async function openReader(source, quote) {
   if (target) setTimeout(() => $('#mark')?.scrollIntoView({ block: 'center', behavior: 'smooth' }), 220); else $('#reader-body').scrollTop = 0;
 }
 $('#reader-close').onclick = () => $('#reader').classList.remove('open');
+
+let readerSource = null;
+function clipButton() {
+  const sel = window.getSelection(), btn = $('#clip'), body = $('#reader-body');
+  const text = sel && !sel.isCollapsed ? sel.toString().trim() : '';
+  if (!text || !readerSource || body.classList.contains('report') || !body.contains(sel.anchorNode)) { btn.classList.remove('show'); return; }
+  const rect = sel.getRangeAt(0).getBoundingClientRect(), host = $('#reader').getBoundingClientRect();
+  btn.style.left = Math.max(8, rect.left - host.left) + 'px'; btn.style.top = (rect.bottom - host.top + 6) + 'px';
+  btn.dataset.text = text; btn.classList.add('show');
+}
+document.addEventListener('selectionchange', () => setTimeout(clipButton, 0));
+$('#clip').addEventListener('mousedown', e => e.preventDefault());  // keep the selection
+$('#clip').onclick = async () => {
+  const text = $('#clip').dataset.text; if (!text) return;
+  const note = prompt(T('clip_note'), ''); if (note === null) return;
+  const r = await fetch('/api/clippings', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ source: readerSource, text, note, matter: $('#matter').value.trim() }) });
+  $('#clip').classList.remove('show'); window.getSelection()?.removeAllRanges();
+  toast(r.ok ? T('clipped') : T('not_removed')); loadDocs(); loadHealth();
+};
 
 function showReport(job) {
   const r = job.result, body = $('#reader-body');

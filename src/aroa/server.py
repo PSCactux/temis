@@ -14,7 +14,7 @@ from fastapi.responses import FileResponse, PlainTextResponse, StreamingResponse
 from pydantic import BaseModel
 from starlette.concurrency import run_in_threadpool
 
-from . import analysis, prompts
+from . import analysis, clippings, prompts
 from .app import Assistant
 from .config import get_settings
 from .memory.loaders import EXTENSIONS, read_text
@@ -47,6 +47,13 @@ class Feedback(BaseModel):
 
 class AnalysisRequest(BaseModel):
     goal: str = ""
+
+
+class Clipping(BaseModel):
+    source: str
+    text: str
+    note: str = ""
+    matter: str = ""
 
 
 class Runtime:
@@ -316,3 +323,24 @@ def job(job_id: str):
     if data is None:
         raise HTTPException(404, "unknown job")
     return data
+
+
+@app.post("/api/clippings")
+async def create_clipping(body: Clipping):
+    """Cut a passage out of a document into a clipping: a small document, indexed like any other."""
+    sources = runtime.assistant.memory.indexed_sources()
+    if body.source not in sources:
+        raise HTTPException(404, "unknown document")
+    try:
+        name = clippings.write(
+            runtime.assistant.settings.docs_dir,
+            source=body.source,
+            source_title=sources[body.source]["title"],
+            text=body.text,
+            note=body.note,
+            matter=body.matter,
+        )
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc
+    result = await run_in_threadpool(runtime.ingest)
+    return {"source": name, **result}

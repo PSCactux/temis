@@ -109,6 +109,10 @@ failed) through `POST /api/documents/{source}/analyze` and `GET /api/jobs/{id}`,
 model call under the turn lock; the UI shows progress and opens the report with `[n]` citations that
 open the fragment. `aroa analizar SOURCE` does the same synchronously. See ADR 009.
 
+## Clippings
+
+`clippings.py`: a passage selected in the reader is saved as `recorte-<doc>-<id>.md` in the documents folder, with a header naming the source document, the matter and an optional note, and the text verbatim. It is indexed, searched, cited and deleted like any document (`POST /api/clippings`).
+
 ## Observability
 
 - **Traces**: OpenInference spans over OTLP/HTTP to any collector; contents hidden unless
