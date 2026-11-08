@@ -50,6 +50,13 @@ class Settings(BaseSettings):
     max_tool_turns: int = 12
     command_timeout_seconds: int = 60
     allowed_commands: str = "ls cat head tail wc grep find sort uniq diff cut tr stat file"  # run_command, no shell
+    calendar_path: Path = Path("data/calendar/holidays.json")  # national and regional holidays, by year
+    court_region: str = ""  # region code in the calendar (CT, MD...) for procedural deadlines
+    local_holidays: str = ""  # comma-separated YYYY-MM-DD local holidays of the court
+
+    def local_holidays_list(self) -> list[str]:
+        return [d.strip() for d in self.local_holidays.split(",") if d.strip()]
+
     search_url: str | None = None  # SearXNG-style endpoint returning JSON, e.g. http://localhost:8888
     web_max_chars: int = 12000
 

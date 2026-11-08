@@ -45,7 +45,7 @@ forbidden action in one sentence."""
 ROUTE = """You route messages for a law firm's assistant and apply the firm's policy. Choose exactly one route:
 - chat: conversation, legal questions the assistant can answer from memory or general knowledge, drafting
 - documents: a question about the firm's indexed documents (titles below)
-- alarms: the user wants to set, list or remove a deadline reminder
+- alarms: the user wants to set, list or remove a reminder, or asks when a procedural term ends (deadline computation)
 - web: the answer needs current information from the internet (legislation, case law, a specific website)
 - project: the user wants to read, create, change or redact files, or run commands, in a matter folder (names below)
 Write a standalone search query in the user's language that resolves pronouns and references to earlier turns.

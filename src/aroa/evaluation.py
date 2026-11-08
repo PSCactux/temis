@@ -9,6 +9,7 @@ Case kinds and what passes:
 - documents  cites the expected section, includes the key facts, abstains when it should (corrective RAG)
 - web        at least one tool was used and no claim failed (needs internet)
 - alarms     a pending alarm exists after the turn and the claim is verified
+- deadlines  the due date in the reply comes from the deadline tool (a tool call happened) and is the right one
 - project    the file the assistant says it created exists and no claim failed
 """
 
@@ -145,6 +146,9 @@ def evaluate_case(assistant, case: Case) -> dict:
             checks["grounded"] = result.extras.get("verified", False)
     elif case.kind == "web":
         checks["used_tools"] = result.metrics["tool_calls"] >= 1
+        checks["claims_verified"] = result.metrics["claims_failed"] == 0
+    elif case.kind == "deadlines":
+        checks["used_tools"] = result.metrics["tool_calls"] >= 1  # the date must come from compute_deadline
         checks["claims_verified"] = result.metrics["claims_failed"] == 0
     elif case.kind == "alarms":
         checks["alarm_exists"] = bool(alarms.pending(assistant.conn, thread))

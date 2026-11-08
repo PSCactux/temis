@@ -13,6 +13,7 @@ when a loop is a loop and what counts as proven.
 """
 
 import json
+import re
 import time
 from datetime import datetime
 from pathlib import Path
@@ -235,6 +236,8 @@ def build_graph(
             chosen, project = "chat", ""  # an unknown project is answered in conversation, not with tools
         if chosen == "chat" and config.get("configurable", {}).get("documents"):
             chosen = "documents"  # the user chose documents to work on: a question goes to them first
+        if chosen == "chat" and deadline_in(state["messages"][-1].content):
+            chosen = "alarms"  # a term from a concrete date is arithmetic: the deadline tool, never the model's count
         if chosen == "documents" and not memory.document_titles():
             chosen = "chat"
         query = result.search_query.strip() or state["query"]
@@ -565,6 +568,21 @@ def build_graph(
     graph.add_conditional_edges("verify", after_verify)
     graph.add_edge("memorize", END)
     return graph.compile(checkpointer=checkpointer)
+
+
+DATE_WORDS = re.compile(
+    r"\b\d{4}-\d{2}-\d{2}\b|\b\d{1,2}/\d{1,2}/\d{2,4}\b|\b\d{1,2}\s+de\s+(?:enero|febrero|marzo|abril|mayo|junio|julio|agosto|"
+    r"septiembre|setiembre|octubre|noviembre|diciembre)\b",
+    re.IGNORECASE,
+)
+TERM_WORDS = re.compile(
+    r"\b(plazo|vence|vencimiento|recurrir|recurso|alegaciones|contestar|días?|mes(?:es)?|año|años)\b", re.IGNORECASE
+)
+
+
+def deadline_in(text: str) -> bool:
+    """A message that names a concrete date and a term is asking when something ends."""
+    return bool(DATE_WORDS.search(text)) and bool(TERM_WORDS.search(text))
 
 
 def project_in(text: str, names: list[str]) -> str:

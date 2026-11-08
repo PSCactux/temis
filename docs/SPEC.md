@@ -93,7 +93,7 @@ recall filters to the current matter plus general memory on every prefetch. The 
 
 | Route | Tools |
 |---|---|
-| alarms | `create_alarm`, `list_alarms`, `delete_alarm` — SQLite; the server's scheduler wakes the thread when one is due |
+| alarms | `create_alarm`, `list_alarms`, `delete_alarm` — SQLite; the server's scheduler wakes the thread when one is due. `compute_deadline` — procedural terms counted in code (`deadlines.py`: working days, August, the Christmas break, months date-to-date, art. 135.5 LEC grace) against the firm's holiday calendar (`data/calendar/holidays.json`, `COURT_REGION`, `LOCAL_HOLIDAYS`); the reply lists every excluded day and the rules applied |
 | web | `search_web` (SearXNG-style JSON endpoint, or DuckDuckGo lite without configuration), `read_page` (HTML and PDF to text, size-capped, private addresses refused) |
 | project | `list_files`, `read_file`, `grep`, `write_file`, `edit_file`, `run_command` (allowlisted, no shell), `redact_file` — confined to `data/projects/<matter>`; the folder's `AGENTS.md` is in the prompt |
 | all tool routes | `ask_user` (interrupt), `remember` (explicit fact) |

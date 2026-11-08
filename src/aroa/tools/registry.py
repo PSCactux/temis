@@ -2,7 +2,7 @@
 
 from langchain_core.tools import tool
 
-from . import alarms, project, web
+from . import alarms, deadlines, project, web
 from .base import ToolContext
 
 TOOL_ROUTES = ("alarms", "web", "project")
@@ -25,7 +25,7 @@ def make_shared(ctx: ToolContext) -> list:
 
 def tools_for(route: str, ctx: ToolContext) -> list:
     if route == "alarms":
-        specific = alarms.make_tools(ctx)
+        specific = alarms.make_tools(ctx) + deadlines.make_tools(ctx)  # reminders and the terms they remind of
     elif route == "web":
         specific = web.make_tools(ctx)
     elif route == "project":
