@@ -30,7 +30,17 @@ framework, open source). Both, and LM Studio, expose an OpenAI-compatible HTTP A
 | llama.cpp | 6.4 s |
 | MLX | 5.1 s |
 
+## Measured with Aroa's evals (same Qwen3-8B 4-bit, same dataset)
+
+| Runtime | Passed | Note |
+|---|---|---|
+| llama.cpp, `json_schema` | 38/44 | documents 17/20, review 2/2, long contract in 1004 s |
+| Ollama | 37/42 | earlier run, before two cases were added |
+| MLX, `function_calling` | 25/44 | documents 7/20: answers right, `[n]` markers missing; long contract in 1440 s |
+
 ## Consequences
 
-- Ollama stays supported but is no longer required. MLX is the fastest option on a Mac; llama.cpp is
-  the most exact for structured output.
+- Ollama stays supported but is no longer required. llama.cpp is the recommended local runtime: open
+  source, the engine Ollama wraps, grammar-constrained structured output, same quality. MLX generates
+  loose text faster but, without schema support in its server, loses citations in Aroa's pipeline.
+- `scripts/llama-server.sh` starts the recommended server (downloads the model on first run).
