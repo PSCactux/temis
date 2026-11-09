@@ -74,9 +74,21 @@ class ProcedureDraft(BaseModel):
     matter: str = ""
 
 
-class ProcedureSave(BaseModel):
+class ProcedureField(BaseModel):
     name: str = ""
-    html: str
+    hint: str = ""
+    long: bool = False
+
+
+class ProcedureSave(BaseModel):
+    """A procedure as the form sends it; the server checks it before anything is written."""
+
+    name: str = ""
+    description: str = ""
+    template: str = ""  # a document of the library
+    fields: list[ProcedureField] = []
+    instructions: str = ""
+    checklist: list[str] = []
 
 
 class ReviewRequest(BaseModel):
@@ -134,13 +146,11 @@ class Runtime:
             proc = procedures.find(s.procedures_dir, spec.get("slug", ""), s.procedures_samples_dir)
             if proc is None:
                 raise ValueError("unknown procedure")
-            template = proc.template_text
+            template = procedure_template(proc)
+            if template is None:
+                raise ValueError(f"template {proc.template_ref} is not in the documents folder")
             if proc.template_ref:
-                path = s.docs_dir / Path(proc.template_ref).name
-                if not path.is_file():
-                    raise ValueError(f"template {proc.template_ref} is not in the documents folder")
-                template = read_text(path)
-                log(f"Plantilla «{path.name}» leída de la biblioteca")
+                log(f"Plantilla «{proc.template_ref}» leída de la biblioteca")
             data = {k: v for k, v in (spec.get("data") or {}).items()}
             if a.anonymizer:  # the model sees placeholders, the firm sees names: same rule as everywhere
                 with self.lock:
@@ -659,68 +669,85 @@ def analyze_document(source: str, body: AnalysisRequest):
     return {"job_id": runtime.enqueue_analysis(source, body.goal.strip())}
 
 
+def procedure_template(proc: procedures.Procedure) -> str | None:
+    """The template's text: the library document it names (None when it is not there), or the inline one."""
+    if not proc.template_ref:
+        return proc.template_text
+    path = runtime.assistant.settings.docs_dir / Path(proc.template_ref).name
+    return read_text(path) if path.is_file() else None
+
+
+def _procedures() -> list[procedures.Procedure]:
+    s = runtime.assistant.settings
+    return procedures.load_all(s.procedures_dir, s.procedures_samples_dir)
+
+
+def _procedure(slug: str) -> procedures.Procedure:
+    proc = next((p for p in _procedures() if p.slug == slug), None)
+    if proc is None:
+        raise HTTPException(404, "unknown procedure")
+    return proc
+
+
+def _checked(body: ProcedureSave, slug: str | None) -> tuple[procedures.Procedure, dict]:
+    """The form's record as a procedure, and its check; a new one takes its slug from the name."""
+    record = body.model_dump()
+    current = _procedure(slug) if slug else None
+    proc = procedures.from_dict(record, slug or procedures.slugify(body.name), current.source if current else "")
+    taken = {p.slug for p in _procedures()} - ({slug} if slug else set())
+    return proc, procedures.check(proc, procedure_template(proc), taken)
+
+
 @app.get("/api/procedures")
 def list_procedures():
-    s = runtime.assistant.settings
-    return [p.as_dict() for p in procedures.load_all(s.procedures_dir, s.procedures_samples_dir)]
+    return [p.as_dict() for p in _procedures()]
 
 
 @app.get("/api/procedures/{slug}")
 def get_procedure(slug: str):
-    s = runtime.assistant.settings
-    proc = procedures.find(s.procedures_dir, slug, s.procedures_samples_dir)
-    if proc is None:
-        raise HTTPException(404, "unknown procedure")
-    path = s.procedures_dir / proc.source
-    raw = path.read_text(encoding="utf-8", errors="replace")
-    fmt = "html" if path.suffix.lower() in (".html", ".htm") else "markdown"
-    return {**proc.as_dict(), "format": fmt, "content": raw}
+    proc = _procedure(slug)
+    return {**proc.as_dict(), "check": procedures.check(proc, procedure_template(proc))}
+
+
+@app.post("/api/procedures/check")
+def check_procedure(body: ProcedureSave, slug: str = ""):
+    """What the form would save, checked: errors stop the save, warnings are shown next to the fields."""
+    return _checked(body, slug or None)[1]
+
+
+def _save_procedure(body: ProcedureSave, slug: str | None) -> dict:
+    proc, result = _checked(body, slug)
+    if result["errors"]:
+        raise HTTPException(422, {"check": result})
+    procedures.save(runtime.assistant.settings.procedures_dir, proc)
+    return {**proc.as_dict(), "check": result}
 
 
 @app.post("/api/procedures")
 def create_procedure(body: ProcedureSave):
-    """A procedure written in the editor (HTML); its sections are read back through the text converter."""
-    s = runtime.assistant.settings
-    try:
-        path = procedures.save(s.procedures_dir, body.name or "procedimiento", body.html)
-    except ValueError as exc:
-        raise HTTPException(400, str(exc)) from exc
-    return procedures.read_procedure(path).as_dict()
+    return _save_procedure(body, None)
 
 
 @app.put("/api/procedures/{slug}")
 def update_procedure(slug: str, body: ProcedureSave):
-    s = runtime.assistant.settings
-    proc = procedures.find(s.procedures_dir, slug, s.procedures_samples_dir)
-    if proc is None:
-        raise HTTPException(404, "unknown procedure")
-    old = s.procedures_dir / proc.source
-    if old.suffix.lower() in (".html", ".htm"):
-        old.write_text(body.html, encoding="utf-8")
-        path = old
-    else:  # a Markdown sample edited in the app becomes HTML; the sample file goes
-        path = procedures.save(s.procedures_dir, old.stem, body.html)
-        old.unlink()
-    return procedures.read_procedure(path).as_dict()
+    return _save_procedure(body, slug)
 
 
 @app.delete("/api/procedures/{slug}")
 def delete_procedure(slug: str):
-    s = runtime.assistant.settings
-    proc = procedures.find(s.procedures_dir, slug, s.procedures_samples_dir)
-    if proc is None:
-        raise HTTPException(404, "unknown procedure")
-    (s.procedures_dir / proc.source).unlink()
+    proc = _procedure(slug)
+    (runtime.assistant.settings.procedures_dir / proc.source).unlink()
     return {"removed": proc.slug}
 
 
 @app.post("/api/procedures/{slug}/draft")
 def draft_from_procedure(slug: str, body: ProcedureDraft):
-    """Queue the drafting: the result (a document for the editor) comes through /api/jobs/{id}."""
-    s = runtime.assistant.settings
-    proc = procedures.find(s.procedures_dir, slug, s.procedures_samples_dir)
-    if proc is None:
-        raise HTTPException(404, "unknown procedure")
+    """Queue the drafting: the result (a document for the editor) comes through /api/jobs/{id}.
+    A procedure whose check fails (its template lost a field, or is gone) is not followed."""
+    proc = _procedure(slug)
+    result = procedures.check(proc, procedure_template(proc))
+    if result["errors"]:
+        raise HTTPException(409, {"check": result})
     return {"job_id": runtime.enqueue_draft(proc, body)}
 
 

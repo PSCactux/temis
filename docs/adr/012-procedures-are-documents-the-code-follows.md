@@ -1,6 +1,6 @@
 # ADR 012 — A procedure is a document with four sections, and the code follows it
 
-**Status:** accepted · 2026-11
+**Status:** accepted · 2026-11 · storage and editing superseded by ADR 015 (procedures are checked records edited through a form)
 
 ## Context
 

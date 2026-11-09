@@ -71,7 +71,7 @@ _Done 2026-11-08: review job (ADR 010): repeats, quotes and legal citations in c
 paragraph gets all three flagged, and nothing else.
 
 ## Phase 8 — style and templates
-_Templates done 2026-11-08 as procedures (ADR 012): template + data + writing rules + review checklist in one document, followed by code with the model only on marked passages. Pending: style documents injected into the free writer._
+_Templates done 2026-11-08 as procedures (ADR 012): template + data + writing rules + review checklist followed by code with the model only on marked passages. Since ADR 015 they are records edited through a checked form, not free documents. Pending: style documents injected into the free writer._
 - Reference documents marked as *style*: writing conventions, headings, formulas the firm uses.
   Marked as *template*: a structure to fill. Both live in the index with a kind, never cited as
   facts, injected tagged into the writer as data.

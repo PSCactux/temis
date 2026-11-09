@@ -136,7 +136,7 @@ out (structural subset), and every save keeps the previous content as a version 
 
 ## Procedures
 
-`procedures.py`: the firm's small flows as documents (`data/procedures/`, samples copied on first run)
+`procedures.py`: the firm's small flows as checked JSON records (`data/procedures/`, samples copied on first run; ADR 015)
 with four sections: template (library document or inline), data (form fields), writing instructions and
 review checklist. `POST /api/procedures/{slug}/draft` queues a `draft` job: placeholders filled in code,
 `[[…]]` passages written by the model one by one, data checked back, result opened in the editor.

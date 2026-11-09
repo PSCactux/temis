@@ -1,12 +1,17 @@
-"""Procedures: the firm's small flows, written as a document, followed by the code.
+"""Procedures: the firm's small flows, kept as structured records and followed by the code.
 
-A procedure (for example "reclamación patrimonial") is one document with four sections: the template to
-use, the data it needs, how to write it and how to review it. No workflow engine: the data is a form,
-`{{Campo}}` placeholders in the template are filled in code, and only the passages marked
+A procedure (for example "reclamación patrimonial") has four parts: the template to use (a document of
+the library), the data it needs, how to write it and how to review it. No workflow engine: the data is a
+form, `{{Campo}}` placeholders in the template are filled in code, and only the passages marked
 `[[instructions]]` are written by the model, one call each, with the data and the firm's instructions as
 data blocks. The review pass then checks the procedure's checklist item by item, each verdict backed by
-a verbatim quote or reported as not met. Procedures live in their own folder, are edited in the app and
-are never indexed as evidence."""
+a verbatim quote or reported as not met.
+
+Procedures are records, not free documents: they are edited through a form and saved as JSON only when
+`check` finds no error (every placeholder of the template has its data field, names are unique, the
+template exists), so a procedure cannot be left half-written. Markdown procedures with the four headings
+are still read, and become JSON the first time they are saved. They live in their own folder and are
+never indexed as evidence."""
 
 from __future__ import annotations
 
@@ -20,10 +25,11 @@ from pathlib import Path
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from . import prompts
-from .documents import html_to_text, safe_name
+from .documents import html_to_text
 
 PLACEHOLDER = re.compile(r"\{\{\s*([^{}]+?)\s*\}\}")
 BLOCK = re.compile(r"\[\[\s*(.+?)\s*\]\]", re.S)
+LONG_HINT = re.compile(r"descripci|documentos|daños|hechos|observ", re.I)  # Markdown procedures only
 SECTIONS = {
     "plantilla": "template",
     "template": "template",
@@ -52,6 +58,7 @@ def slugify(name: str) -> str:
 class Field:
     name: str
     hint: str = ""
+    long: bool = False  # several lines to fill (a description, a list of documents)
 
 
 @dataclass
@@ -68,6 +75,18 @@ class Procedure:
 
     def as_dict(self) -> dict:
         return asdict(self)
+
+
+def _unwrap(text: str) -> str:
+    """Hard-wrapped Markdown lines joined back into paragraphs; blank lines and list items stay."""
+    out: list[str] = []
+    for line in text.split("\n"):
+        item = re.match(r"^\s*(?:[-*•]|\d+[.)])\s", line)
+        if out and out[-1].strip() and line.strip() and not item:
+            out[-1] = out[-1].rstrip() + " " + line.strip()
+        else:
+            out.append(line)
+    return "\n".join(out)
 
 
 def parse(text: str, slug: str, source: str = "") -> Procedure:
@@ -88,7 +107,7 @@ def parse(text: str, slug: str, source: str = "") -> Procedure:
             description.append(line)
         elif current in buckets:
             buckets[current].append(line)
-    proc = Procedure(slug, name or slug, "\n".join(description).strip(), source=source)
+    proc = Procedure(slug, name or slug, _unwrap("\n".join(description).strip()), source=source)
     template = "\n".join(buckets["template"]).strip()
     ref = re.match(r"^(?:documento|document)\s*:\s*(\S+)\s*$", template, re.I | re.M)
     if ref and len(template.splitlines()) <= 2:
@@ -99,8 +118,9 @@ def parse(text: str, slug: str, source: str = "") -> Procedure:
         m = re.match(r"^\s*(?:[-*•]|\d+[.)])\s+(.*)$", raw)
         if m:
             label, _, hint = m.group(1).partition(":")
-            proc.fields.append(Field(label.strip().strip("*"), hint.strip()))
-    proc.instructions = "\n".join(buckets["instructions"]).strip()
+            label = label.strip().strip("*")
+            proc.fields.append(Field(label, hint.strip(), bool(LONG_HINT.search(label))))
+    proc.instructions = _unwrap("\n".join(buckets["instructions"]).strip())
     for raw in buckets["checklist"]:
         m = re.match(r"^\s*(?:[-*•]|\d+[.)]|\[[ x]\])\s+(.*)$", raw)
         if m and m.group(1).strip():
@@ -108,7 +128,28 @@ def parse(text: str, slug: str, source: str = "") -> Procedure:
     return proc
 
 
+def from_dict(data: dict, slug: str, source: str = "") -> Procedure:
+    """A procedure from its record, cleaned: blank rows dropped, spaces trimmed."""
+    fields = [
+        Field(str(f.get("name", "")).strip(), str(f.get("hint", "")).strip(), bool(f.get("long")))
+        for f in data.get("fields") or []
+        if str(f.get("name", "")).strip() or str(f.get("hint", "")).strip()
+    ]
+    return Procedure(
+        slug=slug,
+        name=str(data.get("name", "")).strip(),
+        description=str(data.get("description", "")).strip(),
+        template_ref=Path(str(data.get("template", "")).strip()).name,
+        fields=fields,
+        instructions=str(data.get("instructions", "")).strip(),
+        checklist=[c.strip() for c in (data.get("checklist") or []) if str(c).strip()],
+        source=source,
+    )
+
+
 def read_procedure(path: Path) -> Procedure:
+    if path.suffix.lower() == ".json":
+        return from_dict(json.loads(path.read_text(encoding="utf-8")), path.stem, path.name)
     text = path.read_text(encoding="utf-8", errors="replace")
     if path.suffix.lower() in (".html", ".htm"):
         text = html_to_text(text)
@@ -122,21 +163,95 @@ def load_all(folder: Path, samples: Path | None = None) -> list[Procedure]:
     folder.mkdir(parents=True, exist_ok=True)
     out = []
     for path in sorted(folder.iterdir()):
-        if path.is_file() and path.suffix.lower() in (".md", ".txt", ".html", ".htm") and not path.name.startswith("."):
+        if path.is_file() and path.suffix.lower() in SUFFIXES and not path.name.startswith("."):
             out.append(read_procedure(path))
     return out
+
+
+SUFFIXES = (".json", ".md", ".txt", ".html", ".htm")
 
 
 def find(folder: Path, slug: str, samples: Path | None = None) -> Procedure | None:
     return next((p for p in load_all(folder, samples) if p.slug == slug), None)
 
 
-def save(folder: Path, name: str, html: str) -> Path:
-    """A procedure written in the editor; saved as HTML next to the Markdown samples."""
+def save(folder: Path, proc: Procedure) -> Path:
+    """The record as `<slug>.json`; a Markdown or HTML file it was read from is replaced by it."""
     folder.mkdir(parents=True, exist_ok=True)
-    target = folder / safe_name(name)
-    target.write_text(html, encoding="utf-8")
+    target = folder / f"{proc.slug}.json"
+    record = {
+        "name": proc.name,
+        "description": proc.description,
+        "template": proc.template_ref,
+        "fields": [asdict(f) for f in proc.fields],
+        "instructions": proc.instructions,
+        "checklist": proc.checklist,
+    }
+    tmp = target.with_suffix(".json.tmp")
+    tmp.write_text(json.dumps(record, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    tmp.replace(target)
+    old = folder / proc.source if proc.source else None
+    if old and old != target and old.is_file():
+        old.unlink()
+    proc.source = target.name
     return target
+
+
+# ── checking ─────────────────────────────────────────────────────────────
+def template_body(text: str) -> str:
+    """What the template says about itself, above a `---` rule, is not part of the document."""
+    if "\n---\n" in text:
+        return text.split("\n---\n", 1)[1].lstrip("\n")
+    return text
+
+
+def check(proc: Procedure, template_text: str | None, taken: set[str] = frozenset()) -> dict:
+    """What stops a procedure from being saved or followed (errors) and what deserves a look (warnings).
+    `template_text` is None when the template is not in the library; `taken` holds the other procedures'
+    slugs. Each issue is a code plus the name it is about, so the page can say it in the user's language."""
+    errors: list[dict] = []
+    warnings: list[dict] = []
+    if not proc.name:
+        errors.append({"code": "no_name"})
+    elif proc.slug in taken:
+        errors.append({"code": "name_taken", "name": proc.name})
+    if not proc.template_ref and not proc.template_text:
+        errors.append({"code": "no_template"})
+    elif proc.template_ref and template_text is None:
+        errors.append({"code": "template_missing", "name": proc.template_ref})
+    seen: set[str] = set()
+    for i, f in enumerate(proc.fields, start=1):
+        if not f.name:
+            errors.append({"code": "field_unnamed", "n": i})
+        elif re.search(r"[{}\[\]]", f.name):
+            errors.append({"code": "field_brackets", "name": f.name})
+        elif _fold(f.name) in seen:
+            errors.append({"code": "field_repeated", "name": f.name})
+        seen.add(_fold(f.name))
+    body = template_body(template_text if template_text is not None else proc.template_text)
+    placeholders: list[str] = []
+    for m in PLACEHOLDER.finditer(body):
+        if m.group(1).strip() not in placeholders:
+            placeholders.append(m.group(1).strip())
+    blocks = len(BLOCK.findall(body))
+    if template_text is not None or proc.template_text:
+        for name in placeholders:
+            if _fold(name) not in seen:
+                errors.append({"code": "placeholder_without_field", "name": name})
+        used = {_fold(n) for n in placeholders}
+        asked = " ".join(_fold(m.group(1)) for m in BLOCK.finditer(body))  # a field a block names reaches the model
+        for f in proc.fields:
+            if f.name and _fold(f.name) not in used and _fold(f.name) not in asked:
+                warnings.append({"code": "field_unused" if blocks else "field_ignored", "name": f.name})
+        if not placeholders and not blocks:
+            warnings.append({"code": "template_plain"})
+        if blocks and not proc.instructions:
+            warnings.append({"code": "no_instructions"})
+    if not proc.checklist:
+        warnings.append({"code": "no_checklist"})
+    if len({_fold(c) for c in proc.checklist}) < len(proc.checklist):
+        warnings.append({"code": "checklist_repeated"})
+    return {"errors": errors, "warnings": warnings, "placeholders": placeholders, "blocks": blocks}
 
 
 # ── filling ──────────────────────────────────────────────────────────────
@@ -231,8 +346,7 @@ def draft(
 ) -> dict:
     """The filled document (Markdown-like text) and what to look at: missing data, blocks left, data not found."""
     say = log or (lambda _l: None)
-    if "\n---\n" in template_text:  # what the template says about itself, above the rule, is not part of the document
-        template_text = template_text.split("\n---\n", 1)[1].lstrip("\n")
+    template_text = template_body(template_text)
     say(f"Procedimiento «{procedure.name}»: plantilla de {len(template_text):,} caracteres, {len(data)} datos")
     text, missing = fill(template_text, data)
     say(

@@ -488,6 +488,33 @@
   .pop .tile { border-radius:12px; background:var(--bg); border-color:transparent; }
   .toast { background:var(--ink); color:var(--bg); }
   .editor-wrap .tox .tox-tbtn { border-radius:8px !important; }
+
+  /* procedure form: a record, not a free document */
+  .pform section { margin:0 0 26px; }
+  .pform h2 { margin-top:0; }
+  .procpaper .pe-hint { color:var(--muted); font-size:12.5px; margin:-2px 0 10px; }
+  #pe-tplinfo { margin:8px 0 0; }
+  .paper.prose ul.pissues { padding-left:0; } .paper.prose .pissues li { margin:0; }
+  .pform select, .pform textarea#pe-instr, .pe-row input:not([type=checkbox]) { border:1px solid var(--line-2); border-radius:10px; padding:7px 10px; background:var(--paper); font:inherit; color:var(--ink); }
+  .pform textarea#pe-instr { width:100%; resize:vertical; box-sizing:border-box; }
+  .pform select:focus, .pform textarea:focus, .pe-row input:focus { outline:none; border-color:var(--accent-line); box-shadow:0 0 0 3px var(--accent-soft); }
+  .pe-tpl { display:flex; gap:8px; align-items:center; } .pe-tpl select { flex:1; min-width:0; }
+  .pe-rows { display:flex; flex-direction:column; gap:6px; }
+  .pe-row { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1.4fr) auto auto; gap:6px; align-items:center; padding:4px; border-radius:12px; border:1px solid transparent; }
+  .pe-row.ck { grid-template-columns:minmax(0,1fr) auto; }
+  .pe-row.err { border-color:var(--bad); background:var(--bad-soft); }
+  .pform .err:is(input, select) { border-color:var(--bad); }
+  .pe-long { display:flex; gap:5px; align-items:center; font-size:12px; color:var(--ink-2); white-space:nowrap; }
+  .pe-acts { display:flex; gap:2px; }
+  .pe-add { display:flex; gap:8px; margin-top:8px; flex-wrap:wrap; }
+  .pissues { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:6px; }
+  .pissues li { display:flex; gap:8px; align-items:flex-start; padding:8px 12px; border-radius:10px; font-size:13px; }
+  .pissues li svg.i { width:15px; height:15px; flex:none; margin-top:2px; }
+  .pissues li.bad { background:var(--bad-soft); color:var(--bad); }
+  .pissues li.warn { background:var(--warn-soft); color:var(--warn); }
+  .pok { display:flex; gap:8px; align-items:center; color:var(--ok); font-size:13px; } .pok svg.i { width:15px; height:15px; }
+  .pbroken { margin:0 0 18px; } .pbroken strong { display:block; font-size:13px; margin-bottom:6px; color:var(--bad); }
+  @media (max-width:700px) { .pe-row { grid-template-columns:1fr auto; } .pe-row input[data-f="hint"] { grid-column:1 / -1; grid-row:2; } .pe-long { grid-row:3; } }
 </style>
 </head>
 <body>
@@ -518,6 +545,8 @@
   <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></symbol>
   <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
   <symbol id="i-back" viewBox="0 0 24 24"><path d="m15 6-6 6 6 6"/></symbol>
+  <symbol id="i-chev-up" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol>
+  <symbol id="i-chev-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
   <symbol id="i-alert" viewBox="0 0 24 24"><path d="M12 3 2 21h20z"/><path d="M12 10v5M12 18h.01"/></symbol>
   <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
@@ -647,13 +676,13 @@
 const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
 const column = $('#column'), log = $('#log');
 let thread = null, busy = false, threadsCache = [], docsCache = [], jobsCache = [], attachments = [], selected = new Set();
-let section = 'chat', currentDoc = null, currentJob = null, procsCache = [], currentProc = null;
+let section = 'chat', currentDoc = null, currentJob = null, procsCache = [], currentProc = null, procEdit = null;
 
 /* ── language ──────────────────────────────────────────── */
 const L = {
   en: {
     info: 'About', info_title: 'About Aroa', settings: 'Settings', settings_title: 'Settings', memory_sec: 'Memory', memory_title: 'What Aroa remembers', mem_filter: 'Filter facts', mem_intro: 'Facts extracted from what people at the firm told Aroa: preferences, decisions, people, dates. Only what the user says is stored, never Aroa\'s replies or document contents. Each fact is recalled only inside its matter (or everywhere when it has none). Forget anything wrong or that should not be kept.', mem_general: 'general',
-    sec_chat: 'Chat', sec_docs: 'Documents', sec_jobs: 'Work', sec_procs: 'Procedures', procedures: 'Procedures', no_procs: 'No procedures yet. Write one: template, data, how to write it, how to review it.', procs_empty_h: 'Procedures', procs_empty_p: 'A procedure is one document with four sections: the template, the data it needs, how to write it and how to review it. Pick one to fill in its data and draft the document; Aroa follows the steps and the review checks the list.', new_proc: 'New procedure', draft_btn: 'Draft the document', edit_proc: 'Edit procedure', template_lbl: 'Template', data_lbl: 'Data', instructions_lbl: 'Writing', checklist_lbl: 'Review checklist', kind_draft: 'Draft', drafting: 'drafting', draft_done: 'Draft ready: open in the editor', draft_failed: 'Drafting failed', matter_lbl: 'Matter (for the file name)', no_template: 'This procedure names no template.', checklist_title: 'Procedure checklist', met: 'met', unmet: 'not met', proc_skeleton: '<h1>Procedure name</h1><p>When it is used, in two lines.</p><h2>Template</h2><p>documento: name_of_a_library_document.md</p><h2>Data</h2><ul><li>Field: hint for whoever fills it</li></ul><h2>Writing</h2><p>Register, structure, what to cite, what never to write.</p><h2>Review</h2><ul><li>One thing the finished document must show</li></ul>', inline_template: 'inline template', alarms: 'Alarms', status: 'Status', theme: 'Theme', language: 'Language',
+    cancel: 'Cancel', proc_broken: 'This procedure cannot be followed until it is fixed:', pe_lead: 'Fill in the four parts. Aroa checks the procedure against its template as you type, and it is only saved when there is nothing to fix.', pe_general: 'General', pe_name: 'Name', pe_name_ph: 'Reclamación patrimonial', pe_desc: 'When it is used', pe_desc_ph: 'In two lines: the case, the rules it rests on, the deadline.', pe_template_hint: 'A document of the library. Its {{Field}} gaps are filled with the data; its [[instruction]] passages are written by Aroa. Edit it as a document; the procedure checks it again.', pe_template_pick: 'Choose a library document', pe_missing: 'not in the library', pe_open: 'Open', pe_tplinfo: 'The template has {p} data gaps and {b} passages Aroa writes.', pe_fields_hint: 'One per piece of data the template asks for. The name must match the gap in the template, accents and capitals aside; the hint helps whoever fills it in.', pe_field_name: 'Name, as in the template', pe_field_hint: 'Hint (optional)', pe_long: 'Several lines', pe_long_t: 'Shown as a larger box when filling it in', pe_up: 'Move up', pe_down: 'Move down', pe_add_field: 'Add data', pe_add_missing: 'Add the {n} the template asks for', pe_add_missing_1: 'Add «{name}»', pe_instr_hint: 'How Aroa writes the [[…]] passages: register, structure, what to cite, what never to write.', pe_instr_ph: 'Formal register, numbered facts, cite the exact article…', pe_check_hint: 'One thing per line that the finished document must show. The review checks each one with a verbatim quote.', pe_check_ph: 'Identifies the claimant with name and ID', pe_add_check: 'Add item', pe_issues: 'Before saving', pe_ok: 'Everything fits: the procedure can be saved.', pe_fix_first: 'Fix the marked errors to save', pe_check_failed: 'The procedure could not be checked.', pi_no_name: 'Give it a name.', pi_name_taken: 'There is already a procedure called «{name}».', pi_no_template: 'Choose the template.', pi_template_missing: 'The template «{name}» is no longer in the library.', pi_field_unnamed: 'Data n.º {n} has no name.', pi_field_brackets: 'The name «{name}» cannot contain braces or brackets.', pi_field_repeated: 'The data «{name}» is repeated.', pi_placeholder_without_field: 'The template asks for «{name}» and no data has that name.', pi_field_unused: '«{name}» is not a gap in the template: Aroa gets it when writing passages, but nothing is filled with it directly.', pi_field_ignored: '«{name}» does not appear in the template and will not be used.', pi_template_plain: 'The template has no {{…}} gaps nor [[…]] passages: the document comes out as it is.', pi_no_instructions: 'The template has passages Aroa writes, but there are no writing rules.', pi_no_checklist: 'Without a review checklist, the review checks nothing specific to this procedure.', pi_checklist_repeated: 'Some checklist items are repeated.', sec_chat: 'Chat', sec_docs: 'Documents', sec_jobs: 'Work', sec_procs: 'Procedures', procedures: 'Procedures', no_procs: 'No procedures yet. Create one: template, data, how to write it, how to review it.', procs_empty_h: 'Procedures', procs_empty_p: 'A procedure has four parts: the template, the data it needs, how to write it and how to review it. It is edited through a form and only saved when it is complete and matches its template. Pick one to fill in its data and draft the document; Aroa follows the steps and the review checks the list.', new_proc: 'New procedure', draft_btn: 'Draft the document', edit_proc: 'Edit procedure', template_lbl: 'Template', data_lbl: 'Data', instructions_lbl: 'Writing', checklist_lbl: 'Review checklist', kind_draft: 'Draft', drafting: 'drafting', draft_done: 'Draft ready: open in the editor', draft_failed: 'Drafting failed', matter_lbl: 'Matter (for the file name)', no_template: 'This procedure names no template.', checklist_title: 'Procedure checklist', met: 'met', unmet: 'not met', inline_template: 'inline template', alarms: 'Alarms', status: 'Status', theme: 'Theme', language: 'Language',
     conversations: 'Conversations', new_short: 'New', new_title: 'New conversation', no_threads: 'No conversations yet.', filter_threads: 'Filter conversations', filter_docs: 'Filter documents',
     documents: 'Documents', add: 'Add', add_title: 'Markdown, text, PDF, Word or HTML', add_doc: 'Add a document', no_docs: 'No documents yet. Create one, add .md, .txt, .pdf or .docx files, or drop them anywhere.',
     docs_empty_h: 'Document library', docs_empty_p: 'Documents are indexed pseudonymised and answered from with citations. Pick one on the left to read it, analyse it whole or review it as a draft.',
@@ -692,7 +721,7 @@ const L = {
   },
   es: {
     info: 'Info', info_title: 'Qué es Aroa y cómo funciona', settings: 'Ajustes', settings_title: 'Ajustes', memory_sec: 'Memoria', memory_title: 'Lo que Aroa recuerda', mem_filter: 'Filtrar hechos', mem_intro: 'Hechos extraídos de lo que alguien del despacho le ha dicho a Aroa: preferencias, decisiones, personas, fechas. Solo se guarda lo que dice el usuario, nunca las respuestas de Aroa ni el contenido de los documentos. Cada hecho solo se recuerda dentro de su expediente (o en todos si no tiene). Olvida lo que esté mal o no deba conservarse.', mem_general: 'general',
-    sec_chat: 'Chat', sec_docs: 'Documentos', sec_jobs: 'Trabajos', sec_procs: 'Procedim.', procedures: 'Procedimientos', no_procs: 'Todavía no hay procedimientos. Escribe uno: plantilla, datos, cómo se redacta, cómo se revisa.', procs_empty_h: 'Procedimientos', procs_empty_p: 'Un procedimiento es un documento con cuatro apartados: la plantilla, los datos que necesita, cómo se redacta y cómo se revisa. Elige uno para rellenar sus datos y redactar el documento; Aroa sigue los pasos y la revisión comprueba la lista.', new_proc: 'Nuevo procedimiento', draft_btn: 'Redactar el documento', edit_proc: 'Editar procedimiento', template_lbl: 'Plantilla', data_lbl: 'Datos', instructions_lbl: 'Redacción', checklist_lbl: 'Lista de revisión', kind_draft: 'Borrador', drafting: 'redactando', draft_done: 'Borrador listo: se abre en el editor', draft_failed: 'La redacción ha fallado', matter_lbl: 'Expediente (para el nombre del archivo)', no_template: 'Este procedimiento no indica plantilla.', checklist_title: 'Lista de revisión del procedimiento', met: 'cumplido', unmet: 'no cumplido', proc_skeleton: '<h1>Nombre del procedimiento</h1><p>Cuándo se usa, en dos líneas.</p><h2>Plantilla</h2><p>documento: nombre_de_un_documento_de_la_biblioteca.md</p><h2>Datos</h2><ul><li>Campo: pista para quien lo rellena</li></ul><h2>Redacción</h2><p>Registro, estructura, qué citar, qué no escribir nunca.</p><h2>Revisión</h2><ul><li>Una cosa que el documento terminado debe mostrar</li></ul>', inline_template: 'plantilla en el propio procedimiento', alarms: 'Alarmas', status: 'Estado', theme: 'Tema', language: 'Idioma',
+    cancel: 'Cancelar', proc_broken: 'Este procedimiento no se puede seguir hasta que se corrija:', pe_lead: 'Rellena las cuatro partes. Aroa comprueba el procedimiento contra su plantilla mientras escribes, y solo se guarda cuando no queda nada que corregir.', pe_general: 'General', pe_name: 'Nombre', pe_name_ph: 'Reclamación patrimonial', pe_desc: 'Cuándo se usa', pe_desc_ph: 'En dos líneas: el caso, las normas en que se apoya, el plazo.', pe_template_hint: 'Un documento de la biblioteca. Sus huecos {{Campo}} se rellenan con los datos; sus pasajes [[instrucción]] los redacta Aroa. Se edita como documento; el procedimiento lo vuelve a comprobar.', pe_template_pick: 'Elige un documento de la biblioteca', pe_missing: 'no está en la biblioteca', pe_open: 'Abrir', pe_tplinfo: 'La plantilla tiene {p} huecos de datos y {b} pasajes que redacta Aroa.', pe_fields_hint: 'Uno por cada dato que pide la plantilla. El nombre debe coincidir con el hueco de la plantilla, sin importar tildes ni mayúsculas; la pista ayuda a quien lo rellena.', pe_field_name: 'Nombre, como en la plantilla', pe_field_hint: 'Pista (opcional)', pe_long: 'Varias líneas', pe_long_t: 'Se muestra como un cuadro más grande al rellenarlo', pe_up: 'Subir', pe_down: 'Bajar', pe_add_field: 'Añadir dato', pe_add_missing: 'Añadir los {n} que pide la plantilla', pe_add_missing_1: 'Añadir el dato «{name}»', pe_instr_hint: 'Cómo redacta Aroa los pasajes [[…]]: registro, estructura, qué citar, qué no escribir nunca.', pe_instr_ph: 'Registro formal, hechos numerados, cita del artículo exacto…', pe_check_hint: 'Una cosa por línea que el documento terminado debe mostrar. La revisión comprueba cada una con una cita literal.', pe_check_ph: 'Identifica al reclamante con nombre y DNI', pe_add_check: 'Añadir punto', pe_issues: 'Antes de guardar', pe_ok: 'Todo encaja: el procedimiento se puede guardar.', pe_fix_first: 'Corrige los errores marcados para guardar', pe_check_failed: 'No se ha podido comprobar el procedimiento.', pi_no_name: 'Ponle un nombre.', pi_name_taken: 'Ya hay un procedimiento llamado «{name}».', pi_no_template: 'Elige la plantilla.', pi_template_missing: 'La plantilla «{name}» ya no está en la biblioteca.', pi_field_unnamed: 'El dato n.º {n} no tiene nombre.', pi_field_brackets: 'El nombre «{name}» no puede llevar llaves ni corchetes.', pi_field_repeated: 'El dato «{name}» está repetido.', pi_placeholder_without_field: 'La plantilla pide «{name}» y no hay ningún dato con ese nombre.', pi_field_unused: '«{name}» no es un hueco de la plantilla: Aroa lo tiene al redactar los pasajes, pero no se rellena nada con él directamente.', pi_field_ignored: '«{name}» no aparece en la plantilla y no se usará.', pi_template_plain: 'La plantilla no tiene huecos {{…}} ni pasajes [[…]]: el documento sale tal cual.', pi_no_instructions: 'La plantilla tiene pasajes que redacta Aroa, pero no hay instrucciones de redacción.', pi_no_checklist: 'Sin lista de revisión, la revisión no comprobará nada propio de este procedimiento.', pi_checklist_repeated: 'Hay puntos repetidos en la lista de revisión.', sec_chat: 'Chat', sec_docs: 'Documentos', sec_jobs: 'Trabajos', sec_procs: 'Procedim.', procedures: 'Procedimientos', no_procs: 'Todavía no hay procedimientos. Crea uno: plantilla, datos, cómo se redacta, cómo se revisa.', procs_empty_h: 'Procedimientos', procs_empty_p: 'Un procedimiento tiene cuatro partes: la plantilla, los datos que necesita, cómo se redacta y cómo se revisa. Se edita con un formulario y solo se guarda si está completo y encaja con su plantilla. Elige uno para rellenar sus datos y redactar el documento; Aroa sigue los pasos y la revisión comprueba la lista.', new_proc: 'Nuevo procedimiento', draft_btn: 'Redactar el documento', edit_proc: 'Editar procedimiento', template_lbl: 'Plantilla', data_lbl: 'Datos', instructions_lbl: 'Redacción', checklist_lbl: 'Lista de revisión', kind_draft: 'Borrador', drafting: 'redactando', draft_done: 'Borrador listo: se abre en el editor', draft_failed: 'La redacción ha fallado', matter_lbl: 'Expediente (para el nombre del archivo)', no_template: 'Este procedimiento no indica plantilla.', checklist_title: 'Lista de revisión del procedimiento', met: 'cumplido', unmet: 'no cumplido', inline_template: 'plantilla en el propio procedimiento', alarms: 'Alarmas', status: 'Estado', theme: 'Tema', language: 'Idioma',
     conversations: 'Conversaciones', new_short: 'Nueva', new_title: 'Nueva conversación', no_threads: 'Todavía no hay conversaciones.', filter_threads: 'Filtrar conversaciones', filter_docs: 'Filtrar documentos',
     documents: 'Documentos', add: 'Añadir', add_title: 'Markdown, texto, PDF, Word o HTML', add_doc: 'Añadir un documento', no_docs: 'Todavía no hay documentos. Crea uno, añade archivos .md, .txt, .pdf o .docx, o suéltalos en cualquier parte.',
     docs_empty_h: 'Biblioteca de documentos', docs_empty_p: 'Los documentos se indexan pseudonimizados y se responde desde ellos con citas. Elige uno a la izquierda para leerlo, analizarlo entero o revisarlo como borrador.',
@@ -802,6 +831,7 @@ function md(text) {
 
 /* ── sections ──────────────────────────────────────────── */
 function show(sec) {
+  if (sec !== 'procs' && procEdit && !leaveProcEdit()) return;
   section = sec;
   $$('#rail [data-sec]').forEach(b => b.classList.toggle('active', b.dataset.sec === sec));
   $$('.sp-view').forEach(v => v.hidden = v.id !== 'sp-' + sec);
@@ -829,7 +859,7 @@ function setTitle() {
   else if (section === 'info') { title.textContent = T('info_title'); sub.textContent = ''; }
   else if (section === 'settings') { title.textContent = T('settings_title'); sub.textContent = ''; }
   else if (section === 'memory') { title.textContent = T('memory_title'); sub.textContent = ''; }
-  else if (section === 'procs') { title.textContent = editing ? (editing.name || T('untitled')) : currentProc ? currentProc.name : T('procedures'); sub.textContent = currentProc && !editing ? currentProc.source : ''; }
+  else if (section === 'procs') { title.textContent = procEdit ? (procEdit.rec.name || T('new_proc')) : currentProc ? currentProc.name : T('procedures'); sub.textContent = procEdit ? (procEdit.slug ? T('edit_proc') : '') : currentProc ? currentProc.source : ''; }
   else { title.textContent = currentJob ? (currentJob.kind === 'review' ? T('kind_review') : currentJob.kind === 'draft' ? T('kind_draft') : T('kind_analysis')) : T('jobs'); sub.textContent = currentJob ? currentJob.source : ''; }
 }
 
@@ -1091,10 +1121,6 @@ function docToolbar() {
     `<button class="btn sm" id="d-rev" title="${T('review_long')}">${ico('eye')}${T('review')}</button>` +
     `<button class="btn ghost sm icon danger" id="d-del" title="${T('delete')}">${ico('trash')}</button>`;
 }
-$('#proc-tools').addEventListener('click', e => {
-  const b = e.target.closest('button'); if (!b || !editing) return;
-  if (b.id === 'ed-save') saveDoc(); if (b.id === 'ed-close') closeEditor();
-});
 $('#doc-tools').addEventListener('click', async e => {
   const b = e.target.closest('button'); if (!b) return;
   if (b.id === 'ed-save') { saveDoc(); return; } if (b.id === 'ed-word') { exportWord(); return; } if (b.id === 'ed-versions') { showVersions(); return; } if (b.id === 'ed-close') { closeEditor(); return; }
@@ -1179,10 +1205,8 @@ function updateWords() { const e = ed(), w = $('#ed-words'); if (e && w) { const
 function mdToHtml(text) { return md(text).replace(/<button[^>]*class="cite"[^>]*>(\[\d+\])<\/button>/g, '$1'); }
 async function openEditor(source, html, name, opts = {}) {
   // source: an existing document (null for a new one); html: initial content when there is no source
-  // opts.procedure: 'new' or a slug → the editor edits a procedure (saved in the procedures folder);
   // opts.from_procedure: slug of the procedure a drafted document follows (its checklist joins the review)
-  const procMode = !!opts.procedure;
-  show(procMode ? 'procs' : 'docs'); if (!procMode) { currentDoc = source; renderDocs(); }
+  show('docs'); currentDoc = source; renderDocs();
   if (source && html == null) {
     const r = await fetch('/api/documents/' + encodeURIComponent(source) + '/html');
     if (!r.ok) { toast(T('not_removed')); return; }
@@ -1190,24 +1214,16 @@ async function openEditor(source, html, name, opts = {}) {
     html = d.format === 'html' ? d.content : d.format === 'markdown' ? mdToHtml(d.content) : mdToHtml(d.content.replace(/\n/g, '\n\n'));
   }
   const editable = !!source && /\.html?$/i.test(source);
-  editing = { source: editable ? source : null, origin: source, name: name || (source ? source.replace(/\.[^.]+$/, '') : ''), dirty: false, savedAt: null, procedure: opts.procedure || null, from_procedure: opts.from_procedure || null };
-  if (procMode) { $('#proc-empty').hidden = true; $('#proc-scroll').hidden = true; $('#proc-tools').hidden = false; $('#view-proc').appendChild($('#editor-wrap')); }
-  else { $('#doc-empty').hidden = true; $('#doc-scroll').hidden = true; $('#doc-tools').hidden = false; $('#view-doc').appendChild($('#editor-wrap')); }
+  editing = { source: editable ? source : null, origin: source, name: name || (source ? source.replace(/\.[^.]+$/, '') : ''), dirty: false, savedAt: null, from_procedure: opts.from_procedure || null };
+  $('#doc-empty').hidden = true; $('#doc-scroll').hidden = true; $('#doc-tools').hidden = false;
   $('#editor-wrap').hidden = false;
   editorToolbar(); setTitle();
   $('#title').textContent = editing.name || T('untitled');
   await initEditor(html);
   if (!editable && source) markDirty(true);  // a .md/.docx opens as a copy to be saved under a name
 }
-function toolsEl() { return editing && editing.procedure ? $('#proc-tools') : $('#doc-tools'); }
+function toolsEl() { return $('#doc-tools'); }
 function editorToolbar() {
-  if (editing.procedure) {
-    toolsEl().innerHTML = `<input class="name" id="ed-name" value="${esc(editing.name)}" placeholder="${T('untitled')}">` +
-      `<span class="state" id="ed-state"></span><span class="stats" id="ed-words"></span>` +
-      `<button class="btn primary sm" id="ed-save">${ico('check')}${T('save')}</button><button class="btn ghost sm" id="ed-close">${T('close_editor')}</button>`;
-    $('#ed-name').addEventListener('input', e => { editing.name = e.target.value; $('#title').textContent = editing.name || T('untitled'); });
-    return;
-  }
   $('#doc-tools').innerHTML = `<input class="name" id="ed-name" value="${esc(editing.name)}" placeholder="${T('untitled')}" ${editing.source ? 'readonly' : ''}>` +
     `<span class="state" id="ed-state"></span><span class="stats" id="ed-words"></span>` +
     `<button class="btn sm" id="ed-versions" ${editing.source ? '' : 'disabled'}>${ico('clock')}${T('versions')}</button>` +
@@ -1220,14 +1236,6 @@ function editorToolbar() {
 async function saveDoc(asNew = false) {
   const e = ed(); if (!e || !editing) return;
   const html = e.getContent();
-  if (editing.procedure) {
-    const name = editing.name || prompt(T('name_prompt'), ''); if (!name) return;
-    const isNew = editing.procedure === 'new';
-    const r = await fetch(isNew ? '/api/procedures' : '/api/procedures/' + encodeURIComponent(editing.procedure), { method: isNew ? 'POST' : 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, html }) });
-    if (!r.ok) { toast(T('not_removed')); return; }
-    const p = await r.json(); editing.procedure = p.slug; editing.name = p.name; editing.savedAt = new Date().toISOString(); e.setDirty(false); markDirty(false); toast(T('saved')); loadProcs(); $('#title').textContent = p.name;
-    return;
-  }
   if (editing.source && !asNew) {
     const r = await fetch('/api/documents/' + encodeURIComponent(editing.source), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ html }) });
     if (!r.ok) { toast(T('not_removed')); return; }
@@ -1268,12 +1276,11 @@ function closeEditor(force) {
   if (editing && editing.dirty && !force && !confirm(T('leave_q'))) return false;
   if (ed()) tinymce.remove('#editor');
   $('#editor-wrap').hidden = true; $('#pop-versions').classList.remove('open');
-  if (editing && editing.procedure) { const slug = editing.procedure; editing = null; if (slug !== 'new') openProc(slug); else { $('#proc-tools').hidden = true; $('#proc-empty').hidden = false; setTitle(); } return true; }
   const src = editing && (editing.source || editing.origin); editing = null;
   if (src && docsCache.some(d => d.source === src)) openDoc(src); else { currentDoc = null; docView(); setTitle(); }
   return true;
 }
-window.addEventListener('beforeunload', e => { if (editing && editing.dirty) { e.preventDefault(); e.returnValue = ''; } });
+window.addEventListener('beforeunload', e => { if ((editing && editing.dirty) || (procEdit && procEdit.dirty)) { e.preventDefault(); e.returnValue = ''; } });
 $('#new-doc').onclick = () => openEditor(null, '', '');
 $('#new-doc-2').onclick = () => openEditor(null, '', '');
 
@@ -1351,25 +1358,39 @@ function renderProcs() {
   $('#procs').innerHTML = procsCache.map(p => `<div class="item ${currentProc && currentProc.slug === p.slug ? 'active' : ''}" data-proc="${esc(p.slug)}"><div class="ic">${ico('proc')}</div><div class="tx"><div class="t">${esc(p.name)}</div><div class="m"><span>${p.fields.length} ${T('data_lbl').toLowerCase()} · ${p.checklist.length} ${T('checklist_lbl').toLowerCase()}</span></div></div></div>`).join('');
 }
 $('#procs').addEventListener('click', e => { const it = e.target.closest('[data-proc]'); if (it) openProc(it.dataset.proc); });
+function procIssue(i) { return T('pi_' + i.code).replace('{name}', i.name || '').replace('{n}', i.n || ''); }
+function procIssues(check, withWarnings = true) {
+  const rows = [...check.errors.map(i => ['bad', 'alert', i]), ...(withWarnings ? check.warnings.map(i => ['warn', 'info', i]) : [])];
+  return rows.length ? `<ul class="pissues">${rows.map(([k, ic, i]) => `<li class="${k}">${ico(ic)}<span>${esc(procIssue(i))}</span></li>`).join('')}</ul>` : '';
+}
+function leaveProcEdit() {
+  if (!procEdit) return true;
+  if (procEdit.dirty && !confirm(T('leave_q'))) return false;
+  procEdit = null; clearTimeout(procCheckTimer);
+  $('#proc-tools').hidden = true; $('#proc-scroll').hidden = true; $('#proc-empty').hidden = false;
+  return true;
+}
 async function openProc(slug) {
   if (editing && !closeEditorSilently()) return;
+  if (!leaveProcEdit()) return;
   show('procs');
   const r = await fetch('/api/procedures/' + encodeURIComponent(slug)); if (!r.ok) { toast(T('not_removed')); return; }
   currentProc = await r.json(); renderProcs(); setTitle(); history.replaceState(null, '', '#proc=' + encodeURIComponent(slug));
-  const p = currentProc;
+  const p = currentProc, broken = p.check.errors.length > 0;
   $('#proc-empty').hidden = true; $('#proc-tools').hidden = false; $('#proc-scroll').hidden = false; $('#editor-wrap').hidden = true;
   $('#proc-tools').innerHTML = `<span class="stats">${esc(p.source)}</span><button class="btn sm" id="p-edit">${ico('pen')}${T('edit_proc')}</button><button class="btn ghost sm icon danger" id="p-del" title="${T('delete')}">${ico('trash')}</button>`;
-  const long = n => /descripci|documentos|daños|hechos|observ/i.test(n);
   $('#proc-body').innerHTML = `<h1>${esc(p.name)}</h1>${p.description ? `<p class="lead">${esc(p.description)}</p>` : ''}` +
+    (broken ? `<div class="pbroken"><strong>${T('proc_broken')}</strong>${procIssues(p.check, false)}</div>` : '') +
     `<h2>${T('template_lbl')}</h2><p>${p.template_ref ? `<button type="button" class="cite link" data-open-doc="${esc(p.template_ref)}">${esc(p.template_ref)}</button>` : p.template_text ? T('inline_template') : T('no_template')}</p>` +
-    `<h2>${T('data_lbl')}</h2><form id="proc-form" class="fields">${p.fields.map((f, i) => `<div class="fld ${long(f.name) ? 'wide' : ''}"><label for="pf${i}">${esc(f.name)}${f.hint ? ` <small>· ${esc(f.hint)}</small>` : ''}</label>${long(f.name) ? `<textarea id="pf${i}" rows="2" data-field="${esc(f.name)}"></textarea>` : `<input id="pf${i}" data-field="${esc(f.name)}">`}</div>`).join('')}` +
+    `<h2>${T('data_lbl')}</h2><form id="proc-form" class="fields">${p.fields.map((f, i) => `<div class="fld ${f.long ? 'wide' : ''}"><label for="pf${i}">${esc(f.name)}${f.hint ? ` <small>· ${esc(f.hint)}</small>` : ''}</label>${f.long ? `<textarea id="pf${i}" rows="2" data-field="${esc(f.name)}"></textarea>` : `<input id="pf${i}" data-field="${esc(f.name)}">`}</div>`).join('')}` +
     `<div class="fld"><label for="pf-matter">${T('matter_lbl')}</label><input id="pf-matter" placeholder="${T('matter_ph')}" value="${esc($('#matter').value.trim())}"></div></form>` +
-    `<p><button type="button" class="btn primary" id="p-draft">${ico('pen')}${T('draft_btn')}</button></p>` +
+    `<p><button type="button" class="btn primary" id="p-draft" ${broken ? 'disabled' : ''}>${ico('pen')}${T('draft_btn')}</button></p>` +
     (p.instructions ? `<h2>${T('instructions_lbl')}</h2><div class="instr">${esc(p.instructions)}</div>` : '') +
     (p.checklist.length ? `<h2>${T('checklist_lbl')}</h2><ul class="ck">${p.checklist.map(c => `<li>${ico('check')}<span>${esc(c)}</span></li>`).join('')}</ul>` : '');
   $('#proc-scroll').scrollTop = 0;
 }
 $('#proc-body').addEventListener('click', async e => {
+  if (procEdit) return;
   const d = e.target.closest('[data-open-doc]'); if (d) { openDoc(d.dataset.openDoc); return; }
   if (e.target.closest('#p-draft')) {
     const data = {}; $$('#proc-form [data-field]').forEach(el => { if (el.value.trim()) data[el.dataset.field] = el.value.trim(); });
@@ -1379,10 +1400,110 @@ $('#proc-body').addEventListener('click', async e => {
   }
 });
 $('#proc-tools').addEventListener('click', async e => {
-  if (e.target.closest('#p-edit')) { const p = currentProc; const html = p.format === 'html' ? p.content : mdToHtml(p.content); openEditor(null, html, p.name, { procedure: p.slug }); return; }
-  if (e.target.closest('#p-del')) { if (!confirm(T('remove_q').replace('{n}', currentProc.name))) return; await fetch('/api/procedures/' + encodeURIComponent(currentProc.slug), { method: 'DELETE' }); currentProc = null; $('#proc-empty').hidden = false; $('#proc-tools').hidden = true; $('#proc-scroll').hidden = true; loadProcs(); setTitle(); }
+  if (e.target.closest('#p-edit')) { editProc(currentProc); return; }
+  if (e.target.closest('#p-del')) { if (!confirm(T('remove_q').replace('{n}', currentProc.name))) return; await fetch('/api/procedures/' + encodeURIComponent(currentProc.slug), { method: 'DELETE' }); currentProc = null; $('#proc-empty').hidden = false; $('#proc-tools').hidden = true; $('#proc-scroll').hidden = true; loadProcs(); setTitle(); return; }
+  if (e.target.closest('#pe-save')) { saveProc(); return; }
+  if (e.target.closest('#pe-cancel')) { const slug = procEdit && procEdit.slug; if (!leaveProcEdit()) return; if (slug) openProc(slug); else setTitle(); }
 });
-function newProc() { if (editing && !closeEditorSilently()) return; show('procs'); currentProc = null; renderProcs(); openEditor(null, T('proc_skeleton'), '', { procedure: 'new' }); }
+
+/* the procedure form: a record, checked by the server as it is typed; it saves only without errors */
+async function editProc(p) {
+  if (editing && !closeEditorSilently()) return;
+  if (!leaveProcEdit()) return;
+  show('procs');
+  if (!docsCache.length) await loadDocs();
+  procEdit = { slug: p ? p.slug : null, dirty: false, check: null, rec: p
+    ? { name: p.name, description: p.description, template: p.template_ref, fields: p.fields.map(f => ({ ...f })), instructions: p.instructions, checklist: [...p.checklist] }
+    : { name: '', description: '', template: '', fields: [{ name: '', hint: '', long: false }], instructions: '', checklist: [''] } };
+  if (!p) { currentProc = null; renderProcs(); history.replaceState(null, '', location.pathname + location.search); }
+  $('#proc-empty').hidden = true; $('#proc-tools').hidden = false; $('#proc-scroll').hidden = false;
+  $('#proc-tools').innerHTML = `<span class="state" id="pe-state"></span><button class="btn primary sm" id="pe-save" disabled>${ico('check')}${T('save')}</button><button class="btn ghost sm" id="pe-cancel">${T('cancel')}</button>`;
+  renderProcForm(); setTitle(); procCheck();
+  $('#proc-scroll').scrollTop = 0;
+}
+function renderProcForm() {
+  const r = procEdit.rec;
+  const templates = docsCache.filter(d => /\.(md|html?|docx|txt)$/i.test(d.source));
+  const known = templates.some(d => d.source === r.template);
+  $('#proc-body').innerHTML = `<h1>${procEdit.slug ? T('edit_proc') : T('new_proc')}</h1><p class="lead">${T('pe_lead')}</p>` +
+    `<div class="pform">` +
+    `<section><h2>${T('pe_general')}</h2><div class="fields">` +
+      `<div class="fld wide"><label for="pe-name">${T('pe_name')}</label><input id="pe-name" data-k="name" value="${esc(r.name)}" placeholder="${T('pe_name_ph')}" maxlength="120"></div>` +
+      `<div class="fld wide"><label for="pe-desc">${T('pe_desc')}</label><textarea id="pe-desc" data-k="description" rows="3" placeholder="${T('pe_desc_ph')}">${esc(r.description)}</textarea></div></div></section>` +
+    `<section><h2>${T('template_lbl')}</h2><p class="pe-hint">${T('pe_template_hint')}</p><div class="pe-tpl"><select id="pe-template" data-k="template"><option value="">${T('pe_template_pick')}</option>` +
+      (r.template && !known ? `<option value="${esc(r.template)}" selected>${esc(r.template)} · ${T('pe_missing')}</option>` : '') +
+      templates.map(d => `<option value="${esc(d.source)}" ${d.source === r.template ? 'selected' : ''}>${esc(d.title)} · ${esc(d.source)}</option>`).join('') +
+      `</select><button type="button" class="btn sm" id="pe-open-tpl" ${known ? '' : 'disabled'}>${ico('ext')}${T('pe_open')}</button></div><div id="pe-tplinfo" class="pe-hint"></div></section>` +
+    `<section><h2>${T('data_lbl')}</h2><p class="pe-hint">${T('pe_fields_hint')}</p><div class="pe-rows" id="pe-fields">` +
+      r.fields.map((f, i) => `<div class="pe-row" data-i="${i}"><input data-f="name" value="${esc(f.name)}" placeholder="${T('pe_field_name')}"><input data-f="hint" value="${esc(f.hint)}" placeholder="${T('pe_field_hint')}"><label class="pe-long" title="${T('pe_long_t')}"><input type="checkbox" data-f="long" ${f.long ? 'checked' : ''}>${T('pe_long')}</label>` +
+        `<span class="pe-acts"><button type="button" class="btn ghost sm icon" data-mv="-1" title="${T('pe_up')}" ${i === 0 ? 'disabled' : ''}>${ico('chev-up')}</button><button type="button" class="btn ghost sm icon" data-mv="1" title="${T('pe_down')}" ${i === r.fields.length - 1 ? 'disabled' : ''}>${ico('chev-down')}</button><button type="button" class="btn ghost sm icon danger" data-rm title="${T('delete')}">${ico('trash')}</button></span></div>`).join('') +
+      `</div><div class="pe-add"><button type="button" class="btn sm" id="pe-add-field">${ico('plus')}${T('pe_add_field')}</button><button type="button" class="btn sm" id="pe-add-missing" hidden>${ico('plus')}<span></span></button></div></section>` +
+    `<section><h2>${T('instructions_lbl')}</h2><p class="pe-hint">${T('pe_instr_hint')}</p><textarea id="pe-instr" data-k="instructions" rows="6" placeholder="${T('pe_instr_ph')}">${esc(r.instructions)}</textarea></section>` +
+    `<section><h2>${T('checklist_lbl')}</h2><p class="pe-hint">${T('pe_check_hint')}</p><div class="pe-rows" id="pe-checks">` +
+      r.checklist.map((c, i) => `<div class="pe-row ck" data-i="${i}"><input data-c value="${esc(c)}" placeholder="${T('pe_check_ph')}"><span class="pe-acts"><button type="button" class="btn ghost sm icon danger" data-rm title="${T('delete')}">${ico('trash')}</button></span></div>`).join('') +
+      `</div><div class="pe-add"><button type="button" class="btn sm" id="pe-add-check">${ico('plus')}${T('pe_add_check')}</button></div></section>` +
+    `<div id="pe-issues"></div></div>`;
+  if (procEdit.check) showProcCheck();
+}
+let procCheckTimer = null, procCheckSeq = 0;
+function procCheck() { clearTimeout(procCheckTimer); procCheckTimer = setTimeout(runProcCheck, 250); }
+async function runProcCheck() {
+  const seq = ++procCheckSeq, ed0 = procEdit; if (!ed0) return;
+  const r = await fetch('/api/procedures/check' + (ed0.slug ? '?slug=' + encodeURIComponent(ed0.slug) : ''), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ed0.rec) });
+  if (seq !== procCheckSeq || procEdit !== ed0) return;  // a newer check, or the form was left
+  if (!r.ok) { $('#pe-issues').innerHTML = `<ul class="pissues"><li class="bad">${ico('alert')}<span>${T('pe_check_failed')}</span></li></ul>`; $('#pe-save').disabled = true; return; }
+  ed0.check = await r.json(); showProcCheck();
+}
+function showProcCheck() {
+  const c = procEdit.check, r = procEdit.rec;
+  $('#pe-issues').innerHTML = c.errors.length || c.warnings.length ? `<h2>${T('pe_issues')}</h2>${procIssues(c)}` : `<p class="pok">${ico('check')}${T('pe_ok')}</p>`;
+  $('#pe-save').disabled = c.errors.length > 0 || !procEdit.dirty;
+  $('#pe-save').title = c.errors.length ? T('pe_fix_first') : '';
+  $('#pe-state').textContent = procEdit.dirty ? T('unsaved') : '';
+  $('#pe-state').className = 'state' + (procEdit.dirty ? ' dirty' : '');
+  const tpl = r.template ? T('pe_tplinfo').replace('{p}', c.placeholders.length).replace('{b}', c.blocks) : '';
+  $('#pe-tplinfo').textContent = tpl;
+  const names = new Set(r.fields.map(f => fold(f.name)));
+  const missing = c.placeholders.filter(n => !names.has(fold(n)));
+  const add = $('#pe-add-missing'); add.hidden = !missing.length;
+  if (missing.length) { add.querySelector('span').textContent = missing.length === 1 ? T('pe_add_missing_1').replace('{name}', missing[0]) : T('pe_add_missing').replace('{n}', missing.length); add.dataset.names = JSON.stringify(missing); }
+  const bad = new Set(c.errors.filter(i => i.code.startsWith('field_')).map(i => i.name ? fold(i.name) : '#' + i.n));
+  $$('#pe-fields .pe-row').forEach((row, i) => { const f = r.fields[i]; row.classList.toggle('err', bad.has('#' + (i + 1)) || (f && f.name && bad.has(fold(f.name)))); });
+  $('#pe-name').classList.toggle('err', c.errors.some(i => i.code === 'no_name' || i.code === 'name_taken'));
+  $('#pe-template').classList.toggle('err', c.errors.some(i => i.code === 'no_template' || i.code === 'template_missing'));
+}
+function fold(t) { return (t || '').normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().trim(); }
+function procChanged(rerender = false) { procEdit.dirty = true; if (rerender) renderProcForm(); $('#pe-state').textContent = T('unsaved'); $('#pe-state').className = 'state dirty'; $('#pe-save').disabled = true; procCheck(); }
+$('#proc-body').addEventListener('input', e => {
+  if (!procEdit) return;
+  const t = e.target, r = procEdit.rec;
+  if (t.dataset.k) r[t.dataset.k] = t.value;
+  else if (t.dataset.f) { const i = +t.closest('.pe-row').dataset.i; r.fields[i][t.dataset.f] = t.type === 'checkbox' ? t.checked : t.value; }
+  else if (t.hasAttribute('data-c')) r.checklist[+t.closest('.pe-row').dataset.i] = t.value;
+  else return;
+  if (t.id === 'pe-template') { $('#pe-open-tpl').disabled = !t.value; }
+  procChanged();
+});
+$('#proc-body').addEventListener('click', e => {
+  if (!procEdit) return;
+  const r = procEdit.rec, b = e.target.closest('button'); if (!b) return;
+  if (b.id === 'pe-open-tpl') { if (r.template && leaveProcEdit()) openDoc(r.template); return; }
+  if (b.id === 'pe-add-field') { r.fields.push({ name: '', hint: '', long: false }); procChanged(true); $$('#pe-fields .pe-row input[data-f="name"]').pop().focus(); return; }
+  if (b.id === 'pe-add-check') { r.checklist.push(''); procChanged(true); $$('#pe-checks input[data-c]').pop().focus(); return; }
+  if (b.id === 'pe-add-missing') { JSON.parse(b.dataset.names).forEach(n => r.fields.push({ name: n, hint: '', long: false })); r.fields = r.fields.filter(f => f.name.trim() || f.hint.trim()); procChanged(true); return; }
+  const row = b.closest('.pe-row'); if (!row) return;
+  const i = +row.dataset.i, list = row.classList.contains('ck') ? r.checklist : r.fields;
+  if (b.hasAttribute('data-rm')) { list.splice(i, 1); procChanged(true); return; }
+  if (b.dataset.mv) { const j = i + +b.dataset.mv; if (j < 0 || j >= list.length) return; [list[i], list[j]] = [list[j], list[i]]; procChanged(true); }
+});
+async function saveProc() {
+  const ed0 = procEdit; if (!ed0) return;
+  const r = await fetch(ed0.slug ? '/api/procedures/' + encodeURIComponent(ed0.slug) : '/api/procedures', { method: ed0.slug ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ed0.rec) });
+  if (r.status === 422) { ed0.check = (await r.json()).detail.check; showProcCheck(); toast(T('pe_fix_first')); return; }
+  if (!r.ok) { toast(T('not_removed')); return; }
+  const p = await r.json(); procEdit = null; toast(T('saved')); await loadProcs(); openProc(p.slug);
+}
+function newProc() { editProc(null); }
 $('#new-proc').onclick = newProc; $('#new-proc-2').onclick = newProc;
 
 /* ── jobs: reviews and analyses ────────────────────────── */
@@ -1660,7 +1781,7 @@ const INFO = {
       'Cada paso queda en el «Recorrido» de la respuesta, con su tiempo, sus llamadas al modelo, las herramientas usadas y lo que se guardó.',
     ],
     can_h: 'Qué puede hacer',
-    can: ['Responder desde los documentos con citas literales verificadas y abstenerse cuando no están.', 'Analizar un documento entero, por largo que sea, con hallazgos citados y repetidos fundidos.', 'Revisar un borrador: párrafos repetidos, citas no literales, artículos inexistentes o equivocados contra el archivo del BOE, cuestiones legales señaladas por el modelo (siempre como avisos) y la lista de revisión de un procedimiento.', 'Seguir un procedimiento del despacho: plantilla, datos, normas de redacción y lista de revisión en un solo documento.', 'Editar documentos con un editor tipo Word, con versiones, e importar y exportar Word.', 'Calcular plazos procesales en código con el calendario de festivos y la regla de cada jurisdicción.', 'Alarmas, recortes de documentos y memoria por expediente.'],
+    can: ['Responder desde los documentos con citas literales verificadas y abstenerse cuando no están.', 'Analizar un documento entero, por largo que sea, con hallazgos citados y repetidos fundidos.', 'Revisar un borrador: párrafos repetidos, citas no literales, artículos inexistentes o equivocados contra el archivo del BOE, cuestiones legales señaladas por el modelo (siempre como avisos) y la lista de revisión de un procedimiento.', 'Seguir un procedimiento del despacho: plantilla, datos, normas de redacción y lista de revisión, definidos en un formulario que no deja guardar nada que no encaje con la plantilla.', 'Editar documentos con un editor tipo Word, con versiones, e importar y exportar Word.', 'Calcular plazos procesales en código con el calendario de festivos y la regla de cada jurisdicción.', 'Alarmas, recortes de documentos y memoria por expediente.'],
     data_h: 'Datos: qué se guarda, dónde y qué sale del equipo',
     data: [
       'Todo se guarda en la carpeta de datos de este equipo: los documentos tal cual los subes, sus fragmentos pseudonimizados en el índice vectorial, los hechos y conversaciones recordados (pseudonimizados), cada vuelta con su recorrido y auditoría (herramientas llamadas con un hash de su resultado, hechos escritos), las alarmas, las versiones de los documentos editados y el mapa de seudónimos.',
@@ -1696,7 +1817,7 @@ const INFO = {
       'Every step is kept in the answer\'s "Path", with its time, model calls, tools used and what was stored.',
     ],
     can_h: 'What it can do',
-    can: ['Answer from the documents with verified verbatim citations and abstain when they do not cover it.', 'Analyse a whole document of any length, with cited findings and repeats merged.', 'Review a draft: repeated paragraphs, non-verbatim quotes, inexistent or wrong articles against the BOE archive, legal issues pointed by the model (always as warnings) and a procedure\'s checklist.', 'Follow a firm procedure: template, data, writing rules and review checklist in one document.', 'Edit documents in a Word-like editor with versions, import and export Word.', 'Compute procedural deadlines in code with the holiday calendar and each jurisdiction\'s rule.', 'Alarms, clippings and memory per matter.'],
+    can: ['Answer from the documents with verified verbatim citations and abstain when they do not cover it.', 'Analyse a whole document of any length, with cited findings and repeats merged.', 'Review a draft: repeated paragraphs, non-verbatim quotes, inexistent or wrong articles against the BOE archive, legal issues pointed by the model (always as warnings) and a procedure\'s checklist.', 'Follow a firm procedure: template, data, writing rules and review checklist, defined in a form that saves nothing that does not fit the template.', 'Edit documents in a Word-like editor with versions, import and export Word.', 'Compute procedural deadlines in code with the holiday calendar and each jurisdiction\'s rule.', 'Alarms, clippings and memory per matter.'],
     data_h: 'Data: what is stored, where, and what leaves the computer',
     data: [
       'Everything is stored in this computer\'s data folder: the documents as uploaded, their pseudonymised fragments in the vector index, remembered facts and conversations (pseudonymised), every turn with its path and audit (tools called with a hash of their result, facts written), alarms, versions of edited documents and the pseudonym map.',
