@@ -811,6 +811,7 @@ function show(sec) {
   $('#side').classList.remove('open');
   closeInspector();
   setTitle();
+  if (sec === 'chat') loadThreads();
   if (sec === 'jobs') loadJobs();
   if (sec === 'procs') loadProcs();
   if (sec === 'info') renderInfo();
@@ -929,11 +930,12 @@ column.addEventListener('click', async e => {
 });
 
 /* ── threads ───────────────────────────────────────────── */
-async function loadThreads() { threadsCache = await (await fetch('/api/threads')).json(); renderThreads(); }
+let threadsLoaded = false;
+async function loadThreads() { threadsCache = await (await fetch('/api/threads')).json(); threadsLoaded = true; renderThreads(); }
 function renderThreads() {
   const q = ($('#f-threads').value || '').toLowerCase();
   const rows = threadsCache.filter(r => !q || (r.title || '').toLowerCase().includes(q) || (r.matter || '').toLowerCase().includes(q));
-  $('#threads-empty').hidden = threadsCache.length > 0;
+  $('#threads-empty').hidden = !threadsLoaded || threadsCache.length > 0;  // never claim «none» before the list arrived
   $('#threads').innerHTML = rows.map(r => `<div class="item ${r.thread_id === thread ? 'active' : ''}" data-id="${esc(r.thread_id)}"><div class="tx"><div class="t">${esc(r.title || '…')}</div>` +
     `<div class="m">${r.matter ? `<span class="chip">${esc(r.matter)}</span>` : ''}<span>${ago(r.updated_ts)}</span></div></div></div>`).join('');
 }
@@ -1800,7 +1802,7 @@ loadDocs().then(() => {
   else { showWelcome(); loadThreads().then(setTitle); }
 });
 if (!deep && !deepJob && !deepDoc && !deepProc) showWelcome();
-loadJobs(); loadAlarmCount();
+loadThreads(); loadJobs(); loadAlarmCount();  // the lists load whatever the page opened on
 </script>
 </body>
 </html>
