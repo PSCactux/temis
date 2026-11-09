@@ -73,5 +73,7 @@ testpaths = ["tests"]
 "src/aroa/procedures.py" = ["E501"]
 "src/aroa/prompts.py" = ["E501"]
 "tests/test_procedures.py" = ["E501"]
+"tests/test_settings.py" = ["E501"]
+"src/aroa/server.py" = ["E501"]
 "tests/test_documents.py" = ["E501"]
 "scripts/*" = ["E501"]  # generators and checkers quote long sample text

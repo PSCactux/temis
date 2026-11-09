@@ -162,7 +162,7 @@ in code that every expected section exists and every required term is in it; run
 
 ```bash
 uv sync --extra tracing
-cp .env.example .env            # defaults to Ollama; `ollama pull qwen3:8b`
+cp .env.example .env            # defaults to Ollama; or a local llama.cpp / MLX / LM Studio server (Settings page, ADR 014)
 uv run aroa ingest              # indexes data/docs (a fictitious Spanish corpus is copied in on first run)
 uv run aroa chat --matter 2026-014
 uv run aroa serve               # http://127.0.0.1:8000

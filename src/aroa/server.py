@@ -20,6 +20,7 @@ from . import analysis, clippings, documents, lawcheck, procedures, prompts, rev
 from .app import Assistant
 from .config import get_settings
 from .memory.loaders import EXTENSIONS, read_text
+from .models import make_chat_model
 from .telemetry.audit import turn_audit
 from .telemetry.metrics import now_iso, prometheus_text, report
 from .tools import alarms
@@ -347,6 +348,135 @@ def feedback(turn_id: str, body: Feedback):
 
 class Forget(BaseModel):
     text: str
+
+
+MODEL_SETTINGS = (
+    "llm_model",
+    "llm_fast_model",
+    "llm_base_url",
+    "llm_structured",
+    "llm_reasoning",
+    "privacy_mode",
+    "assistant_language",
+)
+SECRET_SETTINGS = ("anthropic_api_key", "openai_api_key", "openai_base_url")
+
+
+class SettingsUpdate(BaseModel):
+    llm_model: str | None = None
+    llm_fast_model: str | None = None
+    llm_base_url: str | None = None
+    llm_structured: str | None = None
+    llm_reasoning: bool | None = None
+    privacy_mode: str | None = None
+    assistant_language: str | None = None
+    anthropic_api_key: str | None = None
+    openai_api_key: str | None = None
+    openai_base_url: str | None = None
+
+
+class ModelProbe(BaseModel):
+    llm_model: str
+    llm_base_url: str = ""
+    llm_structured: str = "json_schema"
+
+
+def write_env(values: dict[str, str], path: Path = Path(".env")) -> None:
+    """Set keys in the .env file, keeping everything else (comments, other keys) as it is."""
+    lines = path.read_text(encoding="utf-8").splitlines() if path.exists() else []
+    done = set()
+    out = []
+    for line in lines:
+        key = line.split("=", 1)[0].strip().lstrip("#").strip() if "=" in line else ""
+        if key in values and not line.lstrip().startswith("#"):
+            out.append(f"{key}={values[key]}")
+            done.add(key)
+        elif key in values and line.lstrip().startswith("#") and key not in done:
+            out.append(f"{key}={values[key]}")  # a commented example becomes the live value
+            done.add(key)
+        else:
+            out.append(line)
+    for key, value in values.items():
+        if key not in done:
+            out.append(f"{key}={value}")
+    path.write_text("\n".join(out).rstrip("\n") + "\n", encoding="utf-8")
+
+
+@app.get("/api/settings")
+def read_settings():
+    """Model and privacy settings as they run now; secrets only as present/absent."""
+    s = runtime.assistant.settings
+    import os
+
+    return {
+        **{k: getattr(s, k) for k in MODEL_SETTINGS},
+        "secrets": {k: bool(os.environ.get(k.upper())) for k in SECRET_SETTINGS},
+        "openai_base_url": os.environ.get("OPENAI_BASE_URL", ""),
+    }
+
+
+@app.put("/api/settings")
+async def update_settings(body: SettingsUpdate):
+    """Write the changes to .env, apply them live (models, name detector and graph are rebuilt under the lock)."""
+    import os
+
+    changes = {k: v for k, v in body.model_dump().items() if v is not None}
+    if not changes:
+        raise HTTPException(400, "nothing to change")
+    env = {k.upper(): (str(v).lower() if isinstance(v, bool) else str(v)) for k, v in changes.items()}
+    for k in SECRET_SETTINGS:
+        if k in changes and not changes[k]:
+            env.pop(k.upper(), None)
+    write_env(env)
+    for k, v in env.items():
+        os.environ[k] = v
+    for k in SECRET_SETTINGS:
+        if k in changes and not changes[k]:
+            os.environ.pop(k.upper(), None)
+    new = get_settings()
+    try:
+        with runtime.lock:
+            await run_in_threadpool(runtime.assistant.reconfigure, new)
+    except Exception as exc:  # noqa: BLE001 — a bad model spec must not take the server down
+        raise HTTPException(400, f"{type(exc).__name__}: {exc}") from exc
+    return read_settings()
+
+
+@app.post("/api/settings/test")
+async def test_model(body: ModelProbe):
+    """One short call to a model spec: does it answer, how fast, and does structured output work."""
+    import time
+
+    from langchain_core.messages import HumanMessage, SystemMessage
+
+    from .schemas import Routing
+
+    s = runtime.assistant.settings
+    try:
+        model = make_chat_model(
+            body.llm_model, 256, base_url=body.llm_base_url or s.llm_base_url, structured=body.llm_structured
+        )
+        t0 = time.perf_counter()
+        reply = await run_in_threadpool(model.invoke, [HumanMessage("Responde solo con la palabra: listo")])
+        plain = time.perf_counter() - t0
+        tokens = (getattr(reply, "usage_metadata", None) or {}).get("output_tokens")
+        t1 = time.perf_counter()
+        routed = await run_in_threadpool(
+            model.with_structured_output(Routing, method="json_schema").invoke,
+            [SystemMessage("Classify the message."), HumanMessage("Recuérdame mañana llamar al juzgado")],
+        )
+        structured = time.perf_counter() - t1
+        return {
+            "ok": True,
+            "reply": str(reply.content)[:120],
+            "seconds": round(plain, 2),
+            "output_tokens": tokens,
+            "structured_ok": isinstance(routed, Routing),
+            "structured_seconds": round(structured, 2),
+            "route": getattr(routed, "route", None),
+        }
+    except Exception as exc:  # noqa: BLE001 — the probe reports, it does not raise
+        return {"ok": False, "error": f"{type(exc).__name__}: {exc}"[:400]}
 
 
 @app.get("/api/memory/facts")

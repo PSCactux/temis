@@ -41,6 +41,28 @@
   ::selection { background:var(--accent-soft); }
   svg.i { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none; }
   [hidden] { display:none !important; }
+  * { scrollbar-width:thin; scrollbar-color:var(--line-2) transparent; }
+  *::-webkit-scrollbar { width:8px; height:8px; } *::-webkit-scrollbar-track { background:transparent; }
+  *::-webkit-scrollbar-thumb { background:var(--line-2); border-radius:8px; border:2px solid transparent; background-clip:padding-box; }
+  *::-webkit-scrollbar-thumb:hover { background:var(--muted); border:2px solid transparent; background-clip:padding-box; }
+  .settings, .settings p, .settings label, .settings .btn, .settings li { font-family:var(--ui); } .settings { font-size:13.5px; }
+  .settings .guide p, .settings .guide li { font-size:13.5px; line-height:1.6; }
+  .rail { overflow-y:auto; scrollbar-width:none; } .rail::-webkit-scrollbar { display:none; }
+  .settings h1 { font-family:var(--serif); }
+  .settings .cards { display:grid; grid-template-columns:repeat(3, 1fr); gap:10px; margin:10px 0 18px; }
+  .settings .card { border:1px solid var(--line); border-radius:10px; padding:10px 12px; cursor:pointer; background:var(--paper); }
+  .settings .card:hover { border-color:var(--accent-line); } .settings .card.on { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent-soft); }
+  .settings .card b { display:block; font-size:13.5px; } .settings .card span { color:var(--muted); font-size:12px; line-height:1.4; display:block; margin-top:2px; }
+  .settings .card .tag { margin-top:6px; display:inline-block; }
+  .settings .frm { display:grid; grid-template-columns:200px 1fr; gap:10px 16px; align-items:center; margin:8px 0 14px; }
+  .settings .frm label { color:var(--ink-2); font-size:13px; } .settings .frm small { display:block; color:var(--muted); font-size:11.5px; }
+  .settings .frm input, .settings .frm select { border:1px solid var(--line-2); border-radius:8px; padding:7px 10px; background:var(--panel); color:var(--ink); font:inherit; font-family:var(--mono); font-size:12.5px; width:100%; }
+  .settings .frm input:focus, .settings .frm select:focus { outline:none; border-color:var(--accent-line); box-shadow:0 0 0 3px var(--accent-soft); }
+  .settings .acts { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:6px 0 20px; }
+  .settings .probe { font-size:12.5px; color:var(--ink-2); } .settings .probe.ok { color:var(--ok); } .settings .probe.bad { color:var(--bad); }
+  .settings pre { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:10px 12px; overflow:auto; font-size:12px; line-height:1.5; }
+  .settings .guide h3 { font-size:13px; margin:18px 0 6px; } .settings .guide p { color:var(--ink-2); margin:0 0 8px; } .settings .guide li { color:var(--ink-2); }
+  .settings .note { background:var(--warn-soft); color:var(--warn); border-radius:8px; padding:8px 12px; font-size:12.5px; margin:8px 0; }
 
   /* ── buttons ── */
   .btn { display:inline-flex; align-items:center; gap:7px; height:32px; padding:0 12px; border-radius:8px; border:1px solid var(--line-2); background:var(--paper); color:var(--ink); font-weight:500; white-space:nowrap; }
@@ -369,6 +391,8 @@
   <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></symbol>
   <symbol id="i-proc" viewBox="0 0 24 24"><rect x="3" y="4" width="7" height="6" rx="1.5"/><rect x="14" y="4" width="7" height="6" rx="1.5"/><rect x="8.5" y="15" width="7" height="6" rx="1.5"/><path d="M6.5 10v2.5h11V10M12 12.5V15"/></symbol>
   <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-brain" viewBox="0 0 24 24"><path d="M9 4a3 3 0 0 0-3 3v.5A3 3 0 0 0 4 10.5a3 3 0 0 0 1 2.2A3 3 0 0 0 6 18a3 3 0 0 0 3 2h0V4z"/><path d="M15 4a3 3 0 0 1 3 3v.5a3 3 0 0 1 2 3 3 3 0 0 1-1 2.2A3 3 0 0 1 18 18a3 3 0 0 1-3 2h0V4z"/></symbol>
   <symbol id="i-filter" viewBox="0 0 24 24"><path d="M4 5h16l-6 8v6l-4-2v-4z"/></symbol>
 </svg>
 
@@ -380,6 +404,8 @@
   <button data-sec="procs"><svg class="i"><use href="#i-proc"/></svg><span data-i18n="sec_procs"></span></button>
   <div class="grow"></div>
   <button id="b-alarms" data-i18n-title="alarms"><svg class="i"><use href="#i-bell"/></svg><span data-i18n="alarms"></span><span class="badge" id="alarms-badge" hidden></span></button>
+  <button id="b-memory" data-sec="memory"><svg class="i"><use href="#i-brain"/></svg><span data-i18n="memory_sec"></span></button>
+  <button id="b-settings" data-sec="settings"><svg class="i"><use href="#i-gear"/></svg><span data-i18n="settings"></span></button>
   <button id="b-info" data-sec="info"><svg class="i"><use href="#i-info"/></svg><span data-i18n="info"></span></button>
   <button id="b-status" data-i18n-title="status"><svg class="i"><use href="#i-pulse"/></svg><span data-i18n="status"></span><span class="dot" id="health-dot"></span></button>
   <button id="b-theme" data-i18n-title="theme"><svg class="i"><use href="#i-auto" id="theme-icon"/></svg><span data-i18n="theme"></span></button>
@@ -464,6 +490,10 @@
       <div class="toolbar" id="proc-tools" hidden></div>
       <div class="scrollv" id="proc-scroll" hidden><div class="paper prose procpaper" id="proc-body"></div></div>
     </section>
+    <!-- memory: what Aroa remembers, with forget -->
+    <section class="view" id="view-memory" hidden><div class="scrollv"><div class="paper prose info" id="memory-body"></div></div></section>
+    <!-- settings: provider, model, privacy; with the local-model guide -->
+    <section class="view" id="view-settings" hidden><div class="scrollv"><div class="paper prose settings" id="settings-body"></div></div></section>
     <!-- information: what Aroa is, how it works, what happens to the data -->
     <section class="view" id="view-info" hidden><div class="scrollv"><div class="paper prose info" id="info-body"></div></div></section>
     <!-- inspector: the source a citation points at -->
@@ -489,7 +519,7 @@ let section = 'chat', currentDoc = null, currentJob = null, procsCache = [], cur
 /* ── language ──────────────────────────────────────────── */
 const L = {
   en: {
-    info: 'About', info_title: 'About Aroa',
+    info: 'About', info_title: 'About Aroa', settings: 'Settings', settings_title: 'Settings', memory_sec: 'Memory', memory_title: 'What Aroa remembers', mem_filter: 'Filter facts', mem_intro: 'Facts extracted from what people at the firm told Aroa: preferences, decisions, people, dates. Only what the user says is stored, never Aroa\'s replies or document contents. Each fact is recalled only inside its matter (or everywhere when it has none). Forget anything wrong or that should not be kept.', mem_general: 'general',
     sec_chat: 'Chat', sec_docs: 'Documents', sec_jobs: 'Work', sec_procs: 'Procedures', procedures: 'Procedures', no_procs: 'No procedures yet. Write one: template, data, how to write it, how to review it.', procs_empty_h: 'Procedures', procs_empty_p: 'A procedure is one document with four sections: the template, the data it needs, how to write it and how to review it. Pick one to fill in its data and draft the document; Aroa follows the steps and the review checks the list.', new_proc: 'New procedure', draft_btn: 'Draft the document', edit_proc: 'Edit procedure', template_lbl: 'Template', data_lbl: 'Data', instructions_lbl: 'Writing', checklist_lbl: 'Review checklist', kind_draft: 'Draft', drafting: 'drafting', draft_done: 'Draft ready: open in the editor', draft_failed: 'Drafting failed', matter_lbl: 'Matter (for the file name)', no_template: 'This procedure names no template.', checklist_title: 'Procedure checklist', met: 'met', unmet: 'not met', proc_skeleton: '<h1>Procedure name</h1><p>When it is used, in two lines.</p><h2>Template</h2><p>documento: name_of_a_library_document.md</p><h2>Data</h2><ul><li>Field: hint for whoever fills it</li></ul><h2>Writing</h2><p>Register, structure, what to cite, what never to write.</p><h2>Review</h2><ul><li>One thing the finished document must show</li></ul>', inline_template: 'inline template', alarms: 'Alarms', status: 'Status', theme: 'Theme', language: 'Language',
     conversations: 'Conversations', new_short: 'New', new_title: 'New conversation', no_threads: 'No conversations yet.', filter_threads: 'Filter conversations', filter_docs: 'Filter documents',
     documents: 'Documents', add: 'Add', add_title: 'Markdown, text, PDF, Word or HTML', add_doc: 'Add a document', no_docs: 'No documents yet. Create one, add .md, .txt, .pdf or .docx files, or drop them anywhere.',
@@ -516,7 +546,7 @@ const L = {
     stored: 'stored', duplicate: 'duplicate', server_error: 'The server did not answer: ', remove_q: 'Remove "{n}" from the index?', removed: 'Document removed', not_removed: 'Could not do it',
     uploading: 'uploading', indexing: 'indexing…', indexed: '{n} indexed', reading: 'reading…', truncated: 'cut at 12,000 characters',
     kinds: { documents: 'documents', chat: 'chat', web: 'web', alarms: 'alarms', project: 'project', review: 'review' },
-    turns: 'turns today', p50: 'p50 latency', claims_ok: 'claims ok', facts: 'facts', privacy: 'privacy', traced: 'traced', no_tracing: 'no tracing', unreachable: 'server unreachable', model: 'model', memory: 'memory', report_link: 'Weekly report', metrics_link: 'Metrics', pending_alarms: 'Pending alarms', no_alarms: 'No pending alarms.', up_down: 'up / down',
+    turns: 'turns today', p50: 'median response time', claims_ok: 'claims ok', facts: 'facts', privacy: 'privacy', traced: 'traced', no_tracing: 'no tracing', unreachable: 'server unreachable', model: 'model', memory: 'memory', report_link: 'Weekly report', metrics_link: 'Metrics', pending_alarms: 'Pending alarms', no_alarms: 'No pending alarms.', up_down: 'up / down',
     theme_auto: 'system', theme_light: 'light', theme_dark: 'dark',
     suggestions: [
       ['Documents', 'How much is the deposit in the lease agreement and when is it returned?'],
@@ -528,7 +558,7 @@ const L = {
     ],
   },
   es: {
-    info: 'Info', info_title: 'Qué es Aroa y cómo funciona',
+    info: 'Info', info_title: 'Qué es Aroa y cómo funciona', settings: 'Ajustes', settings_title: 'Ajustes', memory_sec: 'Memoria', memory_title: 'Lo que Aroa recuerda', mem_filter: 'Filtrar hechos', mem_intro: 'Hechos extraídos de lo que alguien del despacho le ha dicho a Aroa: preferencias, decisiones, personas, fechas. Solo se guarda lo que dice el usuario, nunca las respuestas de Aroa ni el contenido de los documentos. Cada hecho solo se recuerda dentro de su expediente (o en todos si no tiene). Olvida lo que esté mal o no deba conservarse.', mem_general: 'general',
     sec_chat: 'Chat', sec_docs: 'Documentos', sec_jobs: 'Trabajos', sec_procs: 'Procedim.', procedures: 'Procedimientos', no_procs: 'Todavía no hay procedimientos. Escribe uno: plantilla, datos, cómo se redacta, cómo se revisa.', procs_empty_h: 'Procedimientos', procs_empty_p: 'Un procedimiento es un documento con cuatro apartados: la plantilla, los datos que necesita, cómo se redacta y cómo se revisa. Elige uno para rellenar sus datos y redactar el documento; Aroa sigue los pasos y la revisión comprueba la lista.', new_proc: 'Nuevo procedimiento', draft_btn: 'Redactar el documento', edit_proc: 'Editar procedimiento', template_lbl: 'Plantilla', data_lbl: 'Datos', instructions_lbl: 'Redacción', checklist_lbl: 'Lista de revisión', kind_draft: 'Borrador', drafting: 'redactando', draft_done: 'Borrador listo: se abre en el editor', draft_failed: 'La redacción ha fallado', matter_lbl: 'Expediente (para el nombre del archivo)', no_template: 'Este procedimiento no indica plantilla.', checklist_title: 'Lista de revisión del procedimiento', met: 'cumplido', unmet: 'no cumplido', proc_skeleton: '<h1>Nombre del procedimiento</h1><p>Cuándo se usa, en dos líneas.</p><h2>Plantilla</h2><p>documento: nombre_de_un_documento_de_la_biblioteca.md</p><h2>Datos</h2><ul><li>Campo: pista para quien lo rellena</li></ul><h2>Redacción</h2><p>Registro, estructura, qué citar, qué no escribir nunca.</p><h2>Revisión</h2><ul><li>Una cosa que el documento terminado debe mostrar</li></ul>', inline_template: 'plantilla en el propio procedimiento', alarms: 'Alarmas', status: 'Estado', theme: 'Tema', language: 'Idioma',
     conversations: 'Conversaciones', new_short: 'Nueva', new_title: 'Nueva conversación', no_threads: 'Todavía no hay conversaciones.', filter_threads: 'Filtrar conversaciones', filter_docs: 'Filtrar documentos',
     documents: 'Documentos', add: 'Añadir', add_title: 'Markdown, texto, PDF, Word o HTML', add_doc: 'Añadir un documento', no_docs: 'Todavía no hay documentos. Crea uno, añade archivos .md, .txt, .pdf o .docx, o suéltalos en cualquier parte.',
@@ -555,7 +585,7 @@ const L = {
     stored: 'guardado', duplicate: 'duplicado', server_error: 'El servidor no ha respondido: ', remove_q: '¿Quitar «{n}» del índice?', removed: 'Documento quitado', not_removed: 'No se ha podido',
     uploading: 'subiendo', indexing: 'indexando…', indexed: '{n} indexado', reading: 'leyendo…', truncated: 'recortado a 12.000 caracteres',
     kinds: { documents: 'documentos', chat: 'charla', web: 'web', alarms: 'alarmas', project: 'proyecto', review: 'revisión' },
-    turns: 'vueltas hoy', p50: 'latencia p50', claims_ok: 'afirm. ok', facts: 'hechos', privacy: 'privacidad', traced: 'con trazas', no_tracing: 'sin trazas', unreachable: 'servidor inaccesible', model: 'modelo', memory: 'memoria', report_link: 'Informe semanal', metrics_link: 'Métricas', pending_alarms: 'Alarmas pendientes', no_alarms: 'No hay alarmas pendientes.', up_down: 'bien / mal',
+    turns: 'vueltas hoy', p50: 'tiempo de respuesta (mediana)', claims_ok: 'afirm. ok', facts: 'hechos', privacy: 'privacidad', traced: 'con trazas', no_tracing: 'sin trazas', unreachable: 'servidor inaccesible', model: 'modelo', memory: 'memoria', report_link: 'Informe semanal', metrics_link: 'Métricas', pending_alarms: 'Alarmas pendientes', no_alarms: 'No hay alarmas pendientes.', up_down: 'bien / mal',
     theme_auto: 'sistema', theme_light: 'claro', theme_dark: 'oscuro',
     suggestions: [
       ['Documentos', '¿Cuánto es la fianza del contrato de arrendamiento y cuándo se devuelve?'],
@@ -641,8 +671,8 @@ function show(sec) {
   section = sec;
   $$('#rail [data-sec]').forEach(b => b.classList.toggle('active', b.dataset.sec === sec));
   $$('.sp-view').forEach(v => v.hidden = v.id !== 'sp-' + sec);
-  $('#view-chat').hidden = sec !== 'chat'; $('#view-doc').hidden = sec !== 'docs'; $('#view-job').hidden = sec !== 'jobs'; $('#view-proc').hidden = sec !== 'procs'; $('#view-info').hidden = sec !== 'info';
-  document.body.classList.toggle('noside', sec === 'info');
+  $('#view-chat').hidden = sec !== 'chat'; $('#view-doc').hidden = sec !== 'docs'; $('#view-job').hidden = sec !== 'jobs'; $('#view-proc').hidden = sec !== 'procs'; $('#view-info').hidden = sec !== 'info'; $('#view-settings').hidden = sec !== 'settings'; $('#view-memory').hidden = sec !== 'memory';
+  document.body.classList.toggle('noside', sec === 'info' || sec === 'settings' || sec === 'memory');
   $('#matter-box').hidden = sec !== 'chat'; $('#sel').hidden = sec !== 'chat' || !selected.size;
   $('#side').classList.remove('open');
   closeInspector();
@@ -650,6 +680,8 @@ function show(sec) {
   if (sec === 'jobs') loadJobs();
   if (sec === 'procs') loadProcs();
   if (sec === 'info') renderInfo();
+  if (sec === 'settings') renderSettings();
+  if (sec === 'memory') renderMemory();
 }
 $$('#rail [data-sec]').forEach(b => b.onclick = () => show(b.dataset.sec));
 $('#menu').onclick = () => $('#side').classList.toggle('open');
@@ -660,6 +692,8 @@ function setTitle() {
   if (section === 'chat') { const row = threadsCache.find(r => r.thread_id === thread); title.textContent = row ? row.title : T('new_title'); sub.textContent = ''; }
   else if (section === 'docs') { const d = docsCache.find(x => x.source === currentDoc); title.textContent = editing ? (editing.name || T('untitled')) : d ? d.title : T('documents'); sub.textContent = editing ? (editing.source || '') : d ? d.source : ''; }
   else if (section === 'info') { title.textContent = T('info_title'); sub.textContent = ''; }
+  else if (section === 'settings') { title.textContent = T('settings_title'); sub.textContent = ''; }
+  else if (section === 'memory') { title.textContent = T('memory_title'); sub.textContent = ''; }
   else if (section === 'procs') { title.textContent = editing ? (editing.name || T('untitled')) : currentProc ? currentProc.name : T('procedures'); sub.textContent = currentProc && !editing ? currentProc.source : ''; }
   else { title.textContent = currentJob ? (currentJob.kind === 'review' ? T('kind_review') : currentJob.kind === 'draft' ? T('kind_draft') : T('kind_analysis')) : T('jobs'); sub.textContent = currentJob ? currentJob.source : ''; }
 }
@@ -1370,6 +1404,110 @@ $('#job-tools').addEventListener('click', e => {
   if (e.target.closest('#rv-edit')) openEditor(null, mdToHtml(correctedDraft(r)), (r.name || 'borrador').replace(/\.[^.]+$/, '') + '-revisado');
 });
 
+/* ── settings page ─────────────────────────────────────── */
+const SET = {
+  es: {
+    intro: 'Dónde corre el modelo, qué modelo y cómo se tratan los datos. Los cambios se escriben en el archivo de configuración y se aplican al momento, sin reiniciar.',
+    providers: 'Dónde corre el modelo',
+    cards: {
+      ollama: ['Ollama', 'El más sencillo de instalar. Motor llama.cpp por dentro. Empresa: Ollama Inc.', 'local'],
+      local: ['Servidor local (llama.cpp, MLX, LM Studio)', 'Cualquier servidor compatible con OpenAI en este equipo. llama.cpp (código abierto, MIT) o MLX (Apple, código abierto) son los recomendados en Mac.', 'local'],
+      'claude-cli': ['Claude Code (suscripción)', 'Usa tu sesión de Claude Code: sin clave, pero los textos pseudonimizados salen a Anthropic.', 'externo'],
+      anthropic: ['Anthropic (API)', 'Claude con clave de API. Los textos pseudonimizados salen a Anthropic.', 'externo'],
+      openai: ['Pasarela OpenAI (API)', 'OpenAI o cualquier pasarela compatible con clave (LiteLLM, vLLM, Azure…).', 'externo'],
+    },
+    model: 'Modelo principal', model_h: 'Redacta, analiza, revisa.', fast: 'Modelo rápido', fast_h: 'Enruta, filtra, extrae hechos y nombres. Puede ser el mismo.', base: 'Dirección del servidor local', base_h: 'Donde escucha llama-server, mlx_lm.server o LM Studio.', structured: 'Salida estructurada', structured_h: 'json_schema: exacta (llama.cpp, LM Studio). function_calling: para el servidor de MLX, que no admite esquemas.', reasoning: 'Dejar pensar al modelo', reasoning_h: 'Más lento; en modelos pequeños rompe la salida estructurada.', privacy: 'Privacidad', privacy_h: 'full: identificadores por patrón + nombres por modelo. identifiers: solo patrones. off: nada (solo para pruebas).', language: 'Idioma de los textos del sistema', key: 'Clave de API', key_h: 'Se guarda en el archivo de configuración de este equipo; nunca se muestra.', key_set: 'configurada', key_unset: 'sin configurar', gateway: 'Dirección de la pasarela', gateway_h: 'Vacío = api.openai.com',
+    test: 'Probar el modelo', testing: 'probando…', save: 'Guardar y aplicar', saved: 'Ajustes aplicados', failed: 'No se han podido aplicar', probe_ok: 'Responde en {s} s · salida estructurada {st} ({ss} s)', probe_bad: 'No responde: {e}', st_ok: 'correcta', st_bad: 'FALLA',
+    guide_h: 'Guía: instalar un modelo local en este Mac',
+    guide: [
+      ['Qué modelo', 'Para un despacho, en un Mac con 36 GB, el punto de partida es Qwen3-8B en 4 bits (~5 GB): responde en español, sigue esquemas y cabe con holgura. Con más memoria, Qwen3-14B o Qwen3-32B mejoran la redacción a costa de velocidad. Medido aquí con el mismo Qwen3-8B: llama.cpp y Ollama rinden igual (~40 tokens/s en un M3 Max); MLX es el motor nativo de Apple y suele ser algo más rápido.'],
+      ['Opción A · llama.cpp (código abierto, exacta en salida estructurada)', 'Instalar y arrancar el servidor con un modelo GGUF descargado de Hugging Face; después elegir arriba «Servidor local», modelo «qwen3-8b», salida «json_schema».', 'brew install llama.cpp\nllama-server -hf Qwen/Qwen3-8B-GGUF:Q4_K_M --port 8080 -ngl 99 -c 8192 -fa on --jinja --alias qwen3-8b'],
+      ['Opción B · MLX (motor de Apple, el más rápido en Apple Silicon)', 'Instalar mlx-lm y arrancar su servidor con un modelo MLX; elegir «Servidor local», modelo «mlx-community/Qwen3-8B-4bit», salida «function_calling» (el servidor de MLX no admite esquemas JSON; Aroa pide la estructura por llamada a herramienta).', 'pip install mlx-lm\nmlx_lm.server --model mlx-community/Qwen3-8B-4bit --port 8080'],
+      ['Opción C · LM Studio (aplicación con interfaz)', 'Descargar LM Studio, bajar el modelo desde su buscador (elige el motor MLX en Mac), activar el servidor local en la pestaña Developer (puerto 1234) y poner aquí esa dirección con el nombre del modelo que muestre.', 'Dirección: http://127.0.0.1:1234/v1'],
+      ['Opción D · Ollama', 'Lo que había hasta ahora. Instalar la app, descargar el modelo y elegir «Ollama» arriba.', 'brew install ollama\nollama pull qwen3:8b'],
+      ['Comprobar', 'Pulsa «Probar el modelo»: Aroa hace una llamada corta y otra con salida estructurada y te dice cuánto tarda. Si la estructurada falla, cambia el modo de salida (json_schema ↔ function_calling).'],
+    ],
+  },
+  en: {
+    intro: 'Where the model runs, which model, and how data is treated. Changes are written to the configuration file and applied at once, no restart.',
+    providers: 'Where the model runs',
+    cards: {
+      ollama: ['Ollama', 'Easiest to install. llama.cpp engine inside. Company: Ollama Inc.', 'local'],
+      local: ['Local server (llama.cpp, MLX, LM Studio)', 'Any OpenAI-compatible server on this machine. llama.cpp (open source, MIT) or MLX (Apple, open source) are the recommended ones on a Mac.', 'local'],
+      'claude-cli': ['Claude Code (subscription)', 'Uses your Claude Code session: no key, but pseudonymised texts go to Anthropic.', 'external'],
+      anthropic: ['Anthropic (API)', 'Claude with an API key. Pseudonymised texts go to Anthropic.', 'external'],
+      openai: ['OpenAI gateway (API)', 'OpenAI or any compatible gateway with a key (LiteLLM, vLLM, Azure…).', 'external'],
+    },
+    model: 'Main model', model_h: 'Writes, analyses, reviews.', fast: 'Fast model', fast_h: 'Routes, filters, extracts facts and names. Can be the same.', base: 'Local server address', base_h: 'Where llama-server, mlx_lm.server or LM Studio listens.', structured: 'Structured output', structured_h: 'json_schema: exact (llama.cpp, LM Studio). function_calling: for the MLX server, which has no schema support.', reasoning: 'Let the model think', reasoning_h: 'Slower; breaks structured output on small models.', privacy: 'Privacy', privacy_h: 'full: identifiers by pattern + names by model. identifiers: patterns only. off: nothing (tests only).', language: 'Language of system texts', key: 'API key', key_h: 'Stored in this machine\'s configuration file; never shown.', key_set: 'configured', key_unset: 'not configured', gateway: 'Gateway address', gateway_h: 'Empty = api.openai.com',
+    test: 'Test the model', testing: 'testing…', save: 'Save and apply', saved: 'Settings applied', failed: 'Could not apply', probe_ok: 'Answers in {s} s · structured output {st} ({ss} s)', probe_bad: 'No answer: {e}', st_ok: 'works', st_bad: 'FAILS',
+    guide_h: 'Guide: installing a local model on this Mac',
+    guide: [
+      ['Which model', 'For a firm, on a Mac with 36 GB, start with Qwen3-8B in 4 bits (~5 GB): answers in Spanish, follows schemas, fits easily. With more memory, Qwen3-14B or Qwen3-32B write better at the cost of speed. Measured here with the same Qwen3-8B: llama.cpp and Ollama perform the same (~40 tokens/s on an M3 Max); MLX is Apple\'s native engine and is usually somewhat faster.'],
+      ['Option A · llama.cpp (open source, exact structured output)', 'Install and start the server with a GGUF model from Hugging Face; then pick "Local server" above, model "qwen3-8b", output "json_schema".', 'brew install llama.cpp\nllama-server -hf Qwen/Qwen3-8B-GGUF:Q4_K_M --port 8080 -ngl 99 -c 8192 -fa on --jinja --alias qwen3-8b'],
+      ['Option B · MLX (Apple\'s engine, fastest on Apple Silicon)', 'Install mlx-lm and start its server with an MLX model; pick "Local server", model "mlx-community/Qwen3-8B-4bit", output "function_calling" (the MLX server has no JSON-schema support; Aroa asks for structure through a tool call).', 'pip install mlx-lm\nmlx_lm.server --model mlx-community/Qwen3-8B-4bit --port 8080'],
+      ['Option C · LM Studio (app with a UI)', 'Download LM Studio, get the model from its search (choose the MLX engine on Mac), enable the local server in the Developer tab (port 1234) and put that address here with the model name it shows.', 'Address: http://127.0.0.1:1234/v1'],
+      ['Option D · Ollama', 'What was used so far. Install the app, pull the model, pick "Ollama" above.', 'brew install ollama\nollama pull qwen3:8b'],
+      ['Check', 'Press "Test the model": Aroa makes one short call and one with structured output and tells you how long each takes. If the structured one fails, switch the output mode (json_schema ↔ function_calling).'],
+    ],
+  },
+};
+let settingsState = null;
+async function renderSettings() {
+  const S = SET[loc()] || SET.en, body = $('#settings-body');
+  const cur = await (await fetch('/api/settings')).json(); settingsState = cur;
+  const provider = (cur.llm_model || '').split(':')[0] || 'ollama';
+  const name = (cur.llm_model || '').split(':').slice(1).join(':'), fastName = (cur.llm_fast_model || '').split(':').slice(1).join(':');
+  const opt = (v, cur) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${v}</option>`;
+  body.innerHTML = `<h1>${T('settings_title')}</h1><p class="lead">${esc(S.intro)}</p>` +
+    `<h2>${S.providers}</h2><div class="cards" id="prov-cards">${Object.entries(S.cards).map(([k, [t, d, kind]]) => `<div class="card ${k === provider ? 'on' : ''}" data-prov="${k}"><b>${esc(t)}</b><span>${esc(d)}</span><span class="tag ${kind === 'local' || kind === 'local' ? 'ok' : 'fail'}">${esc(kind)}</span></div>`).join('')}</div>` +
+    `<div class="frm" id="frm">` +
+    `<label>${S.model}<small>${S.model_h}</small></label><input id="s-model" value="${esc(name)}">` +
+    `<label>${S.fast}<small>${S.fast_h}</small></label><input id="s-fast" value="${esc(fastName)}">` +
+    `<label data-for="local">${S.base}<small>${S.base_h}</small></label><input data-for="local" id="s-base" value="${esc(cur.llm_base_url || '')}">` +
+    `<label data-for="local">${S.structured}<small>${S.structured_h}</small></label><select data-for="local" id="s-structured">${['json_schema', 'function_calling', 'json_mode'].map(v => opt(v, cur.llm_structured)).join('')}</select>` +
+    `<label data-for="anthropic">${S.key} (Anthropic)<small>${S.key_h} ${cur.secrets.anthropic_api_key ? '· ' + S.key_set : '· ' + S.key_unset}</small></label><input data-for="anthropic" id="s-akey" type="password" placeholder="${cur.secrets.anthropic_api_key ? '••••••••' : 'sk-ant-…'}">` +
+    `<label data-for="openai">${S.key} (OpenAI)<small>${S.key_h} ${cur.secrets.openai_api_key ? '· ' + S.key_set : '· ' + S.key_unset}</small></label><input data-for="openai" id="s-okey" type="password" placeholder="${cur.secrets.openai_api_key ? '••••••••' : 'sk-…'}">` +
+    `<label data-for="openai">${S.gateway}<small>${S.gateway_h}</small></label><input data-for="openai" id="s-obase" value="${esc(cur.openai_base_url || '')}">` +
+    `<label>${S.reasoning}<small>${S.reasoning_h}</small></label><select id="s-reasoning">${opt('false', String(cur.llm_reasoning))}${opt('true', String(cur.llm_reasoning))}</select>` +
+    `<label>${S.privacy}<small>${S.privacy_h}</small></label><select id="s-privacy">${['full', 'identifiers', 'off'].map(v => opt(v, cur.privacy_mode)).join('')}</select>` +
+    `<label>${S.language}</label><select id="s-lang">${['es', 'en'].map(v => opt(v, cur.assistant_language)).join('')}</select>` +
+    `</div><div class="acts"><button class="btn" id="s-test">${ico('pulse')}${S.test}</button><button class="btn primary" id="s-save">${ico('check')}${S.save}</button><span class="probe" id="s-probe"></span></div>` +
+    `<div class="guide"><h2>${S.guide_h}</h2>${S.guide.map(([h, p, code]) => `<h3>${esc(h)}</h3><p>${esc(p)}</p>${code ? `<pre>${esc(code)}</pre>` : ''}`).join('')}</div>`;
+  body.dataset.provider = provider; applyProvider(provider);
+}
+function applyProvider(prov) {
+  $('#settings-body').dataset.provider = prov;
+  $$('#prov-cards .card').forEach(c => c.classList.toggle('on', c.dataset.prov === prov));
+  $$('#frm [data-for]').forEach(el => el.style.display = el.dataset.for === prov ? '' : 'none');
+  const m = $('#s-model'), f = $('#s-fast');
+  const defaults = { ollama: 'qwen3:8b', local: 'qwen3-8b', 'claude-cli': 'sonnet', anthropic: 'claude-sonnet-5-5', openai: 'gpt-4.1' };
+  if (!m.value || (settingsState && prov !== (settingsState.llm_model || '').split(':')[0])) { m.value = defaults[prov] || ''; f.value = prov === 'claude-cli' ? 'haiku' : prov === 'anthropic' ? 'claude-haiku-5-5' : m.value; }
+}
+function settingsPayload() {
+  const prov = $('#settings-body').dataset.provider;
+  const p = { llm_model: `${prov}:${$('#s-model').value.trim()}`, llm_fast_model: `${prov}:${$('#s-fast').value.trim() || $('#s-model').value.trim()}`, llm_base_url: $('#s-base').value.trim(), llm_structured: $('#s-structured').value, llm_reasoning: $('#s-reasoning').value === 'true', privacy_mode: $('#s-privacy').value, assistant_language: $('#s-lang').value };
+  if ($('#s-akey').value) p.anthropic_api_key = $('#s-akey').value; if ($('#s-okey').value) p.openai_api_key = $('#s-okey').value;
+  if ($('#s-obase').value.trim() !== (settingsState.openai_base_url || '')) p.openai_base_url = $('#s-obase').value.trim();
+  return p;
+}
+$('#settings-body').addEventListener('click', async e => {
+  const S = SET[loc()] || SET.en;
+  const card = e.target.closest('[data-prov]'); if (card) { applyProvider(card.dataset.prov); return; }
+  if (e.target.closest('#s-test')) {
+    const probe = $('#s-probe'); probe.className = 'probe'; probe.textContent = S.testing;
+    const p = settingsPayload();
+    const r = await (await fetch('/api/settings/test', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ llm_model: p.llm_model, llm_base_url: p.llm_base_url, llm_structured: p.llm_structured }) })).json();
+    probe.className = 'probe ' + (r.ok ? 'ok' : 'bad');
+    probe.textContent = r.ok ? S.probe_ok.replace('{s}', r.seconds).replace('{st}', r.structured_ok ? S.st_ok : S.st_bad).replace('{ss}', r.structured_seconds) : S.probe_bad.replace('{e}', r.error || '');
+    return;
+  }
+  if (e.target.closest('#s-save')) {
+    const r = await fetch('/api/settings', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(settingsPayload()) });
+    if (!r.ok) { let d = ''; try { d = (await r.json()).detail || ''; } catch {} toast(`${S.failed}: ${d}`); return; }
+    toast(S.saved); loadHealth(); renderSettings();
+  }
+});
+
 /* ── information page ──────────────────────────────────── */
 const INFO = {
   es: {
@@ -1398,14 +1536,14 @@ const INFO = {
     legal: [
       'El despacho es el responsable del tratamiento; Aroa es una herramienta que trata los datos en los equipos del despacho.',
       'La pseudonimización reduce el riesgo, pero no es anonimización: el mapa de seudónimos permite reidentificar y está en este equipo, bajo el control del despacho. Protegerlo (acceso, copias, cifrado del disco) es parte del tratamiento.',
-      'La muralla por expediente evita que lo dicho en un expediente aparezca en otro. La memoria se puede ver y borrar hecho a hecho desde esta página; un documento se quita del índice al eliminarlo.',
+      'La muralla por expediente evita que lo dicho en un expediente aparezca en otro. La memoria se puede ver y borrar hecho a hecho desde el apartado «Memoria»; un documento se quita del índice al eliminarlo.',
       'Hay una política del despacho que el asistente aplica antes de trabajar: no fabrica ni retrodata pruebas, no engaña a tribunales ni a partes, no entrega datos de clientes a terceros ni reidentifica personas, no ayuda a ocultar delitos.',
       'Aroa no es asesoramiento jurídico: propone, cita y comprueba; decide el abogado. Esta página describe el funcionamiento técnico, no sustituye el registro de actividades ni la evaluación de impacto que el despacho decida hacer.',
     ],
     limits_h: 'Límites que conviene conocer',
     limits: ['El modelo puede equivocarse al redactar o al elegir la ruta; por eso las citas, las acciones y los plazos se comprueban en código y lo no comprobado se marca «sin verificar».', 'La detección de nombres es por modelo y puede fallar con nombres poco habituales; los identificadores con formato (DNI, IBAN…) se detectan por patrón, siempre.', 'La jurisprudencia no se verifica automáticamente: no hay archivo local de sentencias y la base pública no permite la reutilización masiva.', 'Exportar a Word conserva estructura (títulos, listas, tablas, negritas), no la maquetación.'],
     mem_h: 'Lo que Aroa recuerda',
-    mem_p: 'Hechos extraídos de lo que habéis dicho. Pulsa «Olvidar» en el que no deba conservarse.',
+    mem_p: 'Lo que Aroa recuerda se puede ver, filtrar y olvidar en el apartado «Memoria» de la barra lateral.',
     none: 'No hay hechos guardados.', forget: 'Olvidar', model: 'Modelo', local: 'en este equipo', external: 'proveedor externo', privacy: 'Privacidad', traced: 'Trazas', memory_counts: 'Memoria', facts: 'hechos', fragments: 'fragmentos de documentos',
   },
   en: {
@@ -1434,14 +1572,14 @@ const INFO = {
     legal: [
       'The firm is the data controller; Aroa is a tool that processes data on the firm\'s computers.',
       'Pseudonymisation reduces risk but is not anonymisation: the pseudonym map allows re-identification and lives on this computer under the firm\'s control. Protecting it (access, backups, disk encryption) is part of the processing.',
-      'The matter wall keeps what was said in one matter from surfacing in another. Memory can be seen and deleted fact by fact from this page; a document leaves the index when deleted.',
+      'The matter wall keeps what was said in one matter from surfacing in another. Memory can be seen and deleted fact by fact from the "Memory" section; a document leaves the index when deleted.',
       'A firm policy is applied before any work: no fabricated or backdated evidence, no deceiving courts or parties, no client data to third parties, no re-identification, no help concealing offences.',
       'Aroa is not legal advice: it proposes, cites and checks; the lawyer decides. This page describes the technical operation; it does not replace the record of processing or the impact assessment the firm may decide to make.',
     ],
     limits_h: 'Limits worth knowing',
     limits: ['The model can err when writing or routing; that is why citations, actions and deadlines are checked in code and the unchecked is marked "unverified".', 'Name detection is model-based and can miss unusual names; formatted identifiers (IDs, IBAN…) are detected by pattern, always.', 'Case law is not verified automatically: there is no local archive of judgments and the public database forbids bulk reuse.', 'Word export keeps structure (headings, lists, tables, emphasis), not layout.'],
     mem_h: 'What Aroa remembers',
-    mem_p: 'Facts extracted from what you said. Press "Forget" on any that should not be kept.',
+    mem_p: 'What Aroa remembers can be seen, filtered and forgotten in the "Memory" section of the sidebar.',
     none: 'No facts stored.', forget: 'Forget', model: 'Model', local: 'on this computer', external: 'external provider', privacy: 'Privacy', traced: 'Tracing', memory_counts: 'Memory', facts: 'facts', fragments: 'document fragments',
   },
 };
@@ -1454,17 +1592,28 @@ async function renderInfo() {
     (h ? `<h2>${I.now}</h2><div class="kv"><span>${I.model}</span><b>${esc(h.model)} · ${isLocal ? I.local : I.external}</b><span>${I.privacy}</span><b>${esc(h.privacy_mode)}</b><span>${I.traced}</span><b>${h.traced ? 'on' : 'off'}</b><span>${I.memory_counts}</span><b>${h.memory.facts} ${I.facts} · ${h.memory.documents} ${I.fragments}</b></div>` : '') +
     `<h2>${I.flow_h}</h2><div class="flow">${I.flow.map((f, i) => `${i ? '<i>→</i>' : ''}<span>${esc(f)}</span>`).join('')}</div>${li(I.flow_p)}` +
     `<h2>${I.can_h}</h2>${li(I.can)}<h2>${I.data_h}</h2>${li(I.data)}<h2>${I.legal_h}</h2>${li(I.legal)}<h2>${I.limits_h}</h2>${li(I.limits)}` +
-    `<h2>${I.mem_h}</h2><p>${esc(I.mem_p)}</p><div id="info-mem"><div class="live"><div class="spinner"></div></div></div>`;
-  try {
-    const facts = await (await fetch('/api/memory/facts')).json();
-    $('#info-mem').innerHTML = facts.length ? facts.map(f => `<div class="mem"><div>${esc(f.text)}<small>${esc((f.ts || '').slice(0, 10))}${f.matter ? ' · ' + esc(f.matter) : ''}${f.origin ? ' · ' + esc(f.origin) : ''}</small></div><button type="button" class="btn sm" data-forget="${esc(f.text)}">${ico('trash')}${I.forget}</button></div>`).join('') : `<p>${I.none}</p>`;
-  } catch { $('#info-mem').innerHTML = `<p>${T('unreachable')}</p>`; }
+    `<p>${esc(I.mem_p)}</p>`;
 }
-$('#info-body').addEventListener('click', async e => {
+
+/* ── memory page ───────────────────────────────────────── */
+let factsCache = [];
+async function renderMemory() {
+  const body = $('#memory-body');
+  body.innerHTML = `<h1>${T('memory_title')}</h1><p class="lead">${esc(T('mem_intro'))}</p><div class="filter" style="margin:0 0 12px"><input id="f-mem" placeholder="${T('mem_filter')}" style="width:100%;height:34px;border:1px solid var(--line-2);border-radius:8px;padding:0 12px;background:var(--panel);color:var(--ink)"></div><div id="mem-list"><div class="live"><div class="spinner"></div></div></div>`;
+  $('#f-mem').addEventListener('input', renderFacts);
+  try { factsCache = await (await fetch('/api/memory/facts')).json(); } catch { factsCache = []; }
+  renderFacts();
+}
+function renderFacts() {
+  const q = ($('#f-mem')?.value || '').toLowerCase(), I = INFO[loc()] || INFO.en;
+  const rows = factsCache.filter(f => !q || f.text.toLowerCase().includes(q) || (f.matter || '').toLowerCase().includes(q));
+  $('#mem-list').innerHTML = rows.length ? rows.map(f => `<div class="mem"><div>${esc(f.text)}<small>${esc((f.ts || '').slice(0, 10))} · ${f.matter ? esc(f.matter) : T('mem_general')}${f.origin ? ' · ' + esc(f.origin) : ''}</small></div><button type="button" class="btn sm" data-forget="${esc(f.text)}">${ico('trash')}${I.forget}</button></div>`).join('') : `<p>${I.none}</p>`;
+}
+$('#memory-body').addEventListener('click', async e => {
   const b = e.target.closest('[data-forget]'); if (!b) return;
   if (!confirm(T('forget_q'))) return;
   const r = await fetch('/api/memory/forget', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: b.dataset.forget }) });
-  toast(r.ok ? T('forgotten') : T('not_removed')); if (r.ok) { b.closest('.mem').remove(); loadHealth(); }
+  toast(r.ok ? T('forgotten') : T('not_removed')); if (r.ok) { factsCache = factsCache.filter(f => f.text !== b.dataset.forget); renderFacts(); loadHealth(); }
 });
 
 /* ── popovers: alarms and status ───────────────────────── */

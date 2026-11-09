@@ -41,22 +41,40 @@ class Assistant:
         self.settings = settings
         self.traced = setup_tracing(settings)
         self.conn = connect(settings.db_path)
-        self.llm = llm or make_chat_model(settings.llm_model, settings.llm_max_tokens, reasoning=settings.llm_reasoning)
-        self.fast_llm = fast_llm or make_chat_model(settings.llm_fast_model, settings.llm_fast_max_tokens)
+        self.llm = llm or self.model_from(settings, settings.llm_model, settings.llm_max_tokens, settings.llm_reasoning)
+        self.fast_llm = fast_llm or self.model_from(settings, settings.llm_fast_model, settings.llm_fast_max_tokens)
         self.memory = memory or MemoryStore(settings)
         self.anonymizer = self._make_anonymizer()
         settings.data_dir.mkdir(parents=True, exist_ok=True)
         self.checkpointer = SqliteSaver(sqlite3.connect(str(settings.checkpoint_db), check_same_thread=False))
-        self.graph = build_graph(
+        self.graph = self._build_graph()
+
+    @staticmethod
+    def model_from(settings: Settings, spec: str, max_tokens: int, reasoning: bool = False):
+        return make_chat_model(
+            spec, max_tokens, reasoning=reasoning, base_url=settings.llm_base_url, structured=settings.llm_structured
+        )
+
+    def _build_graph(self):
+        s = self.settings
+        return build_graph(
             self.llm,
             self.fast_llm,
             self.memory,
-            settings,
+            s,
             self.conn,
-            persona=load_persona(settings.persona_dir, settings.assistant_name),
+            persona=load_persona(s.persona_dir, s.assistant_name),
             anonymizer=self.anonymizer,
             checkpointer=self.checkpointer,
         )
+
+    def reconfigure(self, settings: Settings) -> None:
+        """New model settings without restarting: models, name detector and graph are rebuilt; stores stay open."""
+        self.settings = settings
+        self.llm = self.model_from(settings, settings.llm_model, settings.llm_max_tokens, settings.llm_reasoning)
+        self.fast_llm = self.model_from(settings, settings.llm_fast_model, settings.llm_fast_max_tokens)
+        self.anonymizer = self._make_anonymizer()
+        self.graph = self._build_graph()
 
     def _make_anonymizer(self) -> Anonymizer | None:
         mode = self.settings.privacy_mode

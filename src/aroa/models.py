@@ -11,15 +11,82 @@ from langchain_core.callbacks import CallbackManagerForLLMRun
 from langchain_core.language_models import BaseChatModel
 from langchain_core.messages import AIMessage, BaseMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_core.outputs import ChatGeneration, ChatResult
+from langchain_core.runnables import RunnableLambda
 from pydantic import BaseModel
 
 API_KEYS = {"anthropic": "ANTHROPIC_API_KEY", "openai": "OPENAI_API_KEY"}
 
 
-def make_chat_model(spec: str, max_tokens: int, *, reasoning: bool = False) -> BaseChatModel:
-    """Build a chat model: "anthropic:claude-sonnet-5-5", "openai:<name>" (OPENAI_BASE_URL), "ollama:qwen3:8b"
-    or "claude-cli:sonnet" (the Claude Code CLI on a subscription, for evaluation on one's own machine)."""
+class LocalChatModel:
+    """An OpenAI-compatible server on this machine (llama.cpp, MLX, LM Studio): ChatOpenAI pointed at it, with the
+    structured-output method the server can honour. Built through `make_chat_model("local:<name>")`."""
+
+    def __new__(cls, name: str, max_tokens: int, base_url: str, structured: str, reasoning: bool = False):
+        from langchain_openai import ChatOpenAI
+
+        class _Local(ChatOpenAI):
+            def with_structured_output(self, schema, **kwargs):  # the caller's method is replaced by the server's
+                kwargs["method"] = structured
+                if structured == "json_schema":
+                    kwargs.setdefault("strict", True)
+                kwargs["include_raw"] = True
+                inner = super().with_structured_output(schema, **kwargs)
+                return RunnableLambda(lambda messages: _structured_with_retry(inner, schema, messages))
+
+        extra = {} if reasoning else {"chat_template_kwargs": {"enable_thinking": False}}  # qwen3 and friends
+        return _Local(
+            model=name, max_tokens=max_tokens, temperature=0, base_url=base_url, api_key="local", extra_body=extra
+        )
+
+
+def _json_in(text: str):
+    """The first JSON object in a reply, when a server answers in prose around it."""
+    start = text.find("{")
+    while start >= 0:
+        depth = 0
+        for i, ch in enumerate(text[start:], start):
+            depth += ch == "{"
+            depth -= ch == "}"
+            if depth == 0:
+                try:
+                    return json.loads(text[start : i + 1])
+                except ValueError:
+                    break
+        start = text.find("{", start + 1)
+    return None
+
+
+def _structured_with_retry(inner, schema, messages):
+    """Servers without forced tool choice (MLX) sometimes answer in prose: read the JSON from the text if there is
+    one, otherwise ask once more, explicitly. Returns the parsed object or None (the caller decides)."""
+    messages = list(messages) if isinstance(messages, list) else messages
+    for attempt in range(2):
+        out = inner.invoke(messages)
+        if out.get("parsed") is not None:
+            return out["parsed"]
+        raw = out.get("raw")
+        data = _json_in(str(getattr(raw, "content", "") or ""))
+        if data is not None:
+            try:
+                return schema.model_validate(data) if hasattr(schema, "model_validate") else data
+            except Exception:  # noqa: BLE001 — not the right shape: fall through to the retry
+                pass
+        if attempt == 0 and isinstance(messages, list):
+            fields = ", ".join(getattr(schema, "model_fields", {}) or [])
+            name = getattr(schema, "__name__", "output")
+            messages = [*messages, HumanMessage(f"Answer only by calling the {name} tool, with the fields: {fields}.")]
+    return None
+
+
+def make_chat_model(
+    spec: str, max_tokens: int, *, reasoning: bool = False, base_url: str | None = None, structured: str = "json_schema"
+) -> BaseChatModel:
+    """Build a chat model: "ollama:qwen3:8b", "local:<name>" (an OpenAI-compatible server at `base_url`),
+    "openai:<name>" (OPENAI_BASE_URL + key), "anthropic:claude-sonnet-5-5" or "claude-cli:sonnet" (the Claude
+    Code CLI on a subscription, for evaluation on one's own machine)."""
     provider, _, name = spec.partition(":")
+    if provider == "local":
+        return LocalChatModel(name, max_tokens, base_url or "http://127.0.0.1:8080/v1", structured, reasoning)
     key = API_KEYS.get(provider)
     if key and not os.environ.get(key):
         raise RuntimeError(f"{spec} needs {key}. Copy .env.example to .env and set it.")
@@ -40,7 +107,7 @@ def make_chat_model(spec: str, max_tokens: int, *, reasoning: bool = False) -> B
         return ChatOllama(model=name, num_predict=max_tokens, reasoning=reasoning, temperature=0)
     if provider == "claude-cli":
         return ClaudeCliChatModel(model=name or "sonnet", max_tokens=max_tokens)
-    raise ValueError(f"Unknown provider in {spec!r}: use anthropic:, openai:, ollama: or claude-cli:")
+    raise ValueError(f"Unknown provider in {spec!r}: use ollama:, local:, openai:, anthropic: or claude-cli:")
 
 
 TOOL_CALL_SCHEMA = {

@@ -10,13 +10,18 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    # "<provider>:<model>" with provider anthropic, openai (any OpenAI-compatible gateway) or ollama.
+    # "<provider>:<model>" with provider ollama, local (any OpenAI-compatible server on this machine: llama.cpp,
+    # MLX, LM Studio), openai (a gateway with a key), anthropic, or claude-cli.
     llm_model: str = "ollama:qwen3:8b"
     # Routing, grading, claim extraction and fact extraction: short structured outputs.
     llm_fast_model: str = "ollama:qwen3:8b"
     llm_max_tokens: int = 4096
     llm_fast_max_tokens: int = 1024
     llm_reasoning: bool = False  # let thinking models think (slower; breaks structured output on small ones)
+    llm_base_url: str = "http://127.0.0.1:8080/v1"  # the local: server
+    # How structured outputs are requested from a local: server. json_schema is exact (llama.cpp, LM Studio);
+    # MLX's server has no schema support, so it uses tool calling (function_calling) instead.
+    llm_structured: Literal["json_schema", "function_calling", "json_mode"] = "json_schema"
 
     assistant_name: str = "Aroa"
     assistant_language: Literal["en", "es"] = "en"  # the texts the code writes and the path of a turn

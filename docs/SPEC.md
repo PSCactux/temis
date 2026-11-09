@@ -152,6 +152,14 @@ are removed in code and the cited items are listed under the reply (`sources` wi
 to a message become fragments of the documents route for that turn (`adjunto:<name>` sources, never
 indexed) and are cited like any other; the fragment text travels with the answer. See ADR 013.
 
+## Models and settings
+
+Providers: `ollama:`, `local:` (any OpenAI-compatible server on the machine: llama.cpp, MLX, LM Studio;
+`LLM_BASE_URL`, `LLM_STRUCTURED`), `openai:`, `anthropic:`, `claude-cli:`. `GET/PUT /api/settings` reads and
+writes model, server, output mode, privacy and language to `.env` and applies them live;
+`POST /api/settings/test` probes a model spec. The Settings page includes a local-model install guide.
+See ADR 014.
+
 ## Observability
 
 - **Traces**: OpenInference spans over OTLP/HTTP to any collector; contents hidden unless

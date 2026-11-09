@@ -7,6 +7,7 @@ same person gets the same placeholder in every conversation and document, and th
 lives on this machine. The user interface reveals the placeholders; the model never sees the originals.
 """
 
+import logging
 import re
 import sqlite3
 from collections.abc import Callable
@@ -14,6 +15,8 @@ from collections.abc import Callable
 from pydantic import BaseModel, Field
 
 from .telemetry.metrics import now_iso
+
+log = logging.getLogger(__name__)
 
 PATTERNS: list[tuple[str, re.Pattern]] = [
     ("EMAIL", re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")),
@@ -226,6 +229,9 @@ class Anonymizer:
         found: list[tuple[str, str]] = []
         if names and self.extract_names:
             result = self.extract_names(text)
+            if result is None:  # the model gave no usable answer: identifiers are still replaced by pattern below
+                log.warning("name detection returned nothing for a %d-character text; only patterns applied", len(text))
+                result = Names()
             proposed = [(n, "PERSON") for n in result.people] + [(n, "ORG") for n in result.organizations]
             for candidate, kind in proposed:
                 kind = "ORG" if CORPORATE.search(clean_name(candidate)) else kind
