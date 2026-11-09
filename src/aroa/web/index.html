@@ -515,6 +515,77 @@
   .pok { display:flex; gap:8px; align-items:center; color:var(--ok); font-size:13px; } .pok svg.i { width:15px; height:15px; }
   .pbroken { margin:0 0 18px; } .pbroken strong { display:block; font-size:13px; margin-bottom:6px; color:var(--bad); }
   @media (max-width:700px) { .pe-row { grid-template-columns:1fr auto; } .pe-row input[data-f="hint"] { grid-column:1 / -1; grid-row:2; } .pe-long { grid-row:3; } }
+
+  /* app pages: full width, panels, filterable tables (documents keep the centred sheet) */
+  .page { width:100%; max-width:1520px; margin:0 auto; padding:4px 0 48px; font-family:var(--ui); font-size:13.5px; line-height:1.5; color:var(--ink); white-space:normal; }
+  .page-head { display:flex; align-items:flex-end; justify-content:space-between; gap:16px 24px; margin:0 0 18px; flex-wrap:wrap; }
+  .page-head h1 { font:600 26px/1.15 var(--ui); letter-spacing:-.03em; margin:0; }
+  .page-head .sub { color:var(--muted); font-size:13px; margin:5px 0 0; max-width:820px; }
+  .page-head .acts { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .panel { background:var(--paper); border:1px solid var(--line); border-radius:16px; padding:18px 20px; min-width:0; }
+  .panel.flush { padding:0; overflow:hidden; }
+  .panel > h2, .panel .ph { font:600 13.5px/1.3 var(--ui); letter-spacing:-.01em; text-transform:none; color:var(--ink); margin:0 0 12px; display:flex; align-items:center; gap:8px; }
+  .panel > h2 .n, .panel .ph .n { color:var(--muted); font-weight:500; }
+  .panel > h2 svg.i { width:16px; height:16px; color:var(--muted); }
+  .panel .note, .page .note { color:var(--muted); font-size:12.5px; margin:0 0 12px; }
+  .panel ul.plain { margin:0; padding-left:18px; } .panel ul.plain li { margin:0 0 8px; color:var(--ink-2); }
+  .grid-main { display:grid; grid-template-columns:minmax(0,1fr) 360px; gap:16px; align-items:start; }
+  .grid-2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; align-items:start; }
+  .stack { display:flex; flex-direction:column; gap:16px; min-width:0; }
+  .sticky { position:sticky; top:0; }
+  .stats-row { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; margin:0 0 16px; }
+  .stat { background:var(--paper); border:1px solid var(--line); border-radius:14px; padding:14px 16px; min-width:0; }
+  .stat span { color:var(--muted); font-size:12px; display:block; } .stat b { font-size:15px; font-weight:600; display:block; margin-top:4px; overflow-wrap:anywhere; } .stat small { color:var(--muted); font-size:11.5px; }
+  .ftools { display:flex; gap:8px; align-items:center; flex-wrap:wrap; padding:14px 16px; border-bottom:1px solid var(--line); }
+  .search { position:relative; flex:1; min-width:220px; }
+  .search svg.i { position:absolute; left:12px; top:50%; transform:translateY(-50%); width:15px; height:15px; color:var(--muted); }
+  .search input { width:100%; height:36px; border:1px solid var(--line-2); border-radius:999px; padding:0 14px 0 36px; background:var(--paper); color:var(--ink); font:inherit; }
+  .search input:focus, select.pill:focus { outline:none; border-color:var(--ink); }
+  .seg { display:inline-flex; border:1px solid var(--line-2); border-radius:999px; padding:2px; background:var(--paper); }
+  .seg button { border:0; background:transparent; height:30px; padding:0 12px; border-radius:999px; font:inherit; font-size:12.5px; color:var(--ink-2); cursor:pointer; white-space:nowrap; }
+  .seg button.on { background:var(--ink); color:var(--paper); } .seg button .c { opacity:.6; margin-left:5px; font-size:11.5px; }
+  select.pill { height:36px; border:1px solid var(--line-2); border-radius:999px; padding:0 30px 0 12px; background:var(--paper); font:inherit; font-size:12.5px; color:var(--ink); }
+  .tbl { width:100%; border-collapse:separate; border-spacing:0; font-size:13px; }
+  .tbl th { text-align:left; font-weight:500; color:var(--muted); font-size:11.5px; padding:9px 14px; border-bottom:1px solid var(--line); white-space:nowrap; background:var(--paper); }
+  .tbl td { padding:11px 14px; border-bottom:1px solid var(--line); vertical-align:top; }
+  .tbl tbody tr:last-child td { border-bottom:0; }
+  .tbl tbody tr:hover td { background:var(--hover); } .tbl tbody tr.sel td { background:var(--accent-soft); }
+  .tbl td.m { color:var(--muted); white-space:nowrap; font-size:12.5px; }
+  .tbl .chk { width:34px; padding-right:0; } .tbl .chk input { margin:3px 0 0; }
+  .tbl .act { width:1%; white-space:nowrap; text-align:right; padding:6px 10px; }
+  .tbl .act .btn { opacity:.55; } .tbl tbody tr:hover .act .btn { opacity:1; }
+  .pillv { display:inline-block; border:1px solid var(--line-2); border-radius:999px; padding:0 8px; font-size:11.5px; color:var(--ink-2); white-space:nowrap; }
+  .bulk { display:flex; align-items:center; gap:10px; padding:9px 16px; border-bottom:1px solid var(--line); background:var(--hover); font-size:12.5px; }
+  .bulk .sp { flex:1; }
+  .tempty { padding:40px 16px; text-align:center; color:var(--muted); }
+  .facet { display:flex; flex-direction:column; gap:2px; }
+  .facet button { display:flex; justify-content:space-between; gap:8px; border:0; background:transparent; padding:7px 10px; border-radius:10px; font:inherit; font-size:13px; color:var(--ink-2); cursor:pointer; text-align:left; }
+  .facet button:hover { background:var(--hover); } .facet button.on { background:var(--ink); color:var(--paper); } .facet button .c { opacity:.65; }
+  .flow-steps { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; }
+  .step-c { border:1px solid var(--line); border-radius:14px; padding:14px; background:var(--panel); }
+  .step-c .num { width:24px; height:24px; border-radius:50%; background:var(--ink); color:var(--paper); display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:600; margin-bottom:8px; }
+  .step-c b { display:block; font-size:13.5px; margin-bottom:4px; } .step-c p { margin:0; color:var(--ink-2); font-size:12.5px; line-height:1.55; }
+  .page .frm2 { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px 16px; }
+  .page .frm2 .f { display:flex; flex-direction:column; gap:5px; min-width:0; } .page .frm2 .f.wide { grid-column:1 / -1; }
+  .page .frm2 label { font-weight:600; font-size:12.5px; color:var(--ink); } .page .frm2 label small { display:block; color:var(--muted); font-weight:400; font-size:11.5px; margin-top:1px; }
+  .page .frm2 input, .page .frm2 select { border:1px solid var(--line-2); border-radius:10px; padding:8px 10px; background:var(--paper); color:var(--ink); font:inherit; font-size:13px; width:100%; box-sizing:border-box; }
+  .page .frm2 input:focus, .page .frm2 select:focus { outline:none; border-color:var(--ink); }
+  .settings .cards { grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); margin:0; }
+  .settings .guide-p { max-height:calc(100vh - 150px); overflow:auto; }
+  .settings .guide-p h3 { font-size:13px; margin:16px 0 4px; } .settings .guide-p h3:first-of-type { margin-top:0; }
+  .settings .guide-p p { color:var(--ink-2); font-size:12.5px; margin:0 0 8px; }
+  .settings .guide-p pre { font-size:11.5px; white-space:pre-wrap; overflow-wrap:anywhere; background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:8px 10px; margin:0 0 8px; }
+  .settings .probe { font-size:12.5px; }
+  .procpaper .fields { margin:0 0 16px; }
+  .procpaper .pe-hint { margin:-6px 0 12px; }
+  .pform section.panel { margin:0; } .pform section.panel h2 { margin-top:0; }
+  .page .state.dirty { color:var(--hot, var(--warn)); font-size:12.5px; }
+  .procpaper .instr { font-family:var(--ui); font-size:13px; }
+  .procpaper .ck { margin:0; }
+  .page ul.pissues { padding-left:0; } .page .pissues li { margin:0; }
+  .procpaper h1 { font-family:var(--ui); }
+  @media (max-width:1100px) { .grid-main, .grid-2 { grid-template-columns:1fr; } .sticky { position:static; } .settings .guide-p { max-height:none; } }
+  @media (max-width:700px) { .page .frm2 { grid-template-columns:1fr; } .tbl .hide-s { display:none; } .seg { max-width:100%; overflow-x:auto; } .tbl th, .tbl td { padding-left:8px; padding-right:8px; } }
 </style>
 </head>
 <body>
@@ -650,14 +721,14 @@
     <section class="view" id="view-proc" hidden>
       <div class="center" id="proc-empty"><div class="empty-state"><div class="ic"><svg class="i"><use href="#i-proc"/></svg></div><h3 data-i18n="procs_empty_h"></h3><p data-i18n="procs_empty_p"></p><button class="btn primary" id="new-proc-2"><svg class="i"><use href="#i-plus"/></svg><span data-i18n="new_proc"></span></button></div></div>
       <div class="toolbar" id="proc-tools" hidden></div>
-      <div class="scrollv" id="proc-scroll" hidden><div class="paper prose procpaper" id="proc-body"></div></div>
+      <div class="scrollv" id="proc-scroll" hidden><div class="page procpaper" id="proc-body"></div></div>
     </section>
     <!-- memory: what Aroa remembers, with forget -->
-    <section class="view" id="view-memory" hidden><div class="scrollv"><div class="paper prose info" id="memory-body"></div></div></section>
+    <section class="view" id="view-memory" hidden><div class="scrollv"><div class="page" id="memory-body"></div></div></section>
     <!-- settings: provider, model, privacy; with the local-model guide -->
-    <section class="view" id="view-settings" hidden><div class="scrollv"><div class="paper prose settings" id="settings-body"></div></div></section>
+    <section class="view" id="view-settings" hidden><div class="scrollv"><div class="page settings" id="settings-body"></div></div></section>
     <!-- information: what Aroa is, how it works, what happens to the data -->
-    <section class="view" id="view-info" hidden><div class="scrollv"><div class="paper prose info" id="info-body"></div></div></section>
+    <section class="view" id="view-info" hidden><div class="scrollv"><div class="page info" id="info-body"></div></div></section>
     <!-- inspector: the source a citation points at -->
     <aside class="inspector" id="inspector">
       <div class="ih"><div class="t" id="insp-title"></div><button class="btn ghost sm icon" id="insp-close" data-i18n-title="close"><svg class="i"><use href="#i-x"/></svg></button></div>
@@ -682,7 +753,7 @@ let section = 'chat', currentDoc = null, currentJob = null, procsCache = [], cur
 const L = {
   en: {
     info: 'About', info_title: 'About Aroa', settings: 'Settings', settings_title: 'Settings', memory_sec: 'Memory', memory_title: 'What Aroa remembers', mem_filter: 'Filter facts', mem_intro: 'Facts extracted from what people at the firm told Aroa: preferences, decisions, people, dates. Only what the user says is stored, never Aroa\'s replies or document contents. Each fact is recalled only inside its matter (or everywhere when it has none). Forget anything wrong or that should not be kept.', mem_general: 'general',
-    cancel: 'Cancel', proc_broken: 'This procedure cannot be followed until it is fixed:', pe_lead: 'Fill in the four parts. Aroa checks the procedure against its template as you type, and it is only saved when there is nothing to fix.', pe_general: 'General', pe_name: 'Name', pe_name_ph: 'Reclamación patrimonial', pe_desc: 'When it is used', pe_desc_ph: 'In two lines: the case, the rules it rests on, the deadline.', pe_template_hint: 'A document of the library. Its {{Field}} gaps are filled with the data; its [[instruction]] passages are written by Aroa. Edit it as a document; the procedure checks it again.', pe_template_pick: 'Choose a library document', pe_missing: 'not in the library', pe_open: 'Open', pe_tplinfo: 'The template has {p} data gaps and {b} passages Aroa writes.', pe_fields_hint: 'One per piece of data the template asks for. The name must match the gap in the template, accents and capitals aside; the hint helps whoever fills it in.', pe_field_name: 'Name, as in the template', pe_field_hint: 'Hint (optional)', pe_long: 'Several lines', pe_long_t: 'Shown as a larger box when filling it in', pe_up: 'Move up', pe_down: 'Move down', pe_add_field: 'Add data', pe_add_missing: 'Add the {n} the template asks for', pe_add_missing_1: 'Add «{name}»', pe_instr_hint: 'How Aroa writes the [[…]] passages: register, structure, what to cite, what never to write.', pe_instr_ph: 'Formal register, numbered facts, cite the exact article…', pe_check_hint: 'One thing per line that the finished document must show. The review checks each one with a verbatim quote.', pe_check_ph: 'Identifies the claimant with name and ID', pe_add_check: 'Add item', pe_issues: 'Before saving', pe_ok: 'Everything fits: the procedure can be saved.', pe_fix_first: 'Fix the marked errors to save', pe_check_failed: 'The procedure could not be checked.', pi_no_name: 'Give it a name.', pi_name_taken: 'There is already a procedure called «{name}».', pi_no_template: 'Choose the template.', pi_template_missing: 'The template «{name}» is no longer in the library.', pi_field_unnamed: 'Data n.º {n} has no name.', pi_field_brackets: 'The name «{name}» cannot contain braces or brackets.', pi_field_repeated: 'The data «{name}» is repeated.', pi_placeholder_without_field: 'The template asks for «{name}» and no data has that name.', pi_field_unused: '«{name}» is not a gap in the template: Aroa gets it when writing passages, but nothing is filled with it directly.', pi_field_ignored: '«{name}» does not appear in the template and will not be used.', pi_template_plain: 'The template has no {{…}} gaps nor [[…]] passages: the document comes out as it is.', pi_no_instructions: 'The template has passages Aroa writes, but there are no writing rules.', pi_no_checklist: 'Without a review checklist, the review checks nothing specific to this procedure.', pi_checklist_repeated: 'Some checklist items are repeated.', sec_chat: 'Chat', sec_docs: 'Documents', sec_jobs: 'Work', sec_procs: 'Procedures', procedures: 'Procedures', no_procs: 'No procedures yet. Create one: template, data, how to write it, how to review it.', procs_empty_h: 'Procedures', procs_empty_p: 'A procedure has four parts: the template, the data it needs, how to write it and how to review it. It is edited through a form and only saved when it is complete and matches its template. Pick one to fill in its data and draft the document; Aroa follows the steps and the review checks the list.', new_proc: 'New procedure', draft_btn: 'Draft the document', edit_proc: 'Edit procedure', template_lbl: 'Template', data_lbl: 'Data', instructions_lbl: 'Writing', checklist_lbl: 'Review checklist', kind_draft: 'Draft', drafting: 'drafting', draft_done: 'Draft ready: open in the editor', draft_failed: 'Drafting failed', matter_lbl: 'Matter (for the file name)', no_template: 'This procedure names no template.', checklist_title: 'Procedure checklist', met: 'met', unmet: 'not met', inline_template: 'inline template', alarms: 'Alarms', status: 'Status', theme: 'Theme', language: 'Language',
+    fill_h: 'Fill in and draft', set_model_h: 'Model', set_behaviour_h: 'Behaviour and privacy', mem_count: '{n} facts stored · {m} matters', mem_count_0: '{n} facts stored, none tied to a matter', mem_by_matter: 'By matter', mem_how: 'How memory works', mem_all: 'All', mem_newest: 'Newest first', mem_oldest: 'Oldest first', mem_az: 'A to Z', mem_fact: 'Fact', mem_matter: 'Matter', mem_origin: 'Said in', mem_when: 'Date', mem_open_conv: 'Open the conversation', mem_no_match: 'No fact matches the filters.', mem_selected: '{n} selected', mem_unselect: 'Clear selection', mem_forget_sel: 'Forget selected', mem_select_all: 'Select all shown', forget_many_q: 'Forget {n} facts? Aroa will no longer remember them.', mo_chat: 'Chat', mo_documents: 'Documents', mo_web: 'Web', mo_project: 'Matter folder', mo_alarms: 'Alarms', mo_review: 'Review', mo_none: 'Not recorded', cancel: 'Cancel', proc_broken: 'This procedure cannot be followed until it is fixed:', pe_lead: 'Fill in the four parts. Aroa checks the procedure against its template as you type, and it is only saved when there is nothing to fix.', pe_general: 'General', pe_name: 'Name', pe_name_ph: 'Reclamación patrimonial', pe_desc: 'When it is used', pe_desc_ph: 'In two lines: the case, the rules it rests on, the deadline.', pe_template_hint: 'A document of the library. Its {{Field}} gaps are filled with the data; its [[instruction]] passages are written by Aroa. Edit it as a document; the procedure checks it again.', pe_template_pick: 'Choose a library document', pe_missing: 'not in the library', pe_open: 'Open', pe_tplinfo: 'The template has {p} data gaps and {b} passages Aroa writes.', pe_fields_hint: 'One per piece of data the template asks for. The name must match the gap in the template, accents and capitals aside; the hint helps whoever fills it in.', pe_field_name: 'Name, as in the template', pe_field_hint: 'Hint (optional)', pe_long: 'Several lines', pe_long_t: 'Shown as a larger box when filling it in', pe_up: 'Move up', pe_down: 'Move down', pe_add_field: 'Add data', pe_add_missing: 'Add the {n} the template asks for', pe_add_missing_1: 'Add «{name}»', pe_instr_hint: 'How Aroa writes the [[…]] passages: register, structure, what to cite, what never to write.', pe_instr_ph: 'Formal register, numbered facts, cite the exact article…', pe_check_hint: 'One thing per line that the finished document must show. The review checks each one with a verbatim quote.', pe_check_ph: 'Identifies the claimant with name and ID', pe_add_check: 'Add item', pe_issues: 'Before saving', pe_ok: 'Everything fits: the procedure can be saved.', pe_fix_first: 'Fix the marked errors to save', pe_check_failed: 'The procedure could not be checked.', pi_no_name: 'Give it a name.', pi_name_taken: 'There is already a procedure called «{name}».', pi_no_template: 'Choose the template.', pi_template_missing: 'The template «{name}» is no longer in the library.', pi_field_unnamed: 'Data n.º {n} has no name.', pi_field_brackets: 'The name «{name}» cannot contain braces or brackets.', pi_field_repeated: 'The data «{name}» is repeated.', pi_placeholder_without_field: 'The template asks for «{name}» and no data has that name.', pi_field_unused: '«{name}» is not a gap in the template: Aroa gets it when writing passages, but nothing is filled with it directly.', pi_field_ignored: '«{name}» does not appear in the template and will not be used.', pi_template_plain: 'The template has no {{…}} gaps nor [[…]] passages: the document comes out as it is.', pi_no_instructions: 'The template has passages Aroa writes, but there are no writing rules.', pi_no_checklist: 'Without a review checklist, the review checks nothing specific to this procedure.', pi_checklist_repeated: 'Some checklist items are repeated.', sec_chat: 'Chat', sec_docs: 'Documents', sec_jobs: 'Work', sec_procs: 'Procedures', procedures: 'Procedures', no_procs: 'No procedures yet. Create one: template, data, how to write it, how to review it.', procs_empty_h: 'Procedures', procs_empty_p: 'A procedure has four parts: the template, the data it needs, how to write it and how to review it. It is edited through a form and only saved when it is complete and matches its template. Pick one to fill in its data and draft the document; Aroa follows the steps and the review checks the list.', new_proc: 'New procedure', draft_btn: 'Draft the document', edit_proc: 'Edit procedure', template_lbl: 'Template', data_lbl: 'Data', instructions_lbl: 'Writing', checklist_lbl: 'Review checklist', kind_draft: 'Draft', drafting: 'drafting', draft_done: 'Draft ready: open in the editor', draft_failed: 'Drafting failed', matter_lbl: 'Matter (for the file name)', no_template: 'This procedure names no template.', checklist_title: 'Procedure checklist', met: 'met', unmet: 'not met', inline_template: 'inline template', alarms: 'Alarms', status: 'Status', theme: 'Theme', language: 'Language',
     conversations: 'Conversations', new_short: 'New', new_title: 'New conversation', no_threads: 'No conversations yet.', filter_threads: 'Filter conversations', filter_docs: 'Filter documents',
     documents: 'Documents', add: 'Add', add_title: 'Markdown, text, PDF, Word or HTML', add_doc: 'Add a document', no_docs: 'No documents yet. Create one, add .md, .txt, .pdf or .docx files, or drop them anywhere.',
     docs_empty_h: 'Document library', docs_empty_p: 'Documents are indexed pseudonymised and answered from with citations. Pick one on the left to read it, analyse it whole or review it as a draft.',
@@ -721,7 +792,7 @@ const L = {
   },
   es: {
     info: 'Info', info_title: 'Qué es Aroa y cómo funciona', settings: 'Ajustes', settings_title: 'Ajustes', memory_sec: 'Memoria', memory_title: 'Lo que Aroa recuerda', mem_filter: 'Filtrar hechos', mem_intro: 'Hechos extraídos de lo que alguien del despacho le ha dicho a Aroa: preferencias, decisiones, personas, fechas. Solo se guarda lo que dice el usuario, nunca las respuestas de Aroa ni el contenido de los documentos. Cada hecho solo se recuerda dentro de su expediente (o en todos si no tiene). Olvida lo que esté mal o no deba conservarse.', mem_general: 'general',
-    cancel: 'Cancelar', proc_broken: 'Este procedimiento no se puede seguir hasta que se corrija:', pe_lead: 'Rellena las cuatro partes. Aroa comprueba el procedimiento contra su plantilla mientras escribes, y solo se guarda cuando no queda nada que corregir.', pe_general: 'General', pe_name: 'Nombre', pe_name_ph: 'Reclamación patrimonial', pe_desc: 'Cuándo se usa', pe_desc_ph: 'En dos líneas: el caso, las normas en que se apoya, el plazo.', pe_template_hint: 'Un documento de la biblioteca. Sus huecos {{Campo}} se rellenan con los datos; sus pasajes [[instrucción]] los redacta Aroa. Se edita como documento; el procedimiento lo vuelve a comprobar.', pe_template_pick: 'Elige un documento de la biblioteca', pe_missing: 'no está en la biblioteca', pe_open: 'Abrir', pe_tplinfo: 'La plantilla tiene {p} huecos de datos y {b} pasajes que redacta Aroa.', pe_fields_hint: 'Uno por cada dato que pide la plantilla. El nombre debe coincidir con el hueco de la plantilla, sin importar tildes ni mayúsculas; la pista ayuda a quien lo rellena.', pe_field_name: 'Nombre, como en la plantilla', pe_field_hint: 'Pista (opcional)', pe_long: 'Varias líneas', pe_long_t: 'Se muestra como un cuadro más grande al rellenarlo', pe_up: 'Subir', pe_down: 'Bajar', pe_add_field: 'Añadir dato', pe_add_missing: 'Añadir los {n} que pide la plantilla', pe_add_missing_1: 'Añadir el dato «{name}»', pe_instr_hint: 'Cómo redacta Aroa los pasajes [[…]]: registro, estructura, qué citar, qué no escribir nunca.', pe_instr_ph: 'Registro formal, hechos numerados, cita del artículo exacto…', pe_check_hint: 'Una cosa por línea que el documento terminado debe mostrar. La revisión comprueba cada una con una cita literal.', pe_check_ph: 'Identifica al reclamante con nombre y DNI', pe_add_check: 'Añadir punto', pe_issues: 'Antes de guardar', pe_ok: 'Todo encaja: el procedimiento se puede guardar.', pe_fix_first: 'Corrige los errores marcados para guardar', pe_check_failed: 'No se ha podido comprobar el procedimiento.', pi_no_name: 'Ponle un nombre.', pi_name_taken: 'Ya hay un procedimiento llamado «{name}».', pi_no_template: 'Elige la plantilla.', pi_template_missing: 'La plantilla «{name}» ya no está en la biblioteca.', pi_field_unnamed: 'El dato n.º {n} no tiene nombre.', pi_field_brackets: 'El nombre «{name}» no puede llevar llaves ni corchetes.', pi_field_repeated: 'El dato «{name}» está repetido.', pi_placeholder_without_field: 'La plantilla pide «{name}» y no hay ningún dato con ese nombre.', pi_field_unused: '«{name}» no es un hueco de la plantilla: Aroa lo tiene al redactar los pasajes, pero no se rellena nada con él directamente.', pi_field_ignored: '«{name}» no aparece en la plantilla y no se usará.', pi_template_plain: 'La plantilla no tiene huecos {{…}} ni pasajes [[…]]: el documento sale tal cual.', pi_no_instructions: 'La plantilla tiene pasajes que redacta Aroa, pero no hay instrucciones de redacción.', pi_no_checklist: 'Sin lista de revisión, la revisión no comprobará nada propio de este procedimiento.', pi_checklist_repeated: 'Hay puntos repetidos en la lista de revisión.', sec_chat: 'Chat', sec_docs: 'Documentos', sec_jobs: 'Trabajos', sec_procs: 'Procedim.', procedures: 'Procedimientos', no_procs: 'Todavía no hay procedimientos. Crea uno: plantilla, datos, cómo se redacta, cómo se revisa.', procs_empty_h: 'Procedimientos', procs_empty_p: 'Un procedimiento tiene cuatro partes: la plantilla, los datos que necesita, cómo se redacta y cómo se revisa. Se edita con un formulario y solo se guarda si está completo y encaja con su plantilla. Elige uno para rellenar sus datos y redactar el documento; Aroa sigue los pasos y la revisión comprueba la lista.', new_proc: 'Nuevo procedimiento', draft_btn: 'Redactar el documento', edit_proc: 'Editar procedimiento', template_lbl: 'Plantilla', data_lbl: 'Datos', instructions_lbl: 'Redacción', checklist_lbl: 'Lista de revisión', kind_draft: 'Borrador', drafting: 'redactando', draft_done: 'Borrador listo: se abre en el editor', draft_failed: 'La redacción ha fallado', matter_lbl: 'Expediente (para el nombre del archivo)', no_template: 'Este procedimiento no indica plantilla.', checklist_title: 'Lista de revisión del procedimiento', met: 'cumplido', unmet: 'no cumplido', inline_template: 'plantilla en el propio procedimiento', alarms: 'Alarmas', status: 'Estado', theme: 'Tema', language: 'Idioma',
+    fill_h: 'Rellenar y redactar', set_model_h: 'Modelo', set_behaviour_h: 'Comportamiento y privacidad', mem_count: '{n} hechos guardados · {m} expedientes', mem_count_0: '{n} hechos guardados, ninguno ligado a un expediente', mem_by_matter: 'Por expediente', mem_how: 'Cómo funciona la memoria', mem_all: 'Todos', mem_newest: 'Más recientes', mem_oldest: 'Más antiguos', mem_az: 'De la A a la Z', mem_fact: 'Hecho', mem_matter: 'Expediente', mem_origin: 'Dicho en', mem_when: 'Fecha', mem_open_conv: 'Abrir la conversación', mem_no_match: 'Ningún hecho coincide con los filtros.', mem_selected: '{n} seleccionados', mem_unselect: 'Quitar selección', mem_forget_sel: 'Olvidar seleccionados', mem_select_all: 'Seleccionar todos los que se ven', forget_many_q: '¿Olvidar {n} hechos? Aroa dejará de recordarlos.', mo_chat: 'Chat', mo_documents: 'Documentos', mo_web: 'Web', mo_project: 'Carpeta del expediente', mo_alarms: 'Alarmas', mo_review: 'Revisión', mo_none: 'Sin registrar', cancel: 'Cancelar', proc_broken: 'Este procedimiento no se puede seguir hasta que se corrija:', pe_lead: 'Rellena las cuatro partes. Aroa comprueba el procedimiento contra su plantilla mientras escribes, y solo se guarda cuando no queda nada que corregir.', pe_general: 'General', pe_name: 'Nombre', pe_name_ph: 'Reclamación patrimonial', pe_desc: 'Cuándo se usa', pe_desc_ph: 'En dos líneas: el caso, las normas en que se apoya, el plazo.', pe_template_hint: 'Un documento de la biblioteca. Sus huecos {{Campo}} se rellenan con los datos; sus pasajes [[instrucción]] los redacta Aroa. Se edita como documento; el procedimiento lo vuelve a comprobar.', pe_template_pick: 'Elige un documento de la biblioteca', pe_missing: 'no está en la biblioteca', pe_open: 'Abrir', pe_tplinfo: 'La plantilla tiene {p} huecos de datos y {b} pasajes que redacta Aroa.', pe_fields_hint: 'Uno por cada dato que pide la plantilla. El nombre debe coincidir con el hueco de la plantilla, sin importar tildes ni mayúsculas; la pista ayuda a quien lo rellena.', pe_field_name: 'Nombre, como en la plantilla', pe_field_hint: 'Pista (opcional)', pe_long: 'Varias líneas', pe_long_t: 'Se muestra como un cuadro más grande al rellenarlo', pe_up: 'Subir', pe_down: 'Bajar', pe_add_field: 'Añadir dato', pe_add_missing: 'Añadir los {n} que pide la plantilla', pe_add_missing_1: 'Añadir el dato «{name}»', pe_instr_hint: 'Cómo redacta Aroa los pasajes [[…]]: registro, estructura, qué citar, qué no escribir nunca.', pe_instr_ph: 'Registro formal, hechos numerados, cita del artículo exacto…', pe_check_hint: 'Una cosa por línea que el documento terminado debe mostrar. La revisión comprueba cada una con una cita literal.', pe_check_ph: 'Identifica al reclamante con nombre y DNI', pe_add_check: 'Añadir punto', pe_issues: 'Antes de guardar', pe_ok: 'Todo encaja: el procedimiento se puede guardar.', pe_fix_first: 'Corrige los errores marcados para guardar', pe_check_failed: 'No se ha podido comprobar el procedimiento.', pi_no_name: 'Ponle un nombre.', pi_name_taken: 'Ya hay un procedimiento llamado «{name}».', pi_no_template: 'Elige la plantilla.', pi_template_missing: 'La plantilla «{name}» ya no está en la biblioteca.', pi_field_unnamed: 'El dato n.º {n} no tiene nombre.', pi_field_brackets: 'El nombre «{name}» no puede llevar llaves ni corchetes.', pi_field_repeated: 'El dato «{name}» está repetido.', pi_placeholder_without_field: 'La plantilla pide «{name}» y no hay ningún dato con ese nombre.', pi_field_unused: '«{name}» no es un hueco de la plantilla: Aroa lo tiene al redactar los pasajes, pero no se rellena nada con él directamente.', pi_field_ignored: '«{name}» no aparece en la plantilla y no se usará.', pi_template_plain: 'La plantilla no tiene huecos {{…}} ni pasajes [[…]]: el documento sale tal cual.', pi_no_instructions: 'La plantilla tiene pasajes que redacta Aroa, pero no hay instrucciones de redacción.', pi_no_checklist: 'Sin lista de revisión, la revisión no comprobará nada propio de este procedimiento.', pi_checklist_repeated: 'Hay puntos repetidos en la lista de revisión.', sec_chat: 'Chat', sec_docs: 'Documentos', sec_jobs: 'Trabajos', sec_procs: 'Procedim.', procedures: 'Procedimientos', no_procs: 'Todavía no hay procedimientos. Crea uno: plantilla, datos, cómo se redacta, cómo se revisa.', procs_empty_h: 'Procedimientos', procs_empty_p: 'Un procedimiento tiene cuatro partes: la plantilla, los datos que necesita, cómo se redacta y cómo se revisa. Se edita con un formulario y solo se guarda si está completo y encaja con su plantilla. Elige uno para rellenar sus datos y redactar el documento; Aroa sigue los pasos y la revisión comprueba la lista.', new_proc: 'Nuevo procedimiento', draft_btn: 'Redactar el documento', edit_proc: 'Editar procedimiento', template_lbl: 'Plantilla', data_lbl: 'Datos', instructions_lbl: 'Redacción', checklist_lbl: 'Lista de revisión', kind_draft: 'Borrador', drafting: 'redactando', draft_done: 'Borrador listo: se abre en el editor', draft_failed: 'La redacción ha fallado', matter_lbl: 'Expediente (para el nombre del archivo)', no_template: 'Este procedimiento no indica plantilla.', checklist_title: 'Lista de revisión del procedimiento', met: 'cumplido', unmet: 'no cumplido', inline_template: 'plantilla en el propio procedimiento', alarms: 'Alarmas', status: 'Estado', theme: 'Tema', language: 'Idioma',
     conversations: 'Conversaciones', new_short: 'Nueva', new_title: 'Nueva conversación', no_threads: 'Todavía no hay conversaciones.', filter_threads: 'Filtrar conversaciones', filter_docs: 'Filtrar documentos',
     documents: 'Documentos', add: 'Añadir', add_title: 'Markdown, texto, PDF, Word o HTML', add_doc: 'Añadir un documento', no_docs: 'Todavía no hay documentos. Crea uno, añade archivos .md, .txt, .pdf o .docx, o suéltalos en cualquier parte.',
     docs_empty_h: 'Biblioteca de documentos', docs_empty_p: 'Los documentos se indexan pseudonimizados y se responde desde ellos con citas. Elige uno a la izquierda para leerlo, analizarlo entero o revisarlo como borrador.',
@@ -1377,16 +1448,15 @@ async function openProc(slug) {
   const r = await fetch('/api/procedures/' + encodeURIComponent(slug)); if (!r.ok) { toast(T('not_removed')); return; }
   currentProc = await r.json(); renderProcs(); setTitle(); history.replaceState(null, '', '#proc=' + encodeURIComponent(slug));
   const p = currentProc, broken = p.check.errors.length > 0;
-  $('#proc-empty').hidden = true; $('#proc-tools').hidden = false; $('#proc-scroll').hidden = false; $('#editor-wrap').hidden = true;
-  $('#proc-tools').innerHTML = `<span class="stats">${esc(p.source)}</span><button class="btn sm" id="p-edit">${ico('pen')}${T('edit_proc')}</button><button class="btn ghost sm icon danger" id="p-del" title="${T('delete')}">${ico('trash')}</button>`;
-  $('#proc-body').innerHTML = `<h1>${esc(p.name)}</h1>${p.description ? `<p class="lead">${esc(p.description)}</p>` : ''}` +
-    (broken ? `<div class="pbroken"><strong>${T('proc_broken')}</strong>${procIssues(p.check, false)}</div>` : '') +
-    `<h2>${T('template_lbl')}</h2><p>${p.template_ref ? `<button type="button" class="cite link" data-open-doc="${esc(p.template_ref)}">${esc(p.template_ref)}</button>` : p.template_text ? T('inline_template') : T('no_template')}</p>` +
-    `<h2>${T('data_lbl')}</h2><form id="proc-form" class="fields">${p.fields.map((f, i) => `<div class="fld ${f.long ? 'wide' : ''}"><label for="pf${i}">${esc(f.name)}${f.hint ? ` <small>· ${esc(f.hint)}</small>` : ''}</label>${f.long ? `<textarea id="pf${i}" rows="2" data-field="${esc(f.name)}"></textarea>` : `<input id="pf${i}" data-field="${esc(f.name)}">`}</div>`).join('')}` +
+  $('#proc-empty').hidden = true; $('#proc-tools').hidden = true; $('#proc-scroll').hidden = false; $('#editor-wrap').hidden = true;
+  $('#proc-body').innerHTML = `<div class="page-head"><div><h1>${esc(p.name)}</h1>${p.description ? `<p class="sub">${esc(p.description)}</p>` : ''}</div><div class="acts"><button class="btn" id="p-edit">${ico('pen')}${T('edit_proc')}</button><button class="btn ghost icon danger" id="p-del" title="${T('delete')}">${ico('trash')}</button></div></div>` +
+    (broken ? `<div class="panel pbroken" style="margin-bottom:16px"><strong>${T('proc_broken')}</strong>${procIssues(p.check, false)}</div>` : '') +
+    `<div class="grid-main"><div class="panel"><h2>${T('fill_h')}<span class="n">· ${p.fields.length}</span></h2><form id="proc-form" class="fields">${p.fields.map((f, i) => `<div class="fld ${f.long ? 'wide' : ''}"><label for="pf${i}">${esc(f.name)}${f.hint ? ` <small>· ${esc(f.hint)}</small>` : ''}</label>${f.long ? `<textarea id="pf${i}" rows="2" data-field="${esc(f.name)}"></textarea>` : `<input id="pf${i}" data-field="${esc(f.name)}">`}</div>`).join('')}` +
     `<div class="fld"><label for="pf-matter">${T('matter_lbl')}</label><input id="pf-matter" placeholder="${T('matter_ph')}" value="${esc($('#matter').value.trim())}"></div></form>` +
-    `<p><button type="button" class="btn primary" id="p-draft" ${broken ? 'disabled' : ''}>${ico('pen')}${T('draft_btn')}</button></p>` +
-    (p.instructions ? `<h2>${T('instructions_lbl')}</h2><div class="instr">${esc(p.instructions)}</div>` : '') +
-    (p.checklist.length ? `<h2>${T('checklist_lbl')}</h2><ul class="ck">${p.checklist.map(c => `<li>${ico('check')}<span>${esc(c)}</span></li>`).join('')}</ul>` : '');
+    `<button type="button" class="btn primary" id="p-draft" ${broken ? 'disabled' : ''}>${ico('pen')}${T('draft_btn')}</button></div>` +
+    `<div class="stack"><div class="panel"><h2>${T('template_lbl')}</h2><p style="margin:0">${p.template_ref ? `<button type="button" class="cite link" data-open-doc="${esc(p.template_ref)}">${esc(p.template_ref)}</button>` : p.template_text ? T('inline_template') : T('no_template')}</p>${p.template_ref && !broken ? `<p class="note" style="margin:6px 0 0">${T('pe_tplinfo').replace('{p}', p.check.placeholders.length).replace('{b}', p.check.blocks)}</p>` : ''}</div>` +
+    (p.instructions ? `<div class="panel"><h2>${T('instructions_lbl')}</h2><div class="instr">${esc(p.instructions)}</div></div>` : '') +
+    (p.checklist.length ? `<div class="panel"><h2>${T('checklist_lbl')}<span class="n">· ${p.checklist.length}</span></h2><ul class="ck">${p.checklist.map(c => `<li>${ico('check')}<span>${esc(c)}</span></li>`).join('')}</ul></div>` : '') + `</div></div>`;
   $('#proc-scroll').scrollTop = 0;
 }
 $('#proc-body').addEventListener('click', async e => {
@@ -1399,7 +1469,7 @@ $('#proc-body').addEventListener('click', async e => {
     watchJob((await r.json()).job_id, 'draft', true);
   }
 });
-$('#proc-tools').addEventListener('click', async e => {
+$('#view-proc').addEventListener('click', async e => {
   if (e.target.closest('#p-edit')) { editProc(currentProc); return; }
   if (e.target.closest('#p-del')) { if (!confirm(T('remove_q').replace('{n}', currentProc.name))) return; await fetch('/api/procedures/' + encodeURIComponent(currentProc.slug), { method: 'DELETE' }); currentProc = null; $('#proc-empty').hidden = false; $('#proc-tools').hidden = true; $('#proc-scroll').hidden = true; loadProcs(); setTitle(); return; }
   if (e.target.closest('#pe-save')) { saveProc(); return; }
@@ -1416,8 +1486,7 @@ async function editProc(p) {
     ? { name: p.name, description: p.description, template: p.template_ref, fields: p.fields.map(f => ({ ...f })), instructions: p.instructions, checklist: [...p.checklist] }
     : { name: '', description: '', template: '', fields: [{ name: '', hint: '', long: false }], instructions: '', checklist: [''] } };
   if (!p) { currentProc = null; renderProcs(); history.replaceState(null, '', location.pathname + location.search); }
-  $('#proc-empty').hidden = true; $('#proc-tools').hidden = false; $('#proc-scroll').hidden = false;
-  $('#proc-tools').innerHTML = `<span class="state" id="pe-state"></span><button class="btn primary sm" id="pe-save" disabled>${ico('check')}${T('save')}</button><button class="btn ghost sm" id="pe-cancel">${T('cancel')}</button>`;
+  $('#proc-empty').hidden = true; $('#proc-tools').hidden = true; $('#proc-scroll').hidden = false;
   renderProcForm(); setTitle(); procCheck();
   $('#proc-scroll').scrollTop = 0;
 }
@@ -1425,24 +1494,24 @@ function renderProcForm() {
   const r = procEdit.rec;
   const templates = docsCache.filter(d => /\.(md|html?|docx|txt)$/i.test(d.source));
   const known = templates.some(d => d.source === r.template);
-  $('#proc-body').innerHTML = `<h1>${procEdit.slug ? T('edit_proc') : T('new_proc')}</h1><p class="lead">${T('pe_lead')}</p>` +
-    `<div class="pform">` +
-    `<section><h2>${T('pe_general')}</h2><div class="fields">` +
+  $('#proc-body').innerHTML = `<div class="page-head"><div><h1>${procEdit.slug ? T('edit_proc') : T('new_proc')}</h1><p class="sub">${T('pe_lead')}</p></div><div class="acts"><span class="state" id="pe-state"></span><button class="btn" id="pe-cancel">${T('cancel')}</button><button class="btn primary" id="pe-save" disabled>${ico('check')}${T('save')}</button></div></div>` +
+    `<div class="grid-main"><div class="stack pform">` +
+    `<section class="panel"><h2>${T('pe_general')}</h2><div class="fields">` +
       `<div class="fld wide"><label for="pe-name">${T('pe_name')}</label><input id="pe-name" data-k="name" value="${esc(r.name)}" placeholder="${T('pe_name_ph')}" maxlength="120"></div>` +
       `<div class="fld wide"><label for="pe-desc">${T('pe_desc')}</label><textarea id="pe-desc" data-k="description" rows="3" placeholder="${T('pe_desc_ph')}">${esc(r.description)}</textarea></div></div></section>` +
-    `<section><h2>${T('template_lbl')}</h2><p class="pe-hint">${T('pe_template_hint')}</p><div class="pe-tpl"><select id="pe-template" data-k="template"><option value="">${T('pe_template_pick')}</option>` +
+    `<section class="panel"><h2>${T('template_lbl')}</h2><p class="pe-hint">${T('pe_template_hint')}</p><div class="pe-tpl"><select id="pe-template" data-k="template"><option value="">${T('pe_template_pick')}</option>` +
       (r.template && !known ? `<option value="${esc(r.template)}" selected>${esc(r.template)} · ${T('pe_missing')}</option>` : '') +
       templates.map(d => `<option value="${esc(d.source)}" ${d.source === r.template ? 'selected' : ''}>${esc(d.title)} · ${esc(d.source)}</option>`).join('') +
       `</select><button type="button" class="btn sm" id="pe-open-tpl" ${known ? '' : 'disabled'}>${ico('ext')}${T('pe_open')}</button></div><div id="pe-tplinfo" class="pe-hint"></div></section>` +
-    `<section><h2>${T('data_lbl')}</h2><p class="pe-hint">${T('pe_fields_hint')}</p><div class="pe-rows" id="pe-fields">` +
+    `<section class="panel"><h2>${T('data_lbl')}</h2><p class="pe-hint">${T('pe_fields_hint')}</p><div class="pe-rows" id="pe-fields">` +
       r.fields.map((f, i) => `<div class="pe-row" data-i="${i}"><input data-f="name" value="${esc(f.name)}" placeholder="${T('pe_field_name')}"><input data-f="hint" value="${esc(f.hint)}" placeholder="${T('pe_field_hint')}"><label class="pe-long" title="${T('pe_long_t')}"><input type="checkbox" data-f="long" ${f.long ? 'checked' : ''}>${T('pe_long')}</label>` +
         `<span class="pe-acts"><button type="button" class="btn ghost sm icon" data-mv="-1" title="${T('pe_up')}" ${i === 0 ? 'disabled' : ''}>${ico('chev-up')}</button><button type="button" class="btn ghost sm icon" data-mv="1" title="${T('pe_down')}" ${i === r.fields.length - 1 ? 'disabled' : ''}>${ico('chev-down')}</button><button type="button" class="btn ghost sm icon danger" data-rm title="${T('delete')}">${ico('trash')}</button></span></div>`).join('') +
       `</div><div class="pe-add"><button type="button" class="btn sm" id="pe-add-field">${ico('plus')}${T('pe_add_field')}</button><button type="button" class="btn sm" id="pe-add-missing" hidden>${ico('plus')}<span></span></button></div></section>` +
-    `<section><h2>${T('instructions_lbl')}</h2><p class="pe-hint">${T('pe_instr_hint')}</p><textarea id="pe-instr" data-k="instructions" rows="6" placeholder="${T('pe_instr_ph')}">${esc(r.instructions)}</textarea></section>` +
-    `<section><h2>${T('checklist_lbl')}</h2><p class="pe-hint">${T('pe_check_hint')}</p><div class="pe-rows" id="pe-checks">` +
+    `<section class="panel"><h2>${T('instructions_lbl')}</h2><p class="pe-hint">${T('pe_instr_hint')}</p><textarea id="pe-instr" data-k="instructions" rows="6" placeholder="${T('pe_instr_ph')}">${esc(r.instructions)}</textarea></section>` +
+    `<section class="panel"><h2>${T('checklist_lbl')}</h2><p class="pe-hint">${T('pe_check_hint')}</p><div class="pe-rows" id="pe-checks">` +
       r.checklist.map((c, i) => `<div class="pe-row ck" data-i="${i}"><input data-c value="${esc(c)}" placeholder="${T('pe_check_ph')}"><span class="pe-acts"><button type="button" class="btn ghost sm icon danger" data-rm title="${T('delete')}">${ico('trash')}</button></span></div>`).join('') +
       `</div><div class="pe-add"><button type="button" class="btn sm" id="pe-add-check">${ico('plus')}${T('pe_add_check')}</button></div></section>` +
-    `<div id="pe-issues"></div></div>`;
+    `</div><div class="panel sticky" id="pe-issues"></div></div>`;
   if (procEdit.check) showProcCheck();
 }
 let procCheckTimer = null, procCheckSeq = 0;
@@ -1451,12 +1520,12 @@ async function runProcCheck() {
   const seq = ++procCheckSeq, ed0 = procEdit; if (!ed0) return;
   const r = await fetch('/api/procedures/check' + (ed0.slug ? '?slug=' + encodeURIComponent(ed0.slug) : ''), { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(ed0.rec) });
   if (seq !== procCheckSeq || procEdit !== ed0) return;  // a newer check, or the form was left
-  if (!r.ok) { $('#pe-issues').innerHTML = `<ul class="pissues"><li class="bad">${ico('alert')}<span>${T('pe_check_failed')}</span></li></ul>`; $('#pe-save').disabled = true; return; }
+  if (!r.ok) { $('#pe-issues').innerHTML = `<h2>${T('pe_issues')}</h2><ul class="pissues"><li class="bad">${ico('alert')}<span>${T('pe_check_failed')}</span></li></ul>`; $('#pe-save').disabled = true; return; }
   ed0.check = await r.json(); showProcCheck();
 }
 function showProcCheck() {
   const c = procEdit.check, r = procEdit.rec;
-  $('#pe-issues').innerHTML = c.errors.length || c.warnings.length ? `<h2>${T('pe_issues')}</h2>${procIssues(c)}` : `<p class="pok">${ico('check')}${T('pe_ok')}</p>`;
+  $('#pe-issues').innerHTML = `<h2>${T('pe_issues')}</h2>` + (c.errors.length || c.warnings.length ? procIssues(c) : `<p class="pok">${ico('check')}${T('pe_ok')}</p>`);
   $('#pe-save').disabled = c.errors.length > 0 || !procEdit.dirty;
   $('#pe-save').title = c.errors.length ? T('pe_fix_first') : '';
   $('#pe-state').textContent = procEdit.dirty ? T('unsaved') : '';
@@ -1715,21 +1784,25 @@ async function renderSettings() {
   const provider = (cur.llm_model || '').split(':')[0] || 'ollama';
   const name = (cur.llm_model || '').split(':').slice(1).join(':'), fastName = (cur.llm_fast_model || '').split(':').slice(1).join(':');
   const opt = (v, cur) => `<option value="${v}" ${v === cur ? 'selected' : ''}>${v}</option>`;
-  body.innerHTML = `<h1>${T('settings_title')}</h1><p class="lead">${esc(S.intro)}</p>` +
-    `<h2>${S.providers}</h2><div class="cards" id="prov-cards">${Object.entries(S.cards).map(([k, [t, d, kind]]) => `<div class="card ${k === provider ? 'on' : ''}" data-prov="${k}"><b>${esc(t)}</b><span>${esc(d)}</span><span class="tag ${kind === 'local' || kind === 'local' ? 'ok' : 'fail'}">${esc(kind)}</span></div>`).join('')}</div>` +
-    `<div class="frm" id="frm">` +
-    `<label>${S.model}<small>${S.model_h}</small></label><input id="s-model" value="${esc(name)}">` +
-    `<label>${S.fast}<small>${S.fast_h}</small></label><input id="s-fast" value="${esc(fastName)}">` +
-    `<label data-for="local">${S.base}<small>${S.base_h}</small></label><input data-for="local" id="s-base" value="${esc(cur.llm_base_url || '')}">` +
-    `<label data-for="local">${S.structured}<small>${S.structured_h}</small></label><select data-for="local" id="s-structured">${['json_schema', 'function_calling', 'json_mode'].map(v => opt(v, cur.llm_structured)).join('')}</select>` +
-    `<label data-for="anthropic">${S.key} (Anthropic)<small>${S.key_h} ${cur.secrets.anthropic_api_key ? '· ' + S.key_set : '· ' + S.key_unset}</small></label><input data-for="anthropic" id="s-akey" type="password" placeholder="${cur.secrets.anthropic_api_key ? '••••••••' : 'sk-ant-…'}">` +
-    `<label data-for="openai">${S.key} (OpenAI)<small>${S.key_h} ${cur.secrets.openai_api_key ? '· ' + S.key_set : '· ' + S.key_unset}</small></label><input data-for="openai" id="s-okey" type="password" placeholder="${cur.secrets.openai_api_key ? '••••••••' : 'sk-…'}">` +
-    `<label data-for="openai">${S.gateway}<small>${S.gateway_h}</small></label><input data-for="openai" id="s-obase" value="${esc(cur.openai_base_url || '')}">` +
-    `<label>${S.reasoning}<small>${S.reasoning_h}</small></label><select id="s-reasoning">${opt('false', String(cur.llm_reasoning))}${opt('true', String(cur.llm_reasoning))}</select>` +
-    `<label>${S.privacy}<small>${S.privacy_h}</small></label><select id="s-privacy">${['full', 'identifiers', 'off'].map(v => opt(v, cur.privacy_mode)).join('')}</select>` +
-    `<label>${S.language}</label><select id="s-lang">${['es', 'en'].map(v => opt(v, cur.assistant_language)).join('')}</select>` +
-    `</div><div class="acts"><button class="btn" id="s-test">${ico('pulse')}${S.test}</button><button class="btn primary" id="s-save">${ico('check')}${S.save}</button><span class="probe" id="s-probe"></span></div>` +
-    `<div class="guide"><h2>${S.guide_h}</h2>${S.guide.map(([h, p, code]) => `<h3>${esc(h)}</h3><p>${esc(p)}</p>${code ? `<pre>${esc(code)}</pre>` : ''}`).join('')}</div>`;
+  const fld = (label, help, control, forp = '') => `<div class="f"${forp ? ` data-for="${forp}"` : ''}><label>${label}${help ? `<small>${help}</small>` : ''}</label>${control}</div>`;
+  body.innerHTML = `<div class="page-head"><div><h1>${T('settings_title')}</h1><p class="sub">${esc(S.intro)}</p></div><div class="acts"><span class="probe" id="s-probe"></span><button class="btn" id="s-test">${ico('pulse')}${S.test}</button><button class="btn primary" id="s-save">${ico('check')}${S.save}</button></div></div>` +
+    `<div class="grid-main"><div class="stack">` +
+    `<div class="panel"><h2>${S.providers}</h2><div class="cards" id="prov-cards">${Object.entries(S.cards).map(([k, [t, d, kind]]) => `<div class="card ${k === provider ? 'on' : ''}" data-prov="${k}"><b>${esc(t)}</b><span>${esc(d)}</span><span class="tag ${kind === 'local' ? 'ok' : 'fail'}">${esc(kind)}</span></div>`).join('')}</div></div>` +
+    `<div class="panel"><h2>${T('set_model_h')}</h2><div class="frm2" id="frm">` +
+      fld(S.model, S.model_h, `<input id="s-model" value="${esc(name)}">`) +
+      fld(S.fast, S.fast_h, `<input id="s-fast" value="${esc(fastName)}">`) +
+      fld(S.base, S.base_h, `<input id="s-base" value="${esc(cur.llm_base_url || '')}">`, 'local') +
+      fld(S.structured, S.structured_h, `<select id="s-structured">${['json_schema', 'function_calling', 'json_mode'].map(v => opt(v, cur.llm_structured)).join('')}</select>`, 'local') +
+      fld(`${S.key} (Anthropic)`, `${S.key_h} · ${cur.secrets.anthropic_api_key ? S.key_set : S.key_unset}`, `<input id="s-akey" type="password" placeholder="${cur.secrets.anthropic_api_key ? '••••••••' : 'sk-ant-…'}">`, 'anthropic') +
+      fld(`${S.key} (OpenAI)`, `${S.key_h} · ${cur.secrets.openai_api_key ? S.key_set : S.key_unset}`, `<input id="s-okey" type="password" placeholder="${cur.secrets.openai_api_key ? '••••••••' : 'sk-…'}">`, 'openai') +
+      fld(S.gateway, S.gateway_h, `<input id="s-obase" value="${esc(cur.openai_base_url || '')}">`, 'openai') +
+    `</div></div>` +
+    `<div class="panel"><h2>${T('set_behaviour_h')}</h2><div class="frm2">` +
+      fld(S.reasoning, S.reasoning_h, `<select id="s-reasoning">${opt('false', String(cur.llm_reasoning))}${opt('true', String(cur.llm_reasoning))}</select>`) +
+      fld(S.privacy, S.privacy_h, `<select id="s-privacy">${['full', 'identifiers', 'off'].map(v => opt(v, cur.privacy_mode)).join('')}</select>`) +
+      fld(S.language, '', `<select id="s-lang">${['es', 'en'].map(v => opt(v, cur.assistant_language)).join('')}</select>`) +
+    `</div></div></div>` +
+    `<div class="panel sticky guide-p"><h2>${S.guide_h}</h2>${S.guide.map(([h, p, code]) => `<h3>${esc(h)}</h3><p>${esc(p)}</p>${code ? `<pre>${esc(code)}</pre>` : ''}`).join('')}</div></div>`;
   body.dataset.provider = provider; applyProvider(provider);
 }
 function applyProvider(prov) {
@@ -1843,34 +1916,74 @@ const INFO = {
 async function renderInfo() {
   const I = INFO[loc()] || INFO.en, body = $('#info-body');
   let h = null; try { h = await (await fetch('/api/health')).json(); } catch {}
-  const li = a => `<ul>${a.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
-  const isLocal = h && /^ollama:/.test(h.model);
-  body.innerHTML = `<h1>${T('info_title')}</h1><p class="lead">${esc(I.intro)}</p>` +
-    (h ? `<h2>${I.now}</h2><div class="kv"><span>${I.model}</span><b>${esc(h.model)} · ${isLocal ? I.local : I.external}</b><span>${I.privacy}</span><b>${esc(h.privacy_mode)}</b><span>${I.traced}</span><b>${h.traced ? 'on' : 'off'}</b><span>${I.memory_counts}</span><b>${h.memory.facts} ${I.facts} · ${h.memory.documents} ${I.fragments}</b></div>` : '') +
-    `<h2>${I.flow_h}</h2><div class="flow">${I.flow.map((f, i) => `${i ? '<i>→</i>' : ''}<span>${esc(f)}</span>`).join('')}</div>${li(I.flow_p)}` +
-    `<h2>${I.can_h}</h2>${li(I.can)}<h2>${I.data_h}</h2>${li(I.data)}<h2>${I.legal_h}</h2>${li(I.legal)}<h2>${I.limits_h}</h2>${li(I.limits)}` +
-    `<p>${esc(I.mem_p)}</p>`;
+  const li = a => `<ul class="plain">${a.map(x => `<li>${esc(x)}</li>`).join('')}</ul>`;
+  const isLocal = h && /^(ollama|local|mlx):/.test(h.model);
+  const steps = I.flow_p.filter(x => /^[^:]{3,20}:/.test(x)), foot = I.flow_p.filter(x => !/^[^:]{3,20}:/.test(x));
+  body.innerHTML = `<div class="page-head"><div><h1>${T('info_title')}</h1><p class="sub">${esc(I.intro)}</p></div></div>` +
+    (h ? `<div class="stats-row"><div class="stat"><span>${I.model}</span><b>${esc(h.model)}</b><small>${isLocal ? I.local : I.external}</small></div><div class="stat"><span>${I.privacy}</span><b>${esc(h.privacy_mode)}</b></div><div class="stat"><span>${I.traced}</span><b>${h.traced ? 'on' : 'off'}</b></div><div class="stat"><span>${I.memory_counts}</span><b>${h.memory.facts} ${I.facts}</b><small>${h.memory.documents} ${I.fragments}</small></div></div>` : '') +
+    `<div class="panel" style="margin-bottom:16px"><h2>${I.flow_h}</h2><div class="flow-steps">${steps.map((x, i) => { const k = x.indexOf(':'), t = x.slice(k + 1).trim(); return `<div class="step-c"><span class="num">${i + 1}</span><b>${esc(x.slice(0, k))}</b><p>${esc(t.charAt(0).toUpperCase() + t.slice(1))}</p></div>`; }).join('')}</div>${foot.length ? `<p class="note" style="margin:12px 0 0">${esc(foot.join(' '))}</p>` : ''}</div>` +
+    `<div class="grid-2"><div class="panel"><h2>${I.can_h}</h2>${li(I.can)}</div><div class="panel"><h2>${I.data_h}</h2>${li(I.data)}</div><div class="panel"><h2>${I.legal_h}</h2>${li(I.legal)}</div><div class="panel"><h2>${I.limits_h}</h2>${li(I.limits)}<p class="note" style="margin:8px 0 0">${esc(I.mem_p)}</p></div></div>`;
 }
 
-/* ── memory page ───────────────────────────────────────── */
-let factsCache = [];
+/* ── memory page: a filterable table of facts ───────────── */
+let factsCache = [], memSel = new Set(), memState = { q: '', matter: null, origin: 'all', sort: 'new' };
+const memRoute = f => (f.origin || '').split(':')[0] || '';
+function memOriginLabel(r) { return r ? (T('mo_' + r) || r) : T('mo_none'); }
+function memDate(ts) { if (!ts) return ''; const d = new Date(ts); return isNaN(d) ? ts.slice(0, 10) : d.toLocaleDateString(loc(), { day: 'numeric', month: 'short', year: 'numeric' }); }
 async function renderMemory() {
   const body = $('#memory-body');
-  body.innerHTML = `<h1>${T('memory_title')}</h1><p class="lead">${esc(T('mem_intro'))}</p><div class="filter" style="margin:0 0 12px"><input id="f-mem" placeholder="${T('mem_filter')}" style="width:100%;height:34px;border:1px solid var(--line-2);border-radius:8px;padding:0 12px;background:var(--panel);color:var(--ink)"></div><div id="mem-list"><div class="live"><div class="spinner"></div></div></div>`;
-  $('#f-mem').addEventListener('input', renderFacts);
+  body.innerHTML = `<div class="page-head"><div><h1>${T('memory_sec')}</h1><p class="sub" id="mem-sub"></p></div></div>` +
+    `<div class="grid-main"><div class="panel flush"><div class="ftools"><div class="search">${ico('search')}<input id="f-mem" placeholder="${T('mem_filter')}" value="${esc(memState.q)}"></div><div class="seg" id="mem-origin"></div>` +
+    `<select class="pill" id="mem-sort"><option value="new">${T('mem_newest')}</option><option value="old">${T('mem_oldest')}</option><option value="az">${T('mem_az')}</option></select></div>` +
+    `<div id="mem-bulk"></div><div id="mem-list"><div class="tempty"><div class="spinner"></div></div></div></div>` +
+    `<div class="stack sticky"><div class="panel"><h2>${T('mem_by_matter')}</h2><div class="facet" id="mem-matters"></div></div>` +
+    `<div class="panel"><h2>${ico('info')}${T('mem_how')}</h2><p class="note" style="margin:0">${esc(T('mem_intro'))}</p></div></div></div>`;
+  $('#mem-sort').value = memState.sort;
   try { factsCache = await (await fetch('/api/memory/facts')).json(); } catch { factsCache = []; }
+  memSel = new Set([...memSel].filter(t => factsCache.some(f => f.text === t)));
   renderFacts();
 }
 function renderFacts() {
-  const q = ($('#f-mem')?.value || '').toLowerCase(), I = INFO[loc()] || INFO.en;
-  const rows = factsCache.filter(f => !q || f.text.toLowerCase().includes(q) || (f.matter || '').toLowerCase().includes(q));
-  $('#mem-list').innerHTML = rows.length ? rows.map(f => `<div class="mem"><div>${esc(f.text)}<small>${esc((f.ts || '').slice(0, 10))} · ${f.matter ? esc(f.matter) : T('mem_general')}${f.origin ? ' · ' + esc(f.origin) : ''}</small></div><button type="button" class="btn sm" data-forget="${esc(f.text)}">${ico('trash')}${I.forget}</button></div>`).join('') : `<p>${I.none}</p>`;
+  const st = memState, q = st.q.toLowerCase();
+  const byRoute = {}, byMatter = {};
+  factsCache.forEach(f => { byRoute[memRoute(f)] = (byRoute[memRoute(f)] || 0) + 1; byMatter[f.matter || ''] = (byMatter[f.matter || ''] || 0) + 1; });
+  const matters = Object.keys(byMatter).sort((a, b) => (a === '') - (b === '') || a.localeCompare(b));
+  const nm = matters.filter(m => m).length;
+  $('#mem-sub').textContent = (nm ? T('mem_count') : T('mem_count_0')).replace('{n}', factsCache.length).replace('{m}', nm);
+  $('#mem-matters').innerHTML = [`<button data-matter="*" class="${st.matter === null ? 'on' : ''}"><span>${T('mem_all')}</span><span class="c">${factsCache.length}</span></button>`, ...matters.map(m => `<button data-matter="${esc(m)}" class="${st.matter === m ? 'on' : ''}"><span>${m ? esc(m) : T('mem_general')}</span><span class="c">${byMatter[m]}</span></button>`)].join('');
+  const routes = Object.keys(byRoute).sort();
+  $('#mem-origin').innerHTML = [`<button data-origin="all" class="${st.origin === 'all' ? 'on' : ''}">${T('mem_all')}<span class="c">${factsCache.length}</span></button>`, ...routes.map(r => `<button data-origin="${esc(r)}" class="${st.origin === r ? 'on' : ''}">${esc(memOriginLabel(r))}<span class="c">${byRoute[r]}</span></button>`)].join('');
+  let rows = factsCache.filter(f => (!q || f.text.toLowerCase().includes(q) || (f.matter || '').toLowerCase().includes(q)) && (st.matter === null || (f.matter || '') === st.matter) && (st.origin === 'all' || memRoute(f) === st.origin));
+  rows = rows.slice().sort((a, b) => st.sort === 'az' ? a.text.localeCompare(b.text) : st.sort === 'old' ? (a.ts || '').localeCompare(b.ts || '') : (b.ts || '').localeCompare(a.ts || ''));
+  const allOn = rows.length > 0 && rows.every(f => memSel.has(f.text));
+  $('#mem-bulk').innerHTML = memSel.size ? `<div class="bulk"><b>${T('mem_selected').replace('{n}', memSel.size)}</b><span class="sp"></span><button class="btn sm" id="mem-clear">${T('mem_unselect')}</button><button class="btn sm danger" id="mem-forget-sel">${ico('trash')}${T('mem_forget_sel')}</button></div>` : '';
+  $('#mem-list').innerHTML = rows.length ? `<table class="tbl"><thead><tr><th class="chk"><input type="checkbox" id="mem-all" ${allOn ? 'checked' : ''} title="${T('mem_select_all')}"></th><th>${T('mem_fact')}</th><th class="hide-s">${T('mem_matter')}</th><th class="hide-s">${T('mem_origin')}</th><th class="hide-s">${T('mem_when')}</th><th></th></tr></thead><tbody>` +
+    rows.map(f => `<tr class="${memSel.has(f.text) ? 'sel' : ''}"><td class="chk"><input type="checkbox" data-sel="${esc(f.text)}" ${memSel.has(f.text) ? 'checked' : ''}></td><td>${esc(f.text)}</td><td class="m hide-s">${f.matter ? `<span class="pillv">${esc(f.matter)}</span>` : T('mem_general')}</td><td class="m hide-s">${esc(memOriginLabel(memRoute(f)))}</td><td class="m hide-s">${esc(memDate(f.ts))}</td>` +
+      `<td class="act">${f.thread_id ? `<button class="btn ghost sm icon" data-thread="${esc(f.thread_id)}" title="${T('mem_open_conv')}">${ico('chat')}</button>` : ''}<button class="btn ghost sm icon danger" data-forget="${esc(f.text)}" title="${T('forget')}">${ico('trash')}</button></td></tr>`).join('') + '</tbody></table>'
+    : `<div class="tempty">${factsCache.length ? T('mem_no_match') : (INFO[loc()] || INFO.en).none}</div>`;
+  $('#mem-list').dataset.visible = JSON.stringify(rows.map(f => f.text));
 }
+async function forgetFacts(texts) {
+  let ok = 0;
+  for (const text of texts) { const r = await fetch('/api/memory/forget', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }) }); if (r.ok) { ok++; memSel.delete(text); factsCache = factsCache.filter(f => f.text !== text); } }
+  toast(ok === texts.length ? T('forgotten') : T('not_removed')); renderFacts(); loadHealth();
+}
+$('#memory-body').addEventListener('input', e => {
+  if (e.target.id === 'f-mem') { memState.q = e.target.value; renderFacts(); }
+});
+$('#memory-body').addEventListener('change', e => {
+  const t = e.target;
+  if (t.id === 'mem-sort') { memState.sort = t.value; renderFacts(); }
+  else if (t.id === 'mem-all') { const vis = JSON.parse($('#mem-list').dataset.visible || '[]'); vis.forEach(x => t.checked ? memSel.add(x) : memSel.delete(x)); renderFacts(); }
+  else if (t.dataset.sel !== undefined) { t.checked ? memSel.add(t.dataset.sel) : memSel.delete(t.dataset.sel); renderFacts(); }
+});
 $('#memory-body').addEventListener('click', async e => {
-  const b = e.target.closest('[data-forget]'); if (!b) return;
-  if (!confirm(T('forget_q'))) return;
-  const r = await fetch('/api/memory/forget', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: b.dataset.forget }) });
-  toast(r.ok ? T('forgotten') : T('not_removed')); if (r.ok) { factsCache = factsCache.filter(f => f.text !== b.dataset.forget); renderFacts(); loadHealth(); }
+  const m = e.target.closest('[data-matter]'); if (m) { memState.matter = m.dataset.matter === '*' ? null : m.dataset.matter; renderFacts(); return; }
+  const o = e.target.closest('[data-origin]'); if (o) { memState.origin = o.dataset.origin; renderFacts(); return; }
+  const th = e.target.closest('[data-thread]'); if (th) { openThread(th.dataset.thread); return; }
+  if (e.target.closest('#mem-clear')) { memSel.clear(); renderFacts(); return; }
+  if (e.target.closest('#mem-forget-sel')) { if (confirm(T('forget_many_q').replace('{n}', memSel.size))) forgetFacts([...memSel]); return; }
+  const b = e.target.closest('[data-forget]'); if (b && confirm(T('forget_q'))) forgetFacts([b.dataset.forget]);
 });
 
 /* ── popovers: alarms and status ───────────────────────── */
