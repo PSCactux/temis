@@ -133,8 +133,9 @@ def turn_messages(messages: list[AnyMessage]) -> list[AnyMessage]:
 
 
 def load_persona(folder: Path, name: str) -> str:
+    """The persona files joined, with {name} replaced by the assistant's name."""
     parts = [p.read_text(encoding="utf-8") for p in sorted(folder.glob("*.md"))] if folder.is_dir() else []
-    return "\n\n".join(parts) or f"# Who you are\n\nYou are {name}, a personal assistant."
+    return "\n\n".join(parts).replace("{name}", name) or f"# Who you are\n\nYou are {name}, a personal assistant."
 
 
 def build_graph(

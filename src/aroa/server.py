@@ -260,6 +260,7 @@ def health():
     a = runtime.assistant
     return {
         "ok": True,
+        "name": a.settings.assistant_name,
         "model": a.settings.llm_model,
         "privacy_mode": a.settings.privacy_mode,
         "traced": a.traced,
