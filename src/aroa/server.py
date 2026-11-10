@@ -333,6 +333,7 @@ def turn(turn_id: str):
         raise HTTPException(404, "unknown turn")
     data = dict(row)
     data["nodes"] = json.loads(data["nodes"] or "{}")
+    data["calls"] = json.loads(data["calls"] or "[]")
     reveal = runtime.assistant.reveal
     data["trace"] = [
         {**e, "summary": reveal(e.get("summary", "")), "items": [reveal(i) for i in e.get("items", [])]}

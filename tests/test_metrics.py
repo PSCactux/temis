@@ -1,7 +1,7 @@
 """Metrics rows, Prometheus text and the daily report are computed from SQLite in code."""
 
 from aroa.telemetry.db import connect
-from aroa.telemetry.metrics import prometheus_text, record_turn, report
+from aroa.telemetry.metrics import TurnCollector, prometheus_text, record_turn, report
 
 
 def test_turns_feed_prometheus_and_report(tmp_path):
@@ -61,3 +61,24 @@ def test_dashboard_fills_the_series_and_groups_errors(tmp_path):
     assert data["memory"] == {"facts": 1, "duplicates": 1, "episodes": 0, "forgotten": 0}
     hours = dashboard(conn, days=1)
     assert hours["bucket"] == "hour" and len(hours["activity"]) in (24, 25)
+
+
+def test_collector_keeps_one_line_per_model_call():
+    from uuid import uuid4
+
+    from langchain_core.messages import AIMessage
+    from langchain_core.outputs import ChatGeneration, LLMResult
+
+    c = TurnCollector()
+    ok, failed = uuid4(), uuid4()
+    meta = {"langgraph_node": "route", "ls_provider": "ollama", "ls_model_name": "qwen3:8b"}
+    c.on_chat_model_start({}, [], run_id=ok, metadata=meta)
+    message = AIMessage("x", usage_metadata={"input_tokens": 120, "output_tokens": 8, "total_tokens": 128})
+    c.on_llm_end(LLMResult(generations=[[ChatGeneration(message=message)]]), run_id=ok)
+    c.on_chat_model_start({"kwargs": {"model": "qwen3-8b"}}, [], run_id=failed, metadata={"langgraph_node": "answer"})
+    c.on_llm_error(ValueError("bad json"), run_id=failed)
+    first, second = c.calls
+    assert (first["step"], first["provider"], first["model"]) == ("route", "ollama", "qwen3:8b")
+    assert (first["input_tokens"], first["output_tokens"]) == (120, 8) and first["seconds"] >= 0
+    assert (second["step"], second["model"], second["error"]) == ("answer", "qwen3-8b", "ValueError")
+    assert c.llm_calls == 2 and c.input_tokens == 120

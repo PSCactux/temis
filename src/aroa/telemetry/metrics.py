@@ -15,29 +15,45 @@ def now_iso() -> str:
 
 
 class TurnCollector(BaseCallbackHandler):
-    """Counts model calls, tokens and model latency for one turn. Attach via config["callbacks"]."""
+    """Counts model calls, tokens and model latency for one turn, and keeps one line per call (graph step,
+    provider, model, seconds, tokens). Attach via config["callbacks"]."""
 
     def __init__(self) -> None:
         self.llm_calls = 0
         self.input_tokens = 0
         self.output_tokens = 0
         self.model_seconds = 0.0
-        self._started: dict[Any, float] = {}
+        self.calls: list[dict] = []
+        self._started: dict[Any, tuple[float, dict]] = {}
 
-    def on_chat_model_start(self, serialized, messages, *, run_id, **kwargs) -> None:
+    def on_chat_model_start(self, serialized, messages, *, run_id, metadata=None, **kwargs) -> None:
         self.llm_calls += 1
-        self._started[run_id] = time.perf_counter()
+        meta = metadata or {}
+        model = meta.get("ls_model_name") or ((serialized or {}).get("kwargs") or {}).get("model", "")
+        call = {"step": meta.get("langgraph_node", ""), "provider": meta.get("ls_provider", ""), "model": model}
+        self.calls.append(call)
+        self._started[run_id] = (time.perf_counter(), call)
 
     def on_llm_end(self, response, *, run_id, **kwargs) -> None:
-        started = self._started.pop(run_id, None)
+        started, call = self._started.pop(run_id, (None, {}))
         if started is not None:
-            self.model_seconds += time.perf_counter() - started
+            seconds = time.perf_counter() - started
+            self.model_seconds += seconds
+            call["seconds"] = round(seconds, 3)
         for generation in response.generations:
             for g in generation:
                 usage = getattr(g.message, "usage_metadata", None) if hasattr(g, "message") else None
                 if usage:
                     self.input_tokens += int(usage.get("input_tokens") or 0)
                     self.output_tokens += int(usage.get("output_tokens") or 0)
+                    call["input_tokens"] = call.get("input_tokens", 0) + int(usage.get("input_tokens") or 0)
+                    call["output_tokens"] = call.get("output_tokens", 0) + int(usage.get("output_tokens") or 0)
+
+    def on_llm_error(self, error, *, run_id, **kwargs) -> None:
+        started, call = self._started.pop(run_id, (None, {}))
+        if started is not None:
+            call["seconds"] = round(time.perf_counter() - started, 3)
+            call["error"] = type(error).__name__
 
 
 def turn_metrics(state: dict, collector: TurnCollector, *, seconds: float) -> dict:
@@ -59,6 +75,7 @@ def turn_metrics(state: dict, collector: TurnCollector, *, seconds: float) -> di
         "claims_failed": verification.get("failed", 0),
         "facts_written": len(state.get("facts_written") or []),
         "nodes": json.dumps({t["step"]: t.get("seconds", 0) for t in trace}),
+        "calls": json.dumps(collector.calls),
     }
 
 

@@ -25,7 +25,8 @@ CREATE TABLE IF NOT EXISTS turns (
     interrupted INTEGER DEFAULT 0,
     error TEXT,
     nodes TEXT,                       -- JSON {node: seconds}
-    trace TEXT                        -- JSON list: the plain-language path of the turn
+    trace TEXT,                       -- JSON list: the plain-language path of the turn
+    calls TEXT                        -- JSON list: one entry per model call (step, provider, model, seconds, tokens)
 );
 CREATE INDEX IF NOT EXISTS turns_ts ON turns(ts);
 CREATE TABLE IF NOT EXISTS tool_calls (
@@ -93,4 +94,7 @@ def connect(path: Path) -> sqlite3.Connection:
     columns = {row["name"] for row in conn.execute("PRAGMA table_info(jobs)")}
     if "log" not in columns:  # databases created before jobs kept a readable log
         conn.execute("ALTER TABLE jobs ADD COLUMN log TEXT")
+    columns = {row["name"] for row in conn.execute("PRAGMA table_info(turns)")}
+    if "calls" not in columns:  # databases created before each model call was recorded
+        conn.execute("ALTER TABLE turns ADD COLUMN calls TEXT")
     return conn
