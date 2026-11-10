@@ -20,6 +20,9 @@ leave the firm and must not depend on one vendor's dashboard.
 - Feedback: thumbs per reply, tied to the turn id.
 - Report: daily aggregates computed in code, never by the model.
 - Evals: a dataset of whole turns by kind, run against the real models, numbers in the README.
+- Page: a metrics page in the UI draws all of the above from the same rows (activity, time per step,
+  routes, errors by type, tools, memory writes, and every turn with its path), with a link to the trace
+  viewer when one is configured. The JSON and Prometheus endpoints stay for other tools.
 
 ## Consequences
 

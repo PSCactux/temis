@@ -19,10 +19,11 @@ from starlette.concurrency import run_in_threadpool
 from . import analysis, clippings, documents, lawcheck, procedures, prompts, review
 from .app import Assistant
 from .config import get_settings
+from .i18n import t as say
 from .memory.loaders import EXTENSIONS, read_text
 from .models import make_chat_model
 from .telemetry.audit import turn_audit
-from .telemetry.metrics import now_iso, prometheus_text, report
+from .telemetry.metrics import dashboard, now_iso, prometheus_text, report
 from .tools import alarms
 
 WEB = Path(__file__).parent / "web"
@@ -337,7 +338,8 @@ def turn(turn_id: str):
         {**e, "summary": reveal(e.get("summary", "")), "items": [reveal(i) for i in e.get("items", [])]}
         for e in json.loads(data["trace"] or "[]")
     ]
-    data["audit"] = turn_audit(conn, turn_id)
+    data["audit"] = runtime.assistant.reveal_all(turn_audit(conn, turn_id))
+    data["error"] = reveal(data["error"]) if data["error"] else data["error"]
     feedback = conn.execute("SELECT score, comment FROM feedback WHERE turn_id = ?", (turn_id,)).fetchone()
     data["feedback"] = dict(feedback) if feedback else None
     return data
@@ -522,6 +524,29 @@ def list_alarms():
 @app.get("/api/report")
 def daily_report(days: int = 1):
     return report(runtime.assistant.conn, days=days)
+
+
+@app.get("/api/observability")
+def observability(days: int = 7):
+    """The metrics page: the dashboard numbers plus what is running now and where its traces go."""
+    a = runtime.assistant
+    endpoint = a.settings.otlp_endpoint or ""
+    data = dashboard(a.conn, days=max(1, min(days, 90)))
+    data["errors"] = [{**e, "kind": a.reveal(e["kind"])} for e in data["errors"]]
+    data["steps"] = [{**st, "title": say(a.settings.assistant_language, st["step"])} for st in data["steps"]]
+    data["turns"] = [{**r, "title": a.reveal(r["title"]), "error": a.reveal(r["error"])} for r in data["turns"]]
+    return {
+        **data,
+        "status": {
+            "model": a.settings.llm_model,
+            "fast_model": a.settings.llm_fast_model,
+            "privacy_mode": a.settings.privacy_mode,
+            "memory": a.memory.stats(),
+            "traced": a.traced,
+            # Phoenix serves its UI where it receives traces: http://host:6006/v1/traces → http://host:6006
+            "traces_ui": endpoint.removesuffix("/v1/traces") if a.traced and endpoint.endswith("/v1/traces") else "",
+        },
+    }
 
 
 @app.get("/metrics", response_class=PlainTextResponse)

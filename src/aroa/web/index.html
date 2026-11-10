@@ -589,6 +589,65 @@
   .procpaper h1 { font-family:var(--ui); }
   @media (max-width:1100px) { .grid-main, .grid-2 { grid-template-columns:1fr; } .sticky { position:static; } .settings .guide-p { max-height:none; } }
   @media (max-width:700px) { .page .frm2 { grid-template-columns:1fr; } .tbl .hide-s { display:none; } .seg { max-width:100%; overflow-x:auto; } .tbl th, .tbl td { padding-left:8px; padding-right:8px; } }
+  /* metrics page */
+  .metrics { --viz-1:#2a78d6; }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .metrics { --viz-1:#3987e5; } }
+  :root[data-theme="dark"] .metrics { --viz-1:#3987e5; }
+  #mx-main { transition:opacity .15s; } #mx-main.loading { opacity:.55; }
+  .metrics .stat b { font-size:22px; letter-spacing:-.02em; margin-top:6px; }
+  .metrics .stat small { display:block; margin-top:2px; }
+  .metrics .stat.alert b { color:var(--bad); } .metrics .stat.warn b { color:var(--warn); }
+  .panel .ph .sp { flex:1; } .panel .ph .n { font-size:12px; }
+  .seg.sm button { height:24px; padding:0 10px; font-size:11.5px; }
+  .cc { padding:6px 0 0; }
+  .cc-plot { position:relative; height:150px; margin-left:44px; }
+  .cc-gl { position:absolute; left:0; right:0; border-top:1px solid var(--line); }
+  .cc-gl span { position:absolute; right:calc(100% + 8px); top:-8px; font-size:11px; color:var(--muted); white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .cc-bars { position:absolute; inset:0; display:flex; align-items:flex-end; gap:2px; }
+  .cc-b { flex:1; height:100%; position:relative; display:flex; align-items:flex-end; justify-content:center; outline:none; border-radius:6px; }
+  .cc-b:hover, .cc-b:focus-visible { background:var(--hover); }
+  .cc-b i { display:block; width:100%; max-width:24px; background:var(--viz-1); border-radius:4px 4px 0 0; position:relative; }
+  .cc-b:focus-visible i { box-shadow:0 0 0 2px var(--paper), 0 0 0 4px var(--viz-1); }
+  .cc-lab { position:absolute; left:50%; transform:translateX(-50%); font-size:11px; color:var(--ink-2); white-space:nowrap; pointer-events:none; }
+  .cc-x { display:flex; gap:2px; margin:6px 0 0 44px; }
+  .cc-x span { flex:1; min-width:0; text-align:center; font-size:11px; color:var(--muted); white-space:nowrap; overflow:visible; }
+  #mx-tip { position:fixed; z-index:60; pointer-events:none; background:var(--paper); border:1px solid var(--line-2); border-radius:10px; box-shadow:var(--shadow); padding:8px 11px; font-size:12px; color:var(--ink-2); line-height:1.55; }
+  #mx-tip .th { color:var(--muted); font-size:11.5px; margin-bottom:2px; } #mx-tip b { color:var(--ink); font-weight:600; }
+  .hbars { display:flex; flex-direction:column; gap:2px; }
+  .hb { display:grid; grid-template-columns:minmax(96px,40%) minmax(0,1fr) auto; align-items:center; gap:10px; border:0; background:transparent; padding:6px 8px; margin:0 -8px; border-radius:10px; font:inherit; font-size:12.5px; color:var(--ink-2); text-align:left; }
+  button.hb { cursor:pointer; } button.hb:hover { background:var(--hover); } .hb.on { background:var(--accent-soft); color:var(--ink); box-shadow:inset 0 0 0 1px var(--line-2); }
+  .hb-l { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .hb-t { height:8px; } .hb-t i { display:block; height:100%; min-width:2px; background:var(--viz-1); border-radius:0 4px 4px 0; }
+  .hb-v { font-variant-numeric:tabular-nums; color:var(--ink); min-width:48px; text-align:right; }
+  .metrics .kv { display:flex; justify-content:space-between; align-items:baseline; gap:14px; padding:8px 0; border-bottom:1px solid var(--line); font-size:12.5px; }
+  .metrics .kv:last-child { border-bottom:0; } .metrics .kv > span { color:var(--muted); min-width:0; } .metrics .kv > b { font-weight:500; text-align:right; overflow-wrap:anywhere; color:var(--ink); }
+  .metrics .kv > b.m { color:var(--muted); font-weight:400; white-space:nowrap; }
+  .mx-det .kv > span { color:var(--ink-2); }
+  .metrics code { font-family:var(--mono); font-size:11.5px; }
+  .metrics code.blk { display:block; background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:6px 9px; margin:0 0 8px; overflow-wrap:anywhere; white-space:pre-wrap; color:var(--ink-2); }
+  .metrics h3.mini { font-size:12.5px; font-weight:600; margin:16px 0 4px; }
+  .metrics .links { display:flex; gap:12px; flex-wrap:wrap; font-family:var(--mono); font-size:12px; } .metrics .links a { color:var(--ink-2); }
+  .metrics .facet .ek { font-family:var(--mono); font-size:12px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+  .tbl.compact th, .tbl.compact td { padding:7px 10px; font-size:12.5px; } .tbl.compact th:first-child, .tbl.compact td:first-child { padding-left:0; } .tbl.compact th:last-child, .tbl.compact td:last-child { padding-right:0; }
+  .tbl th.n, .tbl td.n { text-align:right; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .tbl tr.click { cursor:pointer; } .tbl tr.open td { background:var(--hover); }
+  .tbl td.conv { max-width:420px; } .tbl td.conv .e { font-family:var(--mono); font-size:11px; color:var(--bad); margin-top:2px; }
+  .tbl tr.det td { background:var(--panel); padding:18px 20px 20px; cursor:default; }
+  .tbl tr.det:hover td { background:var(--panel); }
+  .stt { display:inline-flex; align-items:center; gap:6px; font-size:12px; white-space:nowrap; color:var(--ink-2); }
+  .stt::before { content:""; width:7px; height:7px; border-radius:50%; background:var(--ok); flex:none; }
+  .stt.err::before { background:var(--bad); } .stt.warn::before { background:var(--warn); } .stt.blk::before { background:var(--muted); }
+  .mx-det { display:grid; grid-template-columns:minmax(0,1.5fr) minmax(0,1fr); gap:28px; }
+  .mx-det h3 { font-size:12px; font-weight:600; color:var(--muted); margin:0 0 6px; }
+  .mx-path { list-style:none; margin:0; padding:0; counter-reset:p; }
+  .mx-path > li { padding:9px 0 9px 30px; border-bottom:1px solid var(--line); position:relative; counter-increment:p; }
+  .mx-path > li:last-child { border-bottom:0; }
+  .mx-path > li::before { content:counter(p); position:absolute; left:0; top:9px; width:20px; height:20px; border-radius:50%; background:var(--paper); border:1px solid var(--line-2); font-size:11px; display:flex; align-items:center; justify-content:center; color:var(--ink-2); }
+  .mx-path .h { display:flex; justify-content:space-between; gap:12px; font-weight:600; font-size:13px; } .mx-path .h span { font-weight:400; color:var(--muted); font-variant-numeric:tabular-nums; }
+  .mx-path p { margin:2px 0 0; color:var(--ink-2); font-size:12.5px; } .mx-path ul { margin:4px 0 0; padding-left:16px; color:var(--muted); font-size:12px; }
+  pre.errtxt { white-space:pre-wrap; overflow-wrap:anywhere; font-family:var(--mono); font-size:11.5px; background:var(--bad-soft); color:var(--ink); border-radius:10px; padding:10px 12px; max-height:200px; overflow:auto; margin:0; }
+  @media (max-width:1100px) { .mx-det { grid-template-columns:1fr; } }
+  @media (max-width:700px) { .metrics .stats-row { grid-template-columns:repeat(2,minmax(0,1fr)); } .metrics .stat b { font-size:19px; } .cc-x span:nth-child(odd):not(:last-child) { visibility:hidden; } .tbl td.conv { max-width:none; } .metrics .ftools .ph { width:100%; } }
 </style>
 </head>
 <body>
@@ -643,7 +702,7 @@
   <button id="b-memory" data-sec="memory"><svg class="i"><use href="#i-brain"/></svg><span data-i18n="memory_sec"></span></button>
   <button id="b-settings" data-sec="settings"><svg class="i"><use href="#i-gear"/></svg><span data-i18n="settings"></span></button>
   <button id="b-info" data-sec="info"><svg class="i"><use href="#i-info"/></svg><span data-i18n="info"></span></button>
-  <button id="b-status" data-i18n-title="status"><svg class="i"><use href="#i-pulse"/></svg><span data-i18n="status"></span><span class="dot" id="health-dot"></span></button>
+  <button id="b-status" data-sec="metrics"><svg class="i"><use href="#i-pulse"/></svg><span data-i18n="metrics"></span><span class="dot" id="health-dot"></span></button>
   <button id="b-theme" data-i18n-title="theme"><svg class="i"><use href="#i-auto" id="theme-icon"/></svg><span data-i18n="theme"></span></button>
   <button id="lang"><span style="font-size:12px;font-weight:600">ES</span><span data-i18n="language"></span></button>
 </nav>
@@ -730,6 +789,8 @@
     <section class="view" id="view-memory" hidden><div class="scrollv"><div class="page" id="memory-body"></div></div></section>
     <!-- settings: provider, model, privacy; with the local-model guide -->
     <section class="view" id="view-settings" hidden><div class="scrollv"><div class="page settings" id="settings-body"></div></div></section>
+    <!-- metrics: what Aroa did, how long it took, what failed -->
+    <section class="view" id="view-metrics" hidden><div class="scrollv"><div class="page metrics" id="metrics-body"></div></div></section>
     <!-- information: what Aroa is, how it works, what happens to the data -->
     <section class="view" id="view-info" hidden><div class="scrollv"><div class="page info" id="info-body"></div></div></section>
     <!-- inspector: the source a citation points at -->
@@ -743,7 +804,6 @@
 
 <button type="button" class="btn primary sm clip" id="clip"><svg class="i"><use href="#i-scissors"/></svg><span data-i18n="clip"></span></button>
 <div class="pop" id="pop-alarms"></div>
-<div class="pop" id="pop-status"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -756,7 +816,27 @@ let section = 'chat', currentDoc = null, currentJob = null, procsCache = [], cur
 const L = {
   en: {
     info: 'About', info_title: 'About Aroa', settings: 'Settings', settings_title: 'Settings', memory_sec: 'Memory', memory_title: 'What Aroa remembers', mem_filter: 'Filter facts', mem_intro: 'Facts extracted from what people at the firm told Aroa: preferences, decisions, people, dates. Only what the user says is stored, never Aroa\'s replies or document contents. Each fact is recalled only inside its matter (or everywhere when it has none). Forget anything wrong or that should not be kept.', mem_general: 'general',
-    fill_h: 'Fill in and draft', set_model_h: 'Model', set_behaviour_h: 'Behaviour and privacy', mem_count: '{n} facts stored · {m} matters', mem_count_0: '{n} facts stored, none tied to a matter', mem_by_matter: 'By matter', mem_how: 'How memory works', mem_all: 'All', mem_newest: 'Newest first', mem_oldest: 'Oldest first', mem_az: 'A to Z', mem_fact: 'Fact', mem_matter: 'Matter', mem_origin: 'Said in', mem_when: 'Date', mem_open_conv: 'Open the conversation', mem_no_match: 'No fact matches the filters.', mem_selected: '{n} selected', mem_unselect: 'Clear selection', mem_forget_sel: 'Forget selected', mem_select_all: 'Select all shown', forget_many_q: 'Forget {n} facts? Aroa will no longer remember them.', mo_chat: 'Chat', mo_documents: 'Documents', mo_web: 'Web', mo_project: 'Matter folder', mo_alarms: 'Alarms', mo_review: 'Review', mo_none: 'Not recorded', cancel: 'Cancel', proc_broken: 'This procedure cannot be followed until it is fixed:', pe_lead: 'Fill in the four parts. Aroa checks the procedure against its template as you type, and it is only saved when there is nothing to fix.', pe_general: 'General', pe_name: 'Name', pe_name_ph: 'Reclamación patrimonial', pe_desc: 'When it is used', pe_desc_ph: 'In two lines: the case, the rules it rests on, the deadline.', pe_template_hint: 'A document of the library. Its {{Field}} gaps are filled with the data; its [[instruction]] passages are written by Aroa. Edit it as a document; the procedure checks it again.', pe_template_pick: 'Choose a library document', pe_missing: 'not in the library', pe_open: 'Open', pe_tplinfo: 'The template has {p} data gaps and {b} passages Aroa writes.', pe_fields_hint: 'One per piece of data the template asks for. The name must match the gap in the template, accents and capitals aside; the hint helps whoever fills it in.', pe_field_name: 'Name, as in the template', pe_field_hint: 'Hint (optional)', pe_long: 'Several lines', pe_long_t: 'Shown as a larger box when filling it in', pe_up: 'Move up', pe_down: 'Move down', pe_add_field: 'Add data', pe_add_missing: 'Add the {n} the template asks for', pe_add_missing_1: 'Add «{name}»', pe_instr_hint: 'How Aroa writes the [[…]] passages: register, structure, what to cite, what never to write.', pe_instr_ph: 'Formal register, numbered facts, cite the exact article…', pe_check_hint: 'One thing per line that the finished document must show. The review checks each one with a verbatim quote.', pe_check_ph: 'Identifies the claimant with name and ID', pe_add_check: 'Add item', pe_issues: 'Before saving', pe_ok: 'Everything fits: the procedure can be saved.', pe_fix_first: 'Fix the marked errors to save', pe_check_failed: 'The procedure could not be checked.', pi_no_name: 'Give it a name.', pi_name_taken: 'There is already a procedure called «{name}».', pi_no_template: 'Choose the template.', pi_template_missing: 'The template «{name}» is no longer in the library.', pi_field_unnamed: 'Data n.º {n} has no name.', pi_field_brackets: 'The name «{name}» cannot contain braces or brackets.', pi_field_repeated: 'The data «{name}» is repeated.', pi_placeholder_without_field: 'The template asks for «{name}» and no data has that name.', pi_field_unused: '«{name}» is not a gap in the template: Aroa gets it when writing passages, but nothing is filled with it directly.', pi_field_ignored: '«{name}» does not appear in the template and will not be used.', pi_template_plain: 'The template has no {{…}} gaps nor [[…]] passages: the document comes out as it is.', pi_no_instructions: 'The template has passages Aroa writes, but there are no writing rules.', pi_no_checklist: 'Without a review checklist, the review checks nothing specific to this procedure.', pi_checklist_repeated: 'Some checklist items are repeated.', sec_chat: 'Chat', sec_docs: 'Documents', sec_jobs: 'Work', sec_procs: 'Procedures', procedures: 'Procedures', no_procs: 'No procedures yet. Create one: template, data, how to write it, how to review it.', procs_empty_h: 'Procedures', procs_empty_p: 'A procedure has four parts: the template, the data it needs, how to write it and how to review it. It is edited through a form and only saved when it is complete and matches its template. Pick one to fill in its data and draft the document; Aroa follows the steps and the review checks the list.', new_proc: 'New procedure', draft_btn: 'Draft the document', edit_proc: 'Edit procedure', template_lbl: 'Template', data_lbl: 'Data', instructions_lbl: 'Writing', checklist_lbl: 'Review checklist', kind_draft: 'Draft', drafting: 'drafting', draft_done: 'Draft ready: open in the editor', draft_failed: 'Drafting failed', matter_lbl: 'Matter (for the file name)', no_template: 'This procedure names no template.', checklist_title: 'Procedure checklist', met: 'met', unmet: 'not met', inline_template: 'inline template', alarms: 'Alarms', status: 'Status', theme: 'Theme', language: 'Language',
+    fill_h: 'Fill in and draft', set_model_h: 'Model', set_behaviour_h: 'Behaviour and privacy', mem_count: '{n} facts stored · {m} matters', mem_count_0: '{n} facts stored, none tied to a matter',
+    metrics: 'Metrics', mx_sub: 'What Aroa did, how long it took and what failed. Computed on this computer from its own records.',
+    mx_r1: '24 h', mx_r7: '7 days', mx_r30: '30 days', mx_r90: '90 days', mx_refresh: 'Refresh', mx_updated: 'Updated at {t}',
+    mx_turns: 'Questions', mx_per_day: '{n} a day', mx_p50: 'Typical response', mx_p95_s: '95% under {s}', mx_errors: 'Errors', mx_errors_s: '{p}% of questions',
+    mx_calls: 'Model calls', mx_calls_s: '{n} per question', mx_tokens: 'Tokens', mx_tokens_s: '{i} in · {o} out',
+    mx_claims: 'Actions verified', mx_claims_s: '{n} rejected', mx_claims_none: 'none to check', mx_fb: 'Ratings', mx_fb_s: 'helpful / not helpful',
+    mx_activity: 'Questions over time', mx_latency: 'Typical response time', mx_latency_n: 'Median of each {b}.', mx_hour: 'hour', mx_day: 'day',
+    mx_chart: 'Chart', mx_table: 'Table', mx_when: 'When', mx_with_error: 'with an error', mx_typical: 'typical response', mx_questions: 'questions',
+    mx_routes: 'By kind of question', mx_routes_n: 'Pick one to filter the list below.', mx_steps: 'Where the time goes', mx_steps_n: 'Average seconds per step, slowest first.',
+    mx_times: '{n} times', mx_tools: 'Tools', mx_no_tools: 'No tool was used in this period.', mx_tool: 'Tool', mx_calls_c: 'Calls', mx_failed: 'Failed', mx_avg: 'Average',
+    mx_memory: 'Memory written', mx_m_facts: 'Facts saved', mx_m_dup: 'Repeats skipped', mx_m_ep: 'Conversations saved', mx_m_forgot: 'Facts forgotten',
+    mx_errors_h: 'Errors by type', mx_no_errors: 'No errors in this period.', mx_last: 'last {d}',
+    mx_status: 'Running now', mx_model: 'Main model', mx_fast: 'Fast model', mx_privacy: 'Privacy', mx_mem: 'Memory', mx_mem_v: '{f} facts · {e} conversations · {d} fragments',
+    mx_traces: 'Detailed traces', mx_traces_on: 'Every step and model call goes to the trace viewer on this computer.', mx_open_traces: 'Open traces',
+    mx_traces_off: 'Off. To follow each model call step by step, start Phoenix, add this line to .env and restart Aroa:',
+    mx_integr: 'For monitoring tools', mx_integr_p: 'The same numbers for Prometheus or any other system:',
+    mx_list: 'Every question', mx_filter: 'Filter by conversation, kind or error', mx_f_all: 'All', mx_f_err: 'With error', mx_f_claims: 'Not verified', mx_f_down: 'Not helpful',
+    mx_any_kind: 'Any kind', mx_c_conv: 'Conversation', mx_c_kind: 'Kind', mx_c_time: 'Time', mx_c_calls: 'Model', mx_c_tokens: 'Tokens', mx_c_tools: 'Tools', mx_c_state: 'Result',
+    mx_ok: 'OK', mx_err: 'Error', mx_unverified: 'Not verified', mx_blocked: 'Blocked', mx_no_turns: 'No questions in this period.', mx_no_match: 'No question matches the filters.',
+    mx_more: 'Showing the latest {n}.', mx_d_path: 'What it did', mx_d_steps: 'Time per step', mx_d_tools: 'Tool calls', mx_d_mem: 'Memory', mx_d_error: 'Error',
+    mx_d_fb: 'Rating', mx_open_conv: 'Open conversation', mx_saved: 'saved', mx_dup: 'repeat, skipped', mx_src_alarm: 'alarm', mx_src_eval: 'test', mx_untitled: 'Untitled', mem_by_matter: 'By matter', mem_how: 'How memory works', mem_all: 'All', mem_newest: 'Newest first', mem_oldest: 'Oldest first', mem_az: 'A to Z', mem_fact: 'Fact', mem_matter: 'Matter', mem_origin: 'Said in', mem_when: 'Date', mem_open_conv: 'Open the conversation', mem_no_match: 'No fact matches the filters.', mem_selected: '{n} selected', mem_unselect: 'Clear selection', mem_forget_sel: 'Forget selected', mem_select_all: 'Select all shown', forget_many_q: 'Forget {n} facts? Aroa will no longer remember them.', mo_chat: 'Chat', mo_documents: 'Documents', mo_web: 'Web', mo_project: 'Matter folder', mo_alarms: 'Alarms', mo_review: 'Review', mo_none: 'Not recorded', cancel: 'Cancel', proc_broken: 'This procedure cannot be followed until it is fixed:', pe_lead: 'Fill in the four parts. Aroa checks the procedure against its template as you type, and it is only saved when there is nothing to fix.', pe_general: 'General', pe_name: 'Name', pe_name_ph: 'Reclamación patrimonial', pe_desc: 'When it is used', pe_desc_ph: 'In two lines: the case, the rules it rests on, the deadline.', pe_template_hint: 'A document of the library. Its {{Field}} gaps are filled with the data; its [[instruction]] passages are written by Aroa. Edit it as a document; the procedure checks it again.', pe_template_pick: 'Choose a library document', pe_missing: 'not in the library', pe_open: 'Open', pe_tplinfo: 'The template has {p} data gaps and {b} passages Aroa writes.', pe_fields_hint: 'One per piece of data the template asks for. The name must match the gap in the template, accents and capitals aside; the hint helps whoever fills it in.', pe_field_name: 'Name, as in the template', pe_field_hint: 'Hint (optional)', pe_long: 'Several lines', pe_long_t: 'Shown as a larger box when filling it in', pe_up: 'Move up', pe_down: 'Move down', pe_add_field: 'Add data', pe_add_missing: 'Add the {n} the template asks for', pe_add_missing_1: 'Add «{name}»', pe_instr_hint: 'How Aroa writes the [[…]] passages: register, structure, what to cite, what never to write.', pe_instr_ph: 'Formal register, numbered facts, cite the exact article…', pe_check_hint: 'One thing per line that the finished document must show. The review checks each one with a verbatim quote.', pe_check_ph: 'Identifies the claimant with name and ID', pe_add_check: 'Add item', pe_issues: 'Before saving', pe_ok: 'Everything fits: the procedure can be saved.', pe_fix_first: 'Fix the marked errors to save', pe_check_failed: 'The procedure could not be checked.', pi_no_name: 'Give it a name.', pi_name_taken: 'There is already a procedure called «{name}».', pi_no_template: 'Choose the template.', pi_template_missing: 'The template «{name}» is no longer in the library.', pi_field_unnamed: 'Data n.º {n} has no name.', pi_field_brackets: 'The name «{name}» cannot contain braces or brackets.', pi_field_repeated: 'The data «{name}» is repeated.', pi_placeholder_without_field: 'The template asks for «{name}» and no data has that name.', pi_field_unused: '«{name}» is not a gap in the template: Aroa gets it when writing passages, but nothing is filled with it directly.', pi_field_ignored: '«{name}» does not appear in the template and will not be used.', pi_template_plain: 'The template has no {{…}} gaps nor [[…]] passages: the document comes out as it is.', pi_no_instructions: 'The template has passages Aroa writes, but there are no writing rules.', pi_no_checklist: 'Without a review checklist, the review checks nothing specific to this procedure.', pi_checklist_repeated: 'Some checklist items are repeated.', sec_chat: 'Chat', sec_docs: 'Documents', sec_jobs: 'Work', sec_procs: 'Procedures', procedures: 'Procedures', no_procs: 'No procedures yet. Create one: template, data, how to write it, how to review it.', procs_empty_h: 'Procedures', procs_empty_p: 'A procedure has four parts: the template, the data it needs, how to write it and how to review it. It is edited through a form and only saved when it is complete and matches its template. Pick one to fill in its data and draft the document; Aroa follows the steps and the review checks the list.', new_proc: 'New procedure', draft_btn: 'Draft the document', edit_proc: 'Edit procedure', template_lbl: 'Template', data_lbl: 'Data', instructions_lbl: 'Writing', checklist_lbl: 'Review checklist', kind_draft: 'Draft', drafting: 'drafting', draft_done: 'Draft ready: open in the editor', draft_failed: 'Drafting failed', matter_lbl: 'Matter (for the file name)', no_template: 'This procedure names no template.', checklist_title: 'Procedure checklist', met: 'met', unmet: 'not met', inline_template: 'inline template', alarms: 'Alarms', status: 'Status', theme: 'Theme', language: 'Language',
     conversations: 'Conversations', new_short: 'New', new_title: 'New conversation', no_threads: 'No conversations yet.', filter_threads: 'Filter conversations', filter_docs: 'Filter documents',
     documents: 'Documents', add: 'Add', add_title: 'Markdown, text, PDF, Word or HTML', add_doc: 'Add a document', no_docs: 'No documents yet. Create one, add .md, .txt, .pdf or .docx files, or drop them anywhere.',
     docs_empty_h: 'Document library', docs_empty_p: 'Documents are indexed pseudonymised and answered from with citations. Pick one on the left to read it, analyse it whole or review it as a draft.',
@@ -795,7 +875,27 @@ const L = {
   },
   es: {
     info: 'Info', info_title: 'Qué es Aroa y cómo funciona', settings: 'Ajustes', settings_title: 'Ajustes', memory_sec: 'Memoria', memory_title: 'Lo que Aroa recuerda', mem_filter: 'Filtrar hechos', mem_intro: 'Hechos extraídos de lo que alguien del despacho le ha dicho a Aroa: preferencias, decisiones, personas, fechas. Solo se guarda lo que dice el usuario, nunca las respuestas de Aroa ni el contenido de los documentos. Cada hecho solo se recuerda dentro de su expediente (o en todos si no tiene). Olvida lo que esté mal o no deba conservarse.', mem_general: 'general',
-    fill_h: 'Rellenar y redactar', set_model_h: 'Modelo', set_behaviour_h: 'Comportamiento y privacidad', mem_count: '{n} hechos guardados · {m} expedientes', mem_count_0: '{n} hechos guardados, ninguno ligado a un expediente', mem_by_matter: 'Por expediente', mem_how: 'Cómo funciona la memoria', mem_all: 'Todos', mem_newest: 'Más recientes', mem_oldest: 'Más antiguos', mem_az: 'De la A a la Z', mem_fact: 'Hecho', mem_matter: 'Expediente', mem_origin: 'Dicho en', mem_when: 'Fecha', mem_open_conv: 'Abrir la conversación', mem_no_match: 'Ningún hecho coincide con los filtros.', mem_selected: '{n} seleccionados', mem_unselect: 'Quitar selección', mem_forget_sel: 'Olvidar seleccionados', mem_select_all: 'Seleccionar todos los que se ven', forget_many_q: '¿Olvidar {n} hechos? Aroa dejará de recordarlos.', mo_chat: 'Chat', mo_documents: 'Documentos', mo_web: 'Web', mo_project: 'Carpeta del expediente', mo_alarms: 'Alarmas', mo_review: 'Revisión', mo_none: 'Sin registrar', cancel: 'Cancelar', proc_broken: 'Este procedimiento no se puede seguir hasta que se corrija:', pe_lead: 'Rellena las cuatro partes. Aroa comprueba el procedimiento contra su plantilla mientras escribes, y solo se guarda cuando no queda nada que corregir.', pe_general: 'General', pe_name: 'Nombre', pe_name_ph: 'Reclamación patrimonial', pe_desc: 'Cuándo se usa', pe_desc_ph: 'En dos líneas: el caso, las normas en que se apoya, el plazo.', pe_template_hint: 'Un documento de la biblioteca. Sus huecos {{Campo}} se rellenan con los datos; sus pasajes [[instrucción]] los redacta Aroa. Se edita como documento; el procedimiento lo vuelve a comprobar.', pe_template_pick: 'Elige un documento de la biblioteca', pe_missing: 'no está en la biblioteca', pe_open: 'Abrir', pe_tplinfo: 'La plantilla tiene {p} huecos de datos y {b} pasajes que redacta Aroa.', pe_fields_hint: 'Uno por cada dato que pide la plantilla. El nombre debe coincidir con el hueco de la plantilla, sin importar tildes ni mayúsculas; la pista ayuda a quien lo rellena.', pe_field_name: 'Nombre, como en la plantilla', pe_field_hint: 'Pista (opcional)', pe_long: 'Varias líneas', pe_long_t: 'Se muestra como un cuadro más grande al rellenarlo', pe_up: 'Subir', pe_down: 'Bajar', pe_add_field: 'Añadir dato', pe_add_missing: 'Añadir los {n} que pide la plantilla', pe_add_missing_1: 'Añadir el dato «{name}»', pe_instr_hint: 'Cómo redacta Aroa los pasajes [[…]]: registro, estructura, qué citar, qué no escribir nunca.', pe_instr_ph: 'Registro formal, hechos numerados, cita del artículo exacto…', pe_check_hint: 'Una cosa por línea que el documento terminado debe mostrar. La revisión comprueba cada una con una cita literal.', pe_check_ph: 'Identifica al reclamante con nombre y DNI', pe_add_check: 'Añadir punto', pe_issues: 'Antes de guardar', pe_ok: 'Todo encaja: el procedimiento se puede guardar.', pe_fix_first: 'Corrige los errores marcados para guardar', pe_check_failed: 'No se ha podido comprobar el procedimiento.', pi_no_name: 'Ponle un nombre.', pi_name_taken: 'Ya hay un procedimiento llamado «{name}».', pi_no_template: 'Elige la plantilla.', pi_template_missing: 'La plantilla «{name}» ya no está en la biblioteca.', pi_field_unnamed: 'El dato n.º {n} no tiene nombre.', pi_field_brackets: 'El nombre «{name}» no puede llevar llaves ni corchetes.', pi_field_repeated: 'El dato «{name}» está repetido.', pi_placeholder_without_field: 'La plantilla pide «{name}» y no hay ningún dato con ese nombre.', pi_field_unused: '«{name}» no es un hueco de la plantilla: Aroa lo tiene al redactar los pasajes, pero no se rellena nada con él directamente.', pi_field_ignored: '«{name}» no aparece en la plantilla y no se usará.', pi_template_plain: 'La plantilla no tiene huecos {{…}} ni pasajes [[…]]: el documento sale tal cual.', pi_no_instructions: 'La plantilla tiene pasajes que redacta Aroa, pero no hay instrucciones de redacción.', pi_no_checklist: 'Sin lista de revisión, la revisión no comprobará nada propio de este procedimiento.', pi_checklist_repeated: 'Hay puntos repetidos en la lista de revisión.', sec_chat: 'Chat', sec_docs: 'Documentos', sec_jobs: 'Trabajos', sec_procs: 'Procedim.', procedures: 'Procedimientos', no_procs: 'Todavía no hay procedimientos. Crea uno: plantilla, datos, cómo se redacta, cómo se revisa.', procs_empty_h: 'Procedimientos', procs_empty_p: 'Un procedimiento tiene cuatro partes: la plantilla, los datos que necesita, cómo se redacta y cómo se revisa. Se edita con un formulario y solo se guarda si está completo y encaja con su plantilla. Elige uno para rellenar sus datos y redactar el documento; Aroa sigue los pasos y la revisión comprueba la lista.', new_proc: 'Nuevo procedimiento', draft_btn: 'Redactar el documento', edit_proc: 'Editar procedimiento', template_lbl: 'Plantilla', data_lbl: 'Datos', instructions_lbl: 'Redacción', checklist_lbl: 'Lista de revisión', kind_draft: 'Borrador', drafting: 'redactando', draft_done: 'Borrador listo: se abre en el editor', draft_failed: 'La redacción ha fallado', matter_lbl: 'Expediente (para el nombre del archivo)', no_template: 'Este procedimiento no indica plantilla.', checklist_title: 'Lista de revisión del procedimiento', met: 'cumplido', unmet: 'no cumplido', inline_template: 'plantilla en el propio procedimiento', alarms: 'Alarmas', status: 'Estado', theme: 'Tema', language: 'Idioma',
+    fill_h: 'Rellenar y redactar', set_model_h: 'Modelo', set_behaviour_h: 'Comportamiento y privacidad', mem_count: '{n} hechos guardados · {m} expedientes', mem_count_0: '{n} hechos guardados, ninguno ligado a un expediente',
+    metrics: 'Métricas', mx_sub: 'Qué ha hecho Aroa, cuánto ha tardado y qué ha fallado. Se calcula en este equipo a partir de sus propios registros.',
+    mx_r1: '24 h', mx_r7: '7 días', mx_r30: '30 días', mx_r90: '90 días', mx_refresh: 'Actualizar', mx_updated: 'Actualizado a las {t}',
+    mx_turns: 'Consultas', mx_per_day: '{n} al día', mx_p50: 'Respuesta típica', mx_p95_s: 'el 95 % en menos de {s}', mx_errors: 'Errores', mx_errors_s: '{p} % de las consultas',
+    mx_calls: 'Llamadas al modelo', mx_calls_s: '{n} por consulta', mx_tokens: 'Tokens', mx_tokens_s: '{i} entrada · {o} salida',
+    mx_claims: 'Acciones verificadas', mx_claims_s: '{n} rechazadas', mx_claims_none: 'nada que comprobar', mx_fb: 'Valoraciones', mx_fb_s: 'útiles / no útiles',
+    mx_activity: 'Consultas en el tiempo', mx_latency: 'Tiempo de respuesta típico', mx_latency_n: 'Mediana de cada {b}.', mx_hour: 'hora', mx_day: 'día',
+    mx_chart: 'Gráfico', mx_table: 'Tabla', mx_when: 'Cuándo', mx_with_error: 'con error', mx_typical: 'respuesta típica', mx_questions: 'consultas',
+    mx_routes: 'Por tipo de consulta', mx_routes_n: 'Pulsa uno para filtrar la lista de abajo.', mx_steps: 'Dónde se va el tiempo', mx_steps_n: 'Segundos de media por paso, del más lento al más rápido.',
+    mx_times: '{n} veces', mx_tools: 'Herramientas', mx_no_tools: 'No se ha usado ninguna herramienta en este periodo.', mx_tool: 'Herramienta', mx_calls_c: 'Llamadas', mx_failed: 'Fallidas', mx_avg: 'Media',
+    mx_memory: 'Memoria escrita', mx_m_facts: 'Hechos guardados', mx_m_dup: 'Repetidos descartados', mx_m_ep: 'Conversaciones guardadas', mx_m_forgot: 'Hechos olvidados',
+    mx_errors_h: 'Errores por tipo', mx_no_errors: 'Sin errores en este periodo.', mx_last: 'último {d}',
+    mx_status: 'Ahora mismo', mx_model: 'Modelo principal', mx_fast: 'Modelo rápido', mx_privacy: 'Privacidad', mx_mem: 'Memoria', mx_mem_v: '{f} hechos · {e} conversaciones · {d} fragmentos',
+    mx_traces: 'Trazas detalladas', mx_traces_on: 'Cada paso y cada llamada al modelo se envían al visor de trazas, en este equipo.', mx_open_traces: 'Abrir trazas',
+    mx_traces_off: 'Desactivadas. Para seguir cada llamada al modelo paso a paso, arranca Phoenix, añade esta línea a .env y reinicia Aroa:',
+    mx_integr: 'Para herramientas de monitorización', mx_integr_p: 'Los mismos números para Prometheus o cualquier otro sistema:',
+    mx_list: 'Detalle de consultas', mx_filter: 'Filtrar por conversación, tipo o error', mx_f_all: 'Todas', mx_f_err: 'Con error', mx_f_claims: 'Sin verificar', mx_f_down: 'No útiles',
+    mx_any_kind: 'Cualquier tipo', mx_c_conv: 'Conversación', mx_c_kind: 'Tipo', mx_c_time: 'Tiempo', mx_c_calls: 'Modelo', mx_c_tokens: 'Tokens', mx_c_tools: 'Herram.', mx_c_state: 'Resultado',
+    mx_ok: 'Correcta', mx_err: 'Error', mx_unverified: 'Sin verificar', mx_blocked: 'Bloqueada', mx_no_turns: 'No hay consultas en este periodo.', mx_no_match: 'Ninguna consulta coincide con los filtros.',
+    mx_more: 'Se muestran las {n} últimas.', mx_d_path: 'Qué hizo', mx_d_steps: 'Tiempo por paso', mx_d_tools: 'Llamadas a herramientas', mx_d_mem: 'Memoria', mx_d_error: 'Error',
+    mx_d_fb: 'Valoración', mx_open_conv: 'Abrir conversación', mx_saved: 'guardado', mx_dup: 'repetido, descartado', mx_src_alarm: 'alarma', mx_src_eval: 'prueba', mx_untitled: 'Sin título', mem_by_matter: 'Por expediente', mem_how: 'Cómo funciona la memoria', mem_all: 'Todos', mem_newest: 'Más recientes', mem_oldest: 'Más antiguos', mem_az: 'De la A a la Z', mem_fact: 'Hecho', mem_matter: 'Expediente', mem_origin: 'Dicho en', mem_when: 'Fecha', mem_open_conv: 'Abrir la conversación', mem_no_match: 'Ningún hecho coincide con los filtros.', mem_selected: '{n} seleccionados', mem_unselect: 'Quitar selección', mem_forget_sel: 'Olvidar seleccionados', mem_select_all: 'Seleccionar todos los que se ven', forget_many_q: '¿Olvidar {n} hechos? Aroa dejará de recordarlos.', mo_chat: 'Chat', mo_documents: 'Documentos', mo_web: 'Web', mo_project: 'Carpeta del expediente', mo_alarms: 'Alarmas', mo_review: 'Revisión', mo_none: 'Sin registrar', cancel: 'Cancelar', proc_broken: 'Este procedimiento no se puede seguir hasta que se corrija:', pe_lead: 'Rellena las cuatro partes. Aroa comprueba el procedimiento contra su plantilla mientras escribes, y solo se guarda cuando no queda nada que corregir.', pe_general: 'General', pe_name: 'Nombre', pe_name_ph: 'Reclamación patrimonial', pe_desc: 'Cuándo se usa', pe_desc_ph: 'En dos líneas: el caso, las normas en que se apoya, el plazo.', pe_template_hint: 'Un documento de la biblioteca. Sus huecos {{Campo}} se rellenan con los datos; sus pasajes [[instrucción]] los redacta Aroa. Se edita como documento; el procedimiento lo vuelve a comprobar.', pe_template_pick: 'Elige un documento de la biblioteca', pe_missing: 'no está en la biblioteca', pe_open: 'Abrir', pe_tplinfo: 'La plantilla tiene {p} huecos de datos y {b} pasajes que redacta Aroa.', pe_fields_hint: 'Uno por cada dato que pide la plantilla. El nombre debe coincidir con el hueco de la plantilla, sin importar tildes ni mayúsculas; la pista ayuda a quien lo rellena.', pe_field_name: 'Nombre, como en la plantilla', pe_field_hint: 'Pista (opcional)', pe_long: 'Varias líneas', pe_long_t: 'Se muestra como un cuadro más grande al rellenarlo', pe_up: 'Subir', pe_down: 'Bajar', pe_add_field: 'Añadir dato', pe_add_missing: 'Añadir los {n} que pide la plantilla', pe_add_missing_1: 'Añadir el dato «{name}»', pe_instr_hint: 'Cómo redacta Aroa los pasajes [[…]]: registro, estructura, qué citar, qué no escribir nunca.', pe_instr_ph: 'Registro formal, hechos numerados, cita del artículo exacto…', pe_check_hint: 'Una cosa por línea que el documento terminado debe mostrar. La revisión comprueba cada una con una cita literal.', pe_check_ph: 'Identifica al reclamante con nombre y DNI', pe_add_check: 'Añadir punto', pe_issues: 'Antes de guardar', pe_ok: 'Todo encaja: el procedimiento se puede guardar.', pe_fix_first: 'Corrige los errores marcados para guardar', pe_check_failed: 'No se ha podido comprobar el procedimiento.', pi_no_name: 'Ponle un nombre.', pi_name_taken: 'Ya hay un procedimiento llamado «{name}».', pi_no_template: 'Elige la plantilla.', pi_template_missing: 'La plantilla «{name}» ya no está en la biblioteca.', pi_field_unnamed: 'El dato n.º {n} no tiene nombre.', pi_field_brackets: 'El nombre «{name}» no puede llevar llaves ni corchetes.', pi_field_repeated: 'El dato «{name}» está repetido.', pi_placeholder_without_field: 'La plantilla pide «{name}» y no hay ningún dato con ese nombre.', pi_field_unused: '«{name}» no es un hueco de la plantilla: Aroa lo tiene al redactar los pasajes, pero no se rellena nada con él directamente.', pi_field_ignored: '«{name}» no aparece en la plantilla y no se usará.', pi_template_plain: 'La plantilla no tiene huecos {{…}} ni pasajes [[…]]: el documento sale tal cual.', pi_no_instructions: 'La plantilla tiene pasajes que redacta Aroa, pero no hay instrucciones de redacción.', pi_no_checklist: 'Sin lista de revisión, la revisión no comprobará nada propio de este procedimiento.', pi_checklist_repeated: 'Hay puntos repetidos en la lista de revisión.', sec_chat: 'Chat', sec_docs: 'Documentos', sec_jobs: 'Trabajos', sec_procs: 'Procedim.', procedures: 'Procedimientos', no_procs: 'Todavía no hay procedimientos. Crea uno: plantilla, datos, cómo se redacta, cómo se revisa.', procs_empty_h: 'Procedimientos', procs_empty_p: 'Un procedimiento tiene cuatro partes: la plantilla, los datos que necesita, cómo se redacta y cómo se revisa. Se edita con un formulario y solo se guarda si está completo y encaja con su plantilla. Elige uno para rellenar sus datos y redactar el documento; Aroa sigue los pasos y la revisión comprueba la lista.', new_proc: 'Nuevo procedimiento', draft_btn: 'Redactar el documento', edit_proc: 'Editar procedimiento', template_lbl: 'Plantilla', data_lbl: 'Datos', instructions_lbl: 'Redacción', checklist_lbl: 'Lista de revisión', kind_draft: 'Borrador', drafting: 'redactando', draft_done: 'Borrador listo: se abre en el editor', draft_failed: 'La redacción ha fallado', matter_lbl: 'Expediente (para el nombre del archivo)', no_template: 'Este procedimiento no indica plantilla.', checklist_title: 'Lista de revisión del procedimiento', met: 'cumplido', unmet: 'no cumplido', inline_template: 'plantilla en el propio procedimiento', alarms: 'Alarmas', status: 'Estado', theme: 'Tema', language: 'Idioma',
     conversations: 'Conversaciones', new_short: 'Nueva', new_title: 'Nueva conversación', no_threads: 'Todavía no hay conversaciones.', filter_threads: 'Filtrar conversaciones', filter_docs: 'Filtrar documentos',
     documents: 'Documentos', add: 'Añadir', add_title: 'Markdown, texto, PDF, Word o HTML', add_doc: 'Añadir un documento', no_docs: 'Todavía no hay documentos. Crea uno, añade archivos .md, .txt, .pdf o .docx, o suéltalos en cualquier parte.',
     docs_empty_h: 'Biblioteca de documentos', docs_empty_p: 'Los documentos se indexan pseudonimizados y se responde desde ellos con citas. Elige uno a la izquierda para leerlo, analizarlo entero o revisarlo como borrador.',
@@ -909,8 +1009,8 @@ function show(sec) {
   section = sec;
   $$('#rail [data-sec]').forEach(b => b.classList.toggle('active', b.dataset.sec === sec));
   $$('.sp-view').forEach(v => v.hidden = v.id !== 'sp-' + sec);
-  $('#view-chat').hidden = sec !== 'chat'; $('#view-doc').hidden = sec !== 'docs'; $('#view-job').hidden = sec !== 'jobs'; $('#view-proc').hidden = sec !== 'procs'; $('#view-info').hidden = sec !== 'info'; $('#view-settings').hidden = sec !== 'settings'; $('#view-memory').hidden = sec !== 'memory';
-  document.body.classList.toggle('noside', sec === 'info' || sec === 'settings' || sec === 'memory');
+  $('#view-chat').hidden = sec !== 'chat'; $('#view-doc').hidden = sec !== 'docs'; $('#view-job').hidden = sec !== 'jobs'; $('#view-proc').hidden = sec !== 'procs'; $('#view-info').hidden = sec !== 'info'; $('#view-settings').hidden = sec !== 'settings'; $('#view-memory').hidden = sec !== 'memory'; $('#view-metrics').hidden = sec !== 'metrics';
+  document.body.classList.toggle('noside', sec === 'info' || sec === 'settings' || sec === 'memory' || sec === 'metrics');
   $('#matter-box').hidden = sec !== 'chat'; $('#sel').hidden = sec !== 'chat' || !selected.size;
   $('#side').classList.remove('open');
   closeInspector();
@@ -921,6 +1021,7 @@ function show(sec) {
   if (sec === 'info') renderInfo();
   if (sec === 'settings') renderSettings();
   if (sec === 'memory') renderMemory();
+  if (sec === 'metrics') renderMetrics();
 }
 $$('#rail [data-sec]').forEach(b => b.onclick = () => show(b.dataset.sec));
 $('#menu').onclick = () => $('#side').classList.toggle('open');
@@ -933,6 +1034,7 @@ function setTitle() {
   else if (section === 'info') { title.textContent = T('info_title'); sub.textContent = ''; }
   else if (section === 'settings') { title.textContent = T('settings_title'); sub.textContent = ''; }
   else if (section === 'memory') { title.textContent = T('memory_title'); sub.textContent = ''; }
+  else if (section === 'metrics') { title.textContent = T('metrics'); sub.textContent = ''; }
   else if (section === 'procs') { title.textContent = procEdit ? (procEdit.rec.name || T('new_proc')) : currentProc ? currentProc.name : T('procedures'); sub.textContent = procEdit ? (procEdit.slug ? T('edit_proc') : '') : currentProc ? currentProc.source : ''; }
   else { title.textContent = currentJob ? (currentJob.kind === 'review' ? T('kind_review') : currentJob.kind === 'draft' ? T('kind_draft') : T('kind_analysis')) : T('jobs'); sub.textContent = currentJob ? currentJob.source : ''; }
 }
@@ -1989,26 +2091,159 @@ $('#memory-body').addEventListener('click', async e => {
   const b = e.target.closest('[data-forget]'); if (b && confirm(T('forget_q'))) forgetFacts([b.dataset.forget]);
 });
 
-/* ── popovers: alarms and status ───────────────────────── */
+/* ── metrics page: activity, time per step, errors and every turn ── */
+const MX = { days: 7, q: '', f: 'all', route: '', open: null, view: 'chart', data: null, detail: {}, at: null };
+const nfmt = (n, d = 0) => Number(n || 0).toLocaleString(loc(), { maximumFractionDigits: d });
+function compact(n) { n = n || 0; return n >= 1e6 ? nfmt(n / 1e6, 1) + ' M' : n >= 1e4 ? nfmt(n / 1e3) + ' k' : n >= 1e3 ? nfmt(n / 1e3, 1) + ' k' : nfmt(n); }
+function secs(s) { if (s == null) return '–'; return s < 10 ? nfmt(s, 1) + ' s' : s < 90 ? nfmt(s) + ' s' : `${Math.floor(s / 60)} min ${Math.round(s % 60)} s`; }
+function niceMax(v) { if (v <= 0) return 1; const p = 10 ** Math.floor(Math.log10(v)); for (const m of [1, 2, 2.5, 5, 10]) if (m * p >= v) return m * p; return 10 * p; }
+function bucketLabel(t, hourly, long) {
+  const d = new Date(hourly ? t : t + 'T00:00');
+  if (hourly) return d.toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }) + (long ? ' · ' + d.toLocaleDateString(loc(), { day: 'numeric', month: 'short' }) : '');
+  return d.toLocaleDateString(loc(), long ? { weekday: 'long', day: 'numeric', month: 'long' } : { day: 'numeric', month: 'short' });
+}
+const routeLabel = r => r === 'blocked' ? T('mx_blocked') : (T('kinds')[r] || r || '–');
+function colChart(pts, val, fmt, ints) {
+  const vals = pts.map(val), top = Math.max(...vals, 0), max = niceMax(ints ? Math.max(top, 2) : top), hourly = MX.data.bucket === 'hour';
+  const ticks = [max, ...(ints && !Number.isInteger(max / 2) ? [] : [max / 2]), 0], every = pts.length <= 8 ? 1 : Math.ceil(pts.length / 7);
+  const peak = vals.indexOf(top);
+  return `<div class="cc"><div class="cc-plot">` + ticks.map(v => `<div class="cc-gl" style="bottom:${v / max * 100}%"><span>${esc(fmt(v))}</span></div>`).join('') +
+    `<div class="cc-bars">` + pts.map((p, i) => { const h = vals[i] / max * 100; return `<div class="cc-b" tabindex="0" data-i="${i}" aria-label="${esc(bucketLabel(p.t, hourly, true))}: ${esc(fmt(vals[i]))}">` +
+      (top > 0 && i === peak ? `<span class="cc-lab" style="bottom:calc(${h}% + 4px)">${esc(fmt(vals[i]))}</span>` : '') + `<i style="height:${h}%"></i></div>`; }).join('') + `</div></div>` +
+    `<div class="cc-x">${pts.map((p, i) => `<span>${(pts.length - 1 - i) % every === 0 ? esc(bucketLabel(p.t, hourly)) : ''}</span>`).join('')}</div></div>`;
+}
+function hbars(rows, attr) {
+  const max = Math.max(...rows.map(r => r.v), 0) || 1, tag = attr ? 'button' : 'div';
+  return `<div class="hbars">` + rows.map(r => `<${tag} class="hb${r.on ? ' on' : ''}"${attr ? ` type="button" ${attr}="${esc(r.k)}"` : ''}${r.title ? ` title="${esc(r.title)}"` : ''}><span class="hb-l">${esc(r.l)}</span><span class="hb-t"><i style="width:${r.v / max * 100}%"></i></span><span class="hb-v">${esc(r.vt)}</span></${tag}>`).join('') + `</div>`;
+}
+const kv = (k, v) => `<div class="kv"><span>${k}</span><b>${v}</b></div>`;
+async function renderMetrics() {
+  const body = $('#metrics-body');
+  if (!$('#mx-main')) body.innerHTML = `<div class="page-head"><div><h1>${T('metrics')}</h1><p class="sub">${T('mx_sub')}</p></div><div class="acts"><span class="note" id="mx-at" style="margin:0"></span>` +
+    `<div class="seg" id="mx-range">${[1, 7, 30, 90].map(d => `<button data-days="${d}" class="${MX.days === d ? 'on' : ''}">${T('mx_r' + d)}</button>`).join('')}</div><button class="btn sm" id="mx-refresh">${T('mx_refresh')}</button></div></div>` +
+    `<div id="mx-main"><div class="panel tempty"><div class="spinner" style="margin:0 auto"></div></div></div>`;
+  $$('#mx-range button').forEach(b => b.classList.toggle('on', +b.dataset.days === MX.days));
+  $('#mx-main').classList.add('loading');
+  try { MX.data = await (await fetch('/api/observability?days=' + MX.days)).json(); MX.at = new Date(); MX.detail = {}; }
+  catch { $('#mx-main').innerHTML = `<div class="panel tempty">${T('unreachable')}</div>`; return; }
+  finally { $('#mx-main').classList.remove('loading'); }
+  drawMetrics();
+}
+function drawMetrics() {
+  const d = MX.data, s = d.summary, st = d.status, hourly = d.bucket === 'hour';
+  $('#mx-at').textContent = T('mx_updated').replace('{t}', MX.at.toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }));
+  const tiles = [
+    [T('mx_turns'), nfmt(s.turns), d.days > 1 ? T('mx_per_day').replace('{n}', nfmt(s.turns / d.days, 1)) : ''],
+    [T('mx_p50'), s.turns ? secs(s.latency_p50) : '–', s.turns ? T('mx_p95_s').replace('{s}', secs(s.latency_p95)) : ''],
+    [T('mx_errors'), nfmt(s.error_turns), s.turns ? T('mx_errors_s').replace('{p}', nfmt(s.error_turns / s.turns * 100, 1)) : '', s.error_turns ? 'alert' : ''],
+    [T('mx_calls'), nfmt(s.llm_calls), s.turns ? T('mx_calls_s').replace('{n}', nfmt(s.llm_calls / s.turns, 1)) : ''],
+    [T('mx_tokens'), compact(s.input_tokens + s.output_tokens), T('mx_tokens_s').replace('{i}', compact(s.input_tokens)).replace('{o}', compact(s.output_tokens))],
+    [T('mx_claims'), s.claims_checked ? `${nfmt(s.claims_checked - s.claims_failed)} / ${nfmt(s.claims_checked)}` : '–', s.claims_checked ? T('mx_claims_s').replace('{n}', s.claims_failed) : T('mx_claims_none'), s.claims_failed ? 'warn' : ''],
+    [T('mx_fb'), `${s.feedback.up} / ${s.feedback.down}`, T('mx_fb_s')],
+  ];
+  const routes = Object.entries(s.by_route).sort((a, b) => b[1] - a[1]);
+  const actView = MX.view === 'table'
+    ? `<table class="tbl compact"><thead><tr><th>${T('mx_when')}</th><th class="n">${T('mx_turns')}</th><th class="n">${T('mx_errors')}</th><th class="n">${T('mx_p50')}</th></tr></thead><tbody>` +
+      d.activity.filter(p => p.turns).reverse().map(p => `<tr><td>${esc(bucketLabel(p.t, hourly, true))}</td><td class="n">${p.turns}</td><td class="n">${p.errors || '–'}</td><td class="n">${secs(p.p50)}</td></tr>`).join('') + `</tbody></table>` +
+      (d.activity.some(p => p.turns) ? '' : `<div class="tempty">${T('mx_no_turns')}</div>`)
+    : colChart(d.activity, p => p.turns, v => nfmt(v, 1), true);
+  const viewSeg = `<div class="seg sm">${['chart', 'table'].map(v => `<button data-mx-view="${v}" class="${MX.view === v ? 'on' : ''}">${T('mx_' + v)}</button>`).join('')}</div>`;
+  $('#mx-main').innerHTML =
+    `<div class="stats-row">${tiles.map(([l, v, sub, cls]) => `<div class="stat ${cls || ''}"><span>${l}</span><b>${esc(v)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</div>`).join('')}</div>` +
+    `<div class="grid-main" style="margin-bottom:16px"><div class="stack">` +
+      `<div class="panel"><div class="ph">${T('mx_activity')}<span class="sp"></span>${viewSeg}</div>${actView}</div>` +
+      `<div class="panel"><div class="ph">${T('mx_latency')}<span class="n">${T('mx_latency_n').replace('{b}', T(hourly ? 'mx_hour' : 'mx_day'))}</span></div>${colChart(d.activity, p => p.p50, v => secs(v), false)}</div>` +
+      `<div class="grid-2"><div class="panel"><h2>${T('mx_steps')}</h2><p class="note">${T('mx_steps_n')}</p>` +
+        (d.steps.length ? hbars(d.steps.map(x => ({ k: x.step, l: x.title || x.step, v: x.avg, vt: secs(x.avg), title: `p95 ${secs(x.p95)} · ${T('mx_times').replace('{n}', x.n)}` }))) : `<div class="note">${T('mx_no_turns')}</div>`) + `</div>` +
+        `<div class="panel"><h2>${T('mx_routes')}</h2><p class="note">${T('mx_routes_n')}</p>` +
+        (routes.length ? hbars(routes.map(([r, n]) => ({ k: r, l: routeLabel(r), v: n, vt: nfmt(n), on: MX.route === r })), 'data-mx-route') : `<div class="note">${T('mx_no_turns')}</div>`) + `</div></div>` +
+    `</div><div class="stack">` +
+      `<div class="panel"><h2>${T('mx_status')}</h2>${kv(T('mx_model'), esc(st.model))}${kv(T('mx_fast'), esc(st.fast_model))}${kv(T('mx_privacy'), esc(st.privacy_mode))}${kv(T('mx_mem'), esc(T('mx_mem_v').replace('{f}', st.memory.facts).replace('{e}', st.memory.episodes).replace('{d}', st.memory.documents)))}</div>` +
+      `<div class="panel"><h2>${T('mx_errors_h')}</h2>` + (d.errors.length ? `<div class="facet">${d.errors.map(e => `<button data-mx-err="${esc(e.kind)}"><span class="ek">${esc(e.kind)}</span><span class="c">${T('mx_times').replace('{n}', e.n)}</span></button>`).join('')}</div>` : `<p class="note" style="margin:0">${T('mx_no_errors')}</p>`) + `</div>` +
+      `<div class="panel"><h2>${T('mx_memory')}</h2>${kv(T('mx_m_facts'), nfmt(d.memory.facts))}${kv(T('mx_m_dup'), nfmt(d.memory.duplicates))}${kv(T('mx_m_forgot'), nfmt(d.memory.forgotten))}</div>` +
+      `<div class="panel"><h2>${T('mx_tools')}</h2>` + (d.tools.length ? `<table class="tbl compact"><thead><tr><th>${T('mx_tool')}</th><th class="n">${T('mx_calls_c')}</th><th class="n">${T('mx_failed')}</th><th class="n">${T('mx_avg')}</th></tr></thead><tbody>${d.tools.map(t => `<tr><td><code>${esc(t.tool)}</code></td><td class="n">${t.calls}</td><td class="n">${t.errors || '–'}</td><td class="n">${secs(t.avg)}</td></tr>`).join('')}</tbody></table>` : `<p class="note" style="margin:0">${T('mx_no_tools')}</p>`) + `</div>` +
+      `<div class="panel"><h2>${T('mx_traces')}</h2>` + (st.traced ? `<p class="note">${T('mx_traces_on')}</p>${st.traces_ui ? `<a class="btn sm" href="${esc(st.traces_ui)}" target="_blank" rel="noopener">${ico('ext')}${T('mx_open_traces')}</a>` : ''}`
+        : `<p class="note">${T('mx_traces_off')}</p><code class="blk">uv run phoenix serve</code><code class="blk">OTLP_ENDPOINT=http://localhost:6006/v1/traces</code>`) +
+        `<h3 class="mini">${T('mx_integr')}</h3><p class="note">${T('mx_integr_p')}</p><div class="links"><a href="/metrics" target="_blank">/metrics</a><a href="/api/report?days=${d.days}" target="_blank">/api/report</a></div></div>` +
+    `</div></div>` +
+    `<div class="panel flush" id="mx-turns-p"><div class="ftools"><div class="ph" style="margin:0 8px 0 0">${T('mx_list')}</div><div class="search">${ico('search')}<input id="mx-q" placeholder="${T('mx_filter')}" value="${esc(MX.q)}"></div><div class="seg" id="mx-f"></div>` +
+      `<select class="pill" id="mx-route"><option value="">${T('mx_any_kind')}</option>${routes.map(([r]) => `<option value="${esc(r)}" ${MX.route === r ? 'selected' : ''}>${esc(routeLabel(r))}</option>`).join('')}</select></div><div id="mx-turns"></div></div>`;
+  drawTurns();
+}
+function turnState(r) {
+  if (r.error) return `<span class="stt err">${T('mx_err')}</span>`;
+  if (r.route === 'blocked') return `<span class="stt blk">${T('mx_blocked')}</span>`;
+  if (r.claims_failed) return `<span class="stt warn">${T('mx_unverified')}</span>`;
+  return `<span class="stt ok">${T('mx_ok')}</span>`;
+}
+function drawTurns() {
+  const d = MX.data, q = MX.q.toLowerCase();
+  const inRoute = d.turns.filter(r => !MX.route || r.route === MX.route);
+  const tests = { all: () => true, err: r => !!r.error, claims: r => r.claims_failed > 0, down: r => r.score === -1 };
+  $('#mx-f').innerHTML = Object.keys(tests).map(k => `<button data-mx-f="${k}" class="${MX.f === k ? 'on' : ''}">${T('mx_f_' + k)}<span class="c">${inRoute.filter(tests[k]).length}</span></button>`).join('');
+  const rows = inRoute.filter(r => tests[MX.f](r) && (!q || `${r.title} ${r.error} ${routeLabel(r.route)}`.toLowerCase().includes(q)));
+  const when = ts => { const t = new Date(ts); return t.toLocaleDateString(loc(), { day: 'numeric', month: 'short' }) + ' ' + t.toLocaleTimeString(loc(), { hour: '2-digit', minute: '2-digit' }); };
+  $('#mx-turns').innerHTML = rows.length
+    ? `<table class="tbl"><thead><tr><th>${T('mx_when')}</th><th>${T('mx_c_conv')}</th><th>${T('mx_c_kind')}</th><th class="n">${T('mx_c_time')}</th><th class="n hide-s">${T('mx_c_calls')}</th><th class="n hide-s">${T('mx_c_tokens')}</th><th class="n hide-s">${T('mx_c_tools')}</th><th>${T('mx_c_state')}</th></tr></thead><tbody>` +
+      rows.map(r => `<tr class="click${MX.open === r.turn_id ? ' open' : ''}" data-turn="${esc(r.turn_id)}"><td class="m">${esc(when(r.ts))}</td><td class="conv">${esc(r.title || T('mx_untitled'))}${r.source !== 'user' ? ` <span class="pillv">${T('mx_src_' + r.source) || esc(r.source)}</span>` : ''}${r.error ? `<div class="e">${esc(r.error)}</div>` : ''}</td>` +
+        `<td><span class="pillv">${esc(routeLabel(r.route))}</span></td><td class="n">${secs(r.seconds)}</td><td class="n hide-s">${r.llm_calls}</td><td class="n hide-s">${compact(r.tokens)}</td><td class="n hide-s">${r.tool_calls || '–'}</td><td>${turnState(r)}</td></tr>` +
+        (MX.open === r.turn_id ? `<tr class="det"><td colspan="8">${MX.detail[r.turn_id] ? turnDetail(MX.detail[r.turn_id]) : '<div class="spinner"></div>'}</td></tr>` : '')).join('') +
+      `</tbody></table>${d.turns.length >= 300 ? `<p class="note" style="padding:10px 16px;margin:0">${T('mx_more').replace('{n}', d.turns.length)}</p>` : ''}`
+    : `<div class="tempty">${d.turns.length ? T('mx_no_match') : T('mx_no_turns')}</div>`;
+}
+function turnDetail(t) {
+  const nodes = t.nodes || {}, titles = Object.fromEntries((t.trace || []).map(e => [e.step, e.title]));
+  const path = `<h3>${T('mx_d_path')}</h3><ol class="mx-path">${(t.trace || []).map(e => `<li><div class="h">${esc(e.title)}<span>${nodes[e.step] != null ? secs(nodes[e.step]) : ''}</span></div>${e.summary ? `<p>${esc(e.summary)}</p>` : ''}${e.items && e.items.length ? `<ul>${e.items.map(i => `<li>${esc(i)}</li>`).join('')}</ul>` : ''}</li>`).join('')}</ol>`;
+  const steps = Object.entries(nodes);
+  const tools = t.audit.tool_calls, mem = t.audit.memory_writes.filter(m => m.kind !== 'episode');
+  return `<div class="mx-det"><div>${path}</div><div class="stack" style="gap:18px">` +
+    (steps.length ? `<div><h3>${T('mx_d_steps')}</h3>${hbars(steps.map(([k, v]) => ({ k, l: titles[k] || k, v, vt: secs(v) })))}</div>` : '') +
+    (tools.length ? `<div><h3>${T('mx_d_tools')}</h3>${tools.map(c => `<div class="kv"><span><code>${esc(c.tool)}</code></span><b>${c.ok ? `<span class="stt ok">${T('mx_ok')}</span>` : `<span class="stt err">${T('mx_err')}</span>`} · ${secs(c.seconds)}</b></div><code class="blk">${esc(c.arguments.slice(0, 400))}</code>`).join('')}</div>` : '') +
+    (mem.length ? `<div><h3>${T('mx_d_mem')}</h3>${mem.map(m => `<div class="kv"><span>${esc(m.text)}</span><b class="m">${m.kind === 'forget' ? T('mx_m_forgot') : m.stored ? T('mx_saved') : T('mx_dup')}</b></div>`).join('')}</div>` : '') +
+    (t.error ? `<div><h3>${T('mx_d_error')}</h3><pre class="errtxt">${esc(t.error.slice(0, 1500))}</pre></div>` : '') +
+    (t.feedback ? `<div><h3>${T('mx_d_fb')}</h3><p class="note" style="margin:0">${t.feedback.score > 0 ? '+1' : '−1'}${t.feedback.comment ? ' · ' + esc(t.feedback.comment) : ''}</p></div>` : '') +
+    `<div><button class="btn sm" data-thread="${esc(t.thread_id)}">${ico('chat')}${T('mx_open_conv')}</button></div></div></div>`;
+}
+const mxTip = Object.assign(document.createElement('div'), { id: 'mx-tip', hidden: true });
+document.body.appendChild(mxTip);
+function showTip(bar) {
+  const p = MX.data.activity[+bar.dataset.i], hourly = MX.data.bucket === 'hour', r = bar.getBoundingClientRect();
+  mxTip.innerHTML = `<div class="th">${esc(bucketLabel(p.t, hourly, true))}</div><div><b>${nfmt(p.turns)}</b> ${T('mx_questions')}</div>` +
+    (p.errors ? `<div><b>${nfmt(p.errors)}</b> ${T('mx_with_error')}</div>` : '') + (p.turns ? `<div><b>${secs(p.p50)}</b> ${T('mx_typical')}</div>` : '');
+  mxTip.hidden = false;
+  const w = mxTip.offsetWidth, x = Math.min(Math.max(r.left + r.width / 2 - w / 2, 8), innerWidth - w - 8);
+  mxTip.style.left = x + 'px'; mxTip.style.top = Math.max(r.top - mxTip.offsetHeight - 8, 8) + 'px';
+}
+$('#metrics-body').addEventListener('pointerover', e => { const b = e.target.closest('.cc-b'); if (b) showTip(b); });
+$('#metrics-body').addEventListener('pointerout', e => { if (e.target.closest('.cc-b') && !e.relatedTarget?.closest?.('.cc-b')) mxTip.hidden = true; });
+$('#metrics-body').addEventListener('focusin', e => { const b = e.target.closest('.cc-b'); if (b) showTip(b); });
+$('#metrics-body').addEventListener('focusout', e => { if (e.target.closest('.cc-b')) mxTip.hidden = true; });
+$('#metrics-body').addEventListener('input', e => { if (e.target.id === 'mx-q') { MX.q = e.target.value; drawTurns(); } });
+$('#metrics-body').addEventListener('change', e => { if (e.target.id === 'mx-route') { MX.route = e.target.value; drawMetrics(); } });
+$('#metrics-body').addEventListener('click', async e => {
+  const g = e.target.closest('[data-days]'); if (g) { MX.days = +g.dataset.days; MX.open = null; renderMetrics(); return; }
+  if (e.target.closest('#mx-refresh')) { renderMetrics(); return; }
+  const v = e.target.closest('[data-mx-view]'); if (v) { MX.view = v.dataset.mxView; drawMetrics(); return; }
+  const r = e.target.closest('[data-mx-route]'); if (r) { MX.route = MX.route === r.dataset.mxRoute ? '' : r.dataset.mxRoute; drawMetrics(); return; }
+  const f = e.target.closest('[data-mx-f]'); if (f) { MX.f = f.dataset.mxF; drawTurns(); return; }
+  const er = e.target.closest('[data-mx-err]'); if (er) { MX.f = 'err'; MX.route = ''; MX.q = er.dataset.mxErr; drawMetrics(); $('#mx-turns-p').scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
+  const th = e.target.closest('[data-thread]'); if (th) { openThread(th.dataset.thread); return; }
+  const row = e.target.closest('tr[data-turn]'); if (!row) return;
+  const id = row.dataset.turn; MX.open = MX.open === id ? null : id; drawTurns();
+  if (MX.open && !MX.detail[id]) {
+    try { MX.detail[id] = await (await fetch('/api/turns/' + encodeURIComponent(id))).json(); } catch { MX.open = null; toast(T('unreachable')); }
+    drawTurns();
+  }
+});
+
+/* ── popovers: alarms ───────────────────────── */
 function togglePop(id) { const el = $(id), open = el.classList.contains('open'); $$('.pop').forEach(p => p.classList.remove('open')); if (!open) el.classList.add('open'); return !open; }
-document.addEventListener('click', e => { if (!e.target.closest('.pop') && !e.target.closest('#b-alarms') && !e.target.closest('#b-status')) $$('.pop').forEach(p => p.classList.remove('open')); });
+document.addEventListener('click', e => { if (!e.target.closest('.pop') && !e.target.closest('#b-alarms')) $$('.pop').forEach(p => p.classList.remove('open')); });
 $('#b-alarms').onclick = async () => {
   if (!togglePop('#pop-alarms')) return;
   const rows = await (await fetch('/api/alarms')).json();
   $('#pop-alarms').innerHTML = `<h4>${ico('bell')}${T('pending_alarms')}<span class="sp"></span><a href="/api/alarms" target="_blank" class="btn ghost sm icon">${ico('ext')}</a></h4>` +
     (rows.length ? rows.map(a => `<div class="alarm">${esc(a.text)}<small>${esc(a.due_ts || a.due || a.fire_ts || '')}</small></div>`).join('') : `<div class="empty">${T('no_alarms')}</div>`);
-};
-$('#b-status').onclick = async () => {
-  if (!togglePop('#pop-status')) return;
-  const el = $('#pop-status'); el.innerHTML = `<h4>${ico('pulse')}${T('status')}</h4>`;
-  try {
-    const [h, r] = await Promise.all([(await fetch('/api/health')).json(), (await fetch('/api/report?days=1')).json()]);
-    const claims = r.claims_checked ? `${r.claims_checked - r.claims_failed}/${r.claims_checked}` : '–';
-    el.innerHTML += `<div class="tiles">${[[r.turns, T('turns')], [r.latency_p50 + ' s', T('p50')], [r.llm_calls, T('model_calls')], [claims, T('claims_ok')], [r.facts_written, T('facts')], [`${r.feedback.up} / ${r.feedback.down}`, T('up_down')]].map(([v, l]) => `<div class="tile"><b>${esc(v)}</b><span>${l}</span></div>`).join('')}</div>` +
-      `<div class="row"><span>${T('model')}</span><b>${esc(h.model)}</b></div><div class="row"><span>${T('privacy')}</span><b>${esc(h.privacy_mode)}</b></div>` +
-      `<div class="row"><span>${T('memory')}</span><b>${h.memory.facts} ${T('facts')} · ${h.memory.documents} ${T('chunks')}</b></div><div class="row"><span>Tracing</span><b>${h.traced ? T('traced') : T('no_tracing')}</b></div>` +
-      `<div class="links"><a href="/api/report?days=7" target="_blank">${T('report_link')}</a><a href="/metrics" target="_blank">${T('metrics_link')}</a></div>`;
-  } catch { el.innerHTML += `<div class="empty">${T('unreachable')}</div>`; }
 };
 async function loadHealth() {
   try {

@@ -159,3 +159,126 @@ def _count(rows, column: str) -> dict[str, int]:
     for r in rows:
         out[r[column] or "none"] = out.get(r[column] or "none", 0) + 1
     return out
+
+
+def _error_kind(error: str) -> str:
+    """`OutputParserException: Failed to parse…` → `OutputParserException`; anything else, its first words."""
+    head = error.strip().split("\n", 1)[0]
+    name = head.split(":", 1)[0].strip()
+    return name if name and " " not in name else head[:60]
+
+
+def dashboard(conn: sqlite3.Connection, days: int = 7, *, now: datetime | None = None) -> dict:
+    """Everything the metrics page draws for the last N days, from the same SQLite rows as `report`.
+
+    The activity series has one bucket per local hour for a single day and one per local day otherwise, with
+    empty buckets filled in so the chart has no gaps. Turns are the most recent 300, errors cut to their first line."""
+    now = now or datetime.now(UTC)
+    start = now - timedelta(days=days)
+    hourly = days <= 1
+    rows = conn.execute("SELECT * FROM turns WHERE ts >= ? ORDER BY ts", (start.isoformat(timespec="seconds"),))
+    rows = rows.fetchall()
+
+    def bucket(ts: datetime) -> str:
+        return ts.strftime("%Y-%m-%dT%H:00") if hourly else ts.strftime("%Y-%m-%d")
+
+    step = timedelta(hours=1) if hourly else timedelta(days=1)
+    cursor = start.astimezone().replace(minute=0, second=0, microsecond=0)  # buckets in the local time of the machine
+    if not hourly:
+        cursor = cursor.replace(hour=0)
+    series: dict[str, dict] = {}
+    while cursor <= now:
+        series[bucket(cursor)] = {"t": bucket(cursor), "turns": 0, "errors": 0, "seconds": []}
+        cursor += step
+    for r in rows:
+        b = series.get(bucket(datetime.fromisoformat(r["ts"]).astimezone()))
+        if b is None:
+            continue
+        b["turns"] += 1
+        b["errors"] += 1 if r["error"] else 0
+        if r["seconds"] is not None:
+            b["seconds"].append(r["seconds"])
+    activity = [
+        {"t": b["t"], "turns": b["turns"], "errors": b["errors"], "p50": round(_percentile(b["seconds"], 0.5), 2)}
+        for b in series.values()
+    ]
+
+    nodes: dict[str, list[float]] = {}
+    for r in rows:
+        for node, seconds in json.loads(r["nodes"] or "{}").items():
+            nodes.setdefault(node, []).append(seconds or 0.0)
+    steps = sorted(
+        (
+            {"step": n, "avg": round(sum(v) / len(v), 2), "p95": round(_percentile(v, 0.95), 2), "n": len(v)}
+            for n, v in nodes.items()
+        ),
+        key=lambda s: -s["avg"],
+    )
+
+    since = start.isoformat(timespec="seconds")
+    tools = [
+        dict(t)
+        for t in conn.execute(
+            "SELECT tool, COUNT(*) AS calls, SUM(1 - ok) AS errors, ROUND(AVG(seconds), 2) AS avg"
+            " FROM tool_calls WHERE ts >= ? GROUP BY tool ORDER BY calls DESC",
+            (since,),
+        )
+    ]
+    writes = conn.execute(
+        "SELECT kind, stored, COUNT(*) AS n FROM memory_writes WHERE ts >= ? GROUP BY kind, stored", (since,)
+    ).fetchall()
+    memory = {"facts": 0, "duplicates": 0, "episodes": 0, "forgotten": 0}
+    for w in writes:
+        if w["kind"] == "fact":
+            memory["facts" if w["stored"] else "duplicates"] += w["n"]
+        elif w["kind"] == "episode":
+            memory["episodes"] += w["n"]
+        elif w["kind"] == "forget":
+            memory["forgotten"] += w["n"]
+
+    errors: dict[str, dict] = {}
+    for r in rows:
+        if r["error"]:
+            kind = _error_kind(r["error"])
+            e = errors.setdefault(kind, {"kind": kind, "n": 0, "last": r["ts"], "turn_id": r["turn_id"]})
+            e["n"] += 1
+            e["last"], e["turn_id"] = r["ts"], r["turn_id"]
+
+    titles = {t["thread_id"]: t["title"] for t in conn.execute("SELECT thread_id, title FROM threads")}
+    scores = {f["turn_id"]: f["score"] for f in conn.execute("SELECT turn_id, score FROM feedback")}
+    recent = []
+    for r in reversed(rows[-300:]):
+        recent.append(
+            {
+                "turn_id": r["turn_id"],
+                "thread_id": r["thread_id"],
+                "title": titles.get(r["thread_id"], ""),
+                "ts": r["ts"],
+                "source": r["source"],
+                "route": r["route"] or "",
+                "seconds": r["seconds"],
+                "llm_calls": r["llm_calls"],
+                "tokens": (r["input_tokens"] or 0) + (r["output_tokens"] or 0),
+                "tool_calls": r["tool_calls"],
+                "tool_errors": r["tool_errors"],
+                "claims": r["claims"],
+                "claims_failed": r["claims_failed"],
+                "facts_written": r["facts_written"],
+                "error": _error_kind(r["error"]) if r["error"] else "",
+                "score": scores.get(r["turn_id"]),
+            }
+        )
+
+    summary = report(conn, days=days)
+    summary.pop("errors")
+    return {
+        "days": days,
+        "bucket": "hour" if hourly else "day",
+        "summary": {**summary, "error_turns": sum(1 for r in rows if r["error"])},
+        "activity": activity,
+        "steps": steps,
+        "tools": tools,
+        "memory": memory,
+        "errors": sorted(errors.values(), key=lambda e: -e["n"]),
+        "turns": recent,
+    }
