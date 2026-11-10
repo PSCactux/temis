@@ -1,7 +1,7 @@
 """Metrics rows, Prometheus text and the daily report are computed from SQLite in code."""
 
 from aroa.telemetry.db import connect
-from aroa.telemetry.metrics import TurnCollector, prometheus_text, record_turn, report
+from aroa.telemetry.metrics import TurnCollector, prometheus_text, record_calls, record_turn, report
 
 
 def test_turns_feed_prometheus_and_report(tmp_path):
@@ -66,13 +66,14 @@ def test_dashboard_fills_the_series_and_groups_errors(tmp_path):
 def test_collector_keeps_one_line_per_model_call():
     from uuid import uuid4
 
-    from langchain_core.messages import AIMessage
+    from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
     from langchain_core.outputs import ChatGeneration, LLMResult
 
     c = TurnCollector()
     ok, failed = uuid4(), uuid4()
     meta = {"langgraph_node": "route", "ls_provider": "ollama", "ls_model_name": "qwen3:8b"}
-    c.on_chat_model_start({}, [], run_id=ok, metadata=meta)
+    prompt = [[SystemMessage("route it"), HumanMessage("hola [PERSON_1]")]]
+    c.on_chat_model_start({}, prompt, run_id=ok, metadata=meta, invocation_params={"temperature": 0})
     message = AIMessage("x", usage_metadata={"input_tokens": 120, "output_tokens": 8, "total_tokens": 128})
     c.on_llm_end(LLMResult(generations=[[ChatGeneration(message=message)]]), run_id=ok)
     c.on_chat_model_start({"kwargs": {"model": "qwen3-8b"}}, [], run_id=failed, metadata={"langgraph_node": "answer"})
@@ -82,3 +83,19 @@ def test_collector_keeps_one_line_per_model_call():
     assert (first["input_tokens"], first["output_tokens"]) == (120, 8) and first["seconds"] >= 0
     assert (second["step"], second["model"], second["error"]) == ("answer", "qwen3-8b", "ValueError")
     assert c.llm_calls == 2 and c.input_tokens == 120
+    assert c.bodies[0]["prompt"] == [
+        {"role": "system", "content": "route it"},
+        {"role": "human", "content": "hola [PERSON_1]"},
+    ]
+    assert c.bodies[0]["params"] == {"temperature": 0} and c.bodies[0]["response"][0]["content"] == "x"
+    assert c.bodies[1]["response"] == [{"role": "error", "content": "ValueError: bad json"}]
+
+
+def test_model_calls_are_stored_by_turn_and_position(tmp_path):
+    conn = connect(tmp_path / "m.sqlite")
+    bodies = [
+        {"prompt": [{"role": "human", "content": "a"}], "params": {}, "response": [{"role": "ai", "content": "b"}]}
+    ]
+    record_calls(conn, "t1", bodies)
+    row = conn.execute("SELECT * FROM model_calls WHERE turn_id = 't1' AND n = 0").fetchone()
+    assert '"b"' in row["response"] and '"a"' in row["prompt"]

@@ -1,5 +1,6 @@
 """One SQLite file for everything the assistant records besides graph checkpoints and vectors:
-turn metrics, the audit log of tool calls and memory writes, feedback, and alarms."""
+turn metrics, every model call's prompt and response, the audit log of tool calls and memory writes,
+feedback, and alarms."""
 
 import sqlite3
 from pathlib import Path
@@ -29,6 +30,14 @@ CREATE TABLE IF NOT EXISTS turns (
     calls TEXT                        -- JSON list: one entry per model call (step, provider, model, seconds, tokens)
 );
 CREATE INDEX IF NOT EXISTS turns_ts ON turns(ts);
+CREATE TABLE IF NOT EXISTS model_calls (
+    turn_id TEXT NOT NULL,
+    n INTEGER NOT NULL,              -- position in turns.calls
+    prompt TEXT NOT NULL,            -- JSON list of messages, as the model received them
+    params TEXT,                     -- JSON: invocation parameters (model, temperature, schema, tools)
+    response TEXT,                   -- JSON list of messages the model returned, or the error
+    PRIMARY KEY (turn_id, n)
+);
 CREATE TABLE IF NOT EXISTS tool_calls (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     turn_id TEXT NOT NULL,

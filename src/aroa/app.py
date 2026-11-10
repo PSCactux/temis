@@ -19,7 +19,7 @@ from .memory.store import MemoryStore
 from .models import make_chat_model
 from .privacy import NAMES_PROMPT, Anonymizer, Names
 from .telemetry.db import connect
-from .telemetry.metrics import TurnCollector, record_turn, turn_metrics
+from .telemetry.metrics import TurnCollector, record_calls, record_turn, turn_metrics
 from .telemetry.tracing import setup_tracing
 
 
@@ -159,6 +159,7 @@ class Assistant:
         metrics["error"] = error
         metrics["trace"] = __import__("json").dumps(state.get("trace") or [])
         record_turn(self.conn, turn_id, thread_id, source, metrics)
+        record_calls(self.conn, turn_id, collector.bodies)
         reply = waiting or error or self._last_reply(state)
         last = state["messages"][-1] if state.get("messages") else None
         kind = (

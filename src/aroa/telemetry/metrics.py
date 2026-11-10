@@ -14,9 +14,24 @@ def now_iso() -> str:
     return datetime.now(UTC).isoformat(timespec="seconds")
 
 
+MAX_TEXT = 60_000  # characters kept of each message of a recorded prompt or response
+
+
+def _text(content: Any) -> str:
+    text = content if isinstance(content, str) else json.dumps(content, ensure_ascii=False, default=str)
+    return text if len(text) <= MAX_TEXT else text[:MAX_TEXT] + f"\n[… {len(text) - MAX_TEXT} more characters]"
+
+
+def _message(m: Any) -> dict:
+    out = {"role": getattr(m, "type", "unknown"), "content": _text(getattr(m, "content", m))}
+    if getattr(m, "tool_calls", None):
+        out["tool_calls"] = m.tool_calls
+    return out
+
+
 class TurnCollector(BaseCallbackHandler):
     """Counts model calls, tokens and model latency for one turn, and keeps one line per call (graph step,
-    provider, model, seconds, tokens). Attach via config["callbacks"]."""
+    provider, model, seconds, tokens) plus what the model received and returned. Attach via config["callbacks"]."""
 
     def __init__(self) -> None:
         self.llm_calls = 0
@@ -24,19 +39,34 @@ class TurnCollector(BaseCallbackHandler):
         self.output_tokens = 0
         self.model_seconds = 0.0
         self.calls: list[dict] = []
-        self._started: dict[Any, tuple[float, dict]] = {}
+        self.bodies: list[dict] = []  # per call: prompt messages, invocation parameters, response
+        self._started: dict[Any, tuple[float, dict, dict]] = {}
 
     def on_chat_model_start(self, serialized, messages, *, run_id, metadata=None, **kwargs) -> None:
         self.llm_calls += 1
         meta = metadata or {}
         model = meta.get("ls_model_name") or ((serialized or {}).get("kwargs") or {}).get("model", "")
         call = {"step": meta.get("langgraph_node", ""), "provider": meta.get("ls_provider", ""), "model": model}
+        body = {
+            "prompt": [_message(m) for batch in messages for m in batch],
+            "params": {
+                **{k: meta[f"ls_{k}"] for k in ("temperature", "max_tokens") if meta.get(f"ls_{k}") is not None},
+                **(kwargs.get("invocation_params") or {}),
+            },
+            "response": None,
+        }
         self.calls.append(call)
-        self._started[run_id] = (time.perf_counter(), call)
+        self.bodies.append(body)
+        self._started[run_id] = (time.perf_counter(), call, body)
 
     def on_llm_end(self, response, *, run_id, **kwargs) -> None:
-        started, call = self._started.pop(run_id, (None, {}))
+        started, call, body = self._started.pop(run_id, (None, {}, {}))
         if started is not None:
+            body["response"] = [
+                _message(g.message) if hasattr(g, "message") else {"role": "ai", "content": _text(g.text)}
+                for generation in response.generations
+                for g in generation
+            ]
             seconds = time.perf_counter() - started
             self.model_seconds += seconds
             call["seconds"] = round(seconds, 3)
@@ -50,8 +80,9 @@ class TurnCollector(BaseCallbackHandler):
                     call["output_tokens"] = call.get("output_tokens", 0) + int(usage.get("output_tokens") or 0)
 
     def on_llm_error(self, error, *, run_id, **kwargs) -> None:
-        started, call = self._started.pop(run_id, (None, {}))
+        started, call, body = self._started.pop(run_id, (None, {}, {}))
         if started is not None:
+            body["response"] = [{"role": "error", "content": _text(f"{type(error).__name__}: {error}")}]
             call["seconds"] = round(time.perf_counter() - started, 3)
             call["error"] = type(error).__name__
 
@@ -83,6 +114,18 @@ def record_turn(conn: sqlite3.Connection, turn_id: str, thread_id: str, source: 
     columns = ["turn_id", "thread_id", "ts", "source", *metrics]
     values = [turn_id, thread_id, now_iso(), source, *metrics.values()]
     conn.execute(f"INSERT OR REPLACE INTO turns ({', '.join(columns)}) VALUES ({', '.join('?' * len(values))})", values)
+    conn.commit()
+
+
+def record_calls(conn: sqlite3.Connection, turn_id: str, bodies: list[dict]) -> None:
+    """What each model call of the turn received and returned, numbered as in the turn's `calls`."""
+    rows = [
+        (turn_id, n, *(json.dumps(b[k], ensure_ascii=False, default=str) for k in ("prompt", "params", "response")))
+        for n, b in enumerate(bodies)
+    ]
+    conn.executemany(
+        "INSERT OR REPLACE INTO model_calls (turn_id, n, prompt, params, response) VALUES (?,?,?,?,?)", rows
+    )
     conn.commit()
 
 

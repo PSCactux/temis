@@ -347,6 +347,17 @@ def turn(turn_id: str):
     return data
 
 
+@app.get("/api/turns/{turn_id}/calls/{n}")
+def model_call(turn_id: str, n: int):
+    """What one model call of the turn received and returned, exactly as the model saw it."""
+    row = runtime.assistant.conn.execute(
+        "SELECT prompt, params, response FROM model_calls WHERE turn_id = ? AND n = ?", (turn_id, n)
+    ).fetchone()
+    if row is None:
+        raise HTTPException(404, "call not recorded")
+    return {k: json.loads(row[k]) if row[k] else None for k in ("prompt", "params", "response")}
+
+
 @app.post("/api/turns/{turn_id}/feedback")
 def feedback(turn_id: str, body: Feedback):
     if body.score not in (1, -1):
