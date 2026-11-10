@@ -46,6 +46,10 @@ class Settings(BaseSettings):
     recall_episodes: int = 3
     episode_half_life_days: float = 14.0
     fact_duplicate_threshold: float = 0.9
+    # Recall floors (close in meaning, or fairly close and sharing words with the message), measured on E5,
+    # where unrelated Spanish sentences score about 0.80. Another embedding model needs them measured again.
+    fact_floors: tuple[float, float] = (0.85, 0.80)
+    episode_floors: tuple[float, float] = (0.87, 0.83)
     history_messages: int = 10
 
     # Documents

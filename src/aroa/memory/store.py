@@ -120,6 +120,47 @@ class MemoryStore:
         )
         return result.points
 
+    def _recall_search(
+        self, name: str, query: str, k: int, flt: models.Filter | None, floors: tuple[float, float]
+    ) -> list[models.ScoredPoint]:
+        """Like `_search`, with a floor: memory is only worth recalling when it is about the message.
+
+        Fusion ranks whatever the collection holds, so without a floor the top facts come back for any message,
+        "hello" included. With E5, unrelated Spanish sentences score about 0.80 against each other, so an item
+        passes when its meaning is close (dense >= the first floor) or when it is fairly close and shares
+        words with the message (a BM25 hit and dense >= the second floor). Episodes hold whole replies, which
+        share greetings and boilerplate with almost anything, so their floors are higher. The points keep the
+        RRF order of the two rankings."""
+        close, with_words = floors
+        if not self.client.collection_exists(name):
+            return []
+        dense = next(iter(self.dense.query_embed(self.query_prefix + query)))
+        sparse = next(iter(self.sparse.query_embed(query)))
+        by_meaning = self.client.query_points(
+            name,
+            query=dense.tolist(),
+            using=DENSE,
+            limit=self.settings.prefetch_k,
+            query_filter=flt,
+            score_threshold=with_words,
+            with_payload=True,
+        ).points
+        by_words = self.client.query_points(
+            name,
+            query=models.SparseVector(indices=sparse.indices.tolist(), values=sparse.values.tolist()),
+            using=SPARSE,
+            limit=self.settings.prefetch_k,
+            query_filter=flt,
+        ).points
+        word_rank = {p.id: i for i, p in enumerate(by_words)}
+        kept = [(i, p) for i, p in enumerate(by_meaning) if p.score >= close or p.id in word_rank]
+
+        def rrf(item: tuple[int, models.ScoredPoint]) -> float:
+            i, p = item
+            return 1 / (60 + i) + (1 / (60 + word_rank[p.id]) if p.id in word_rank else 0)
+
+        return [p for _, p in sorted(kept, key=rrf, reverse=True)][:k]
+
     def count(self, name: str) -> int:
         return self.client.count(name).count if self.client.collection_exists(name) else 0
 
@@ -202,6 +243,7 @@ class MemoryStore:
 
     def recall(self, query: str, *, exclude_thread: str | None = None, matter: str = "") -> dict:
         """Facts and past episodes relevant to the query, limited to this matter and to general memory.
+        Nothing comes back when nothing is about the query (see `_recall_search`).
 
         That limit is the ethical wall: what was said while working on one matter is never recalled in another.
         Episodes are re-ranked by recency.
@@ -209,10 +251,12 @@ class MemoryStore:
         wall = _matter_filter(matter)
         facts = [
             {"text": p.payload["text"], "ts": p.payload["ts"], "score": round(float(p.score), 3)}
-            for p in self._search(FACTS, query, self.settings.recall_facts, wall)
+            for p in self._recall_search(FACTS, query, self.settings.recall_facts, wall, self.settings.fact_floors)
         ]
         episodes = []
-        for p in self._search(EPISODES, query, self.settings.recall_episodes * 3, wall):
+        for p in self._recall_search(
+            EPISODES, query, self.settings.recall_episodes * 3, wall, self.settings.episode_floors
+        ):
             if exclude_thread and p.payload.get("thread_id") == exclude_thread:
                 continue  # the current thread is already in the context window
             decay = math.exp(-_age_days(p.payload["ts"]) * math.log(2) / self.settings.episode_half_life_days)

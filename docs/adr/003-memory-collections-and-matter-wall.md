@@ -22,3 +22,7 @@ hybrid query, not only on the fused result.
 - Facts are captured whether or not the model thinks to save them; duplicates are skipped and logged.
 - What was said while working on matter A is never recalled in matter B (integration test).
 - The persona is never retrieved: it is always in the prompt, which is what keeps identity stable.
+- Recall has a floor (2026-11): fusion ranks whatever the collection holds, so without one the same
+  top facts came back for every message. An item is recalled when it is close in meaning to the message,
+  or fairly close and sharing words with it; the floors are measured for the embedding model in use
+  (`fact_floors`, `episode_floors`). An empty recall is the usual answer to small talk.
