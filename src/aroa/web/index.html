@@ -207,7 +207,7 @@
   .path { display:none; margin-top:8px; border:1px solid var(--line); border-radius:10px; background:var(--panel); padding:10px 14px; font-size:12.5px; }
   .path.open { display:block; }
   .path .sum { display:flex; flex-wrap:wrap; gap:6px 16px; color:var(--muted); padding-bottom:8px; border-bottom:1px solid var(--line); margin-bottom:6px; }
-  .path .sum b { color:var(--ink); }
+  .path .sum b { color:var(--ink); } .path .sum .btn { margin:-4px -6px -4px auto; }
   .path .step { padding:6px 0 6px 14px; border-left:2px solid var(--line-2); margin-left:4px; }
   .path .step.bad { border-left-color:var(--warn); }
   .path .step.audit { border-left-color:var(--accent-line); }
@@ -869,7 +869,7 @@ const L = {
     welcome_p: 'Ask about the indexed documents, the web, your matters, or set an alarm. Try one of these with the sample corpus:',
     thinking: 'Thinking', path: 'Path', mem_fact_word: 'fact', forget: 'Forget this fact', forget_q: 'Remove this fact from memory? Aroa will no longer rely on it.', forgotten: 'Forgotten', forget_hint: 'A remembered fact comes from what someone at the firm told Aroa. If it is wrong or should not be kept:', steps_n: '{n} steps · {s} s', working: 'working', log: 'Progress', show_details: 'details', in_progress: 'In progress', good: 'Good answer', bad: 'Bad answer', thanks: 'Thanks, feedback stored', no_path: 'No path recorded for this turn.',
     asking: 'Aroa is asking you', k_blocked: 'blocked by policy', k_question: 'needs your answer', k_abstain: 'not in the documents', k_verified: 'verified', k_unverified: 'unverified',
-    route: 'route', model_calls: 'model calls', tools: 'tools', claims: 'claims', facts_stored: 'facts stored', audit_tools: 'Audit · tool calls', audit_memory: 'Audit · memory writes', feedback: 'Feedback',
+    route: 'route', see_metrics: 'Open in Metrics', model_calls: 'model calls', tools: 'tools', claims: 'claims', facts_stored: 'facts stored', audit_tools: 'Audit · tool calls', audit_memory: 'Audit · memory writes', feedback: 'Feedback',
     stored: 'stored', duplicate: 'duplicate', server_error: 'The server did not answer: ', remove_q: 'Remove "{n}" from the index?', removed: 'Document removed', not_removed: 'Could not do it',
     uploading: 'uploading', indexing: 'indexing…', indexed: '{n} indexed', reading: 'reading…', truncated: 'cut at 12,000 characters',
     kinds: { documents: 'documents', chat: 'chat', web: 'web', alarms: 'alarms', project: 'project', review: 'review' },
@@ -928,7 +928,7 @@ const L = {
     welcome_p: 'Pregunta por los documentos indexados, la web, tus expedientes, o pon una alarma. Prueba con el corpus de muestra:',
     thinking: 'Pensando', path: 'Recorrido', mem_fact_word: 'hecho', forget: 'Olvidar este hecho', forget_q: '¿Quitar este hecho de la memoria? Aroa dejará de apoyarse en él.', forgotten: 'Olvidado', forget_hint: 'Un hecho recordado procede de lo que alguien del despacho le dijo a Aroa. Si está mal o no debe conservarse:', steps_n: '{n} pasos · {s} s', working: 'en curso', log: 'Progreso', show_details: 'detalles', in_progress: 'En curso', good: 'Buena respuesta', bad: 'Mala respuesta', thanks: 'Gracias, valoración guardada', no_path: 'No hay recorrido registrado para esta vuelta.',
     asking: 'Aroa te pregunta', k_blocked: 'bloqueado por política', k_question: 'necesita tu respuesta', k_abstain: 'no está en los documentos', k_verified: 'verificado', k_unverified: 'sin verificar',
-    route: 'ruta', model_calls: 'llamadas al modelo', tools: 'herramientas', claims: 'afirmaciones', facts_stored: 'hechos guardados', audit_tools: 'Auditoría · herramientas', audit_memory: 'Auditoría · memoria', feedback: 'Valoración',
+    route: 'ruta', see_metrics: 'Ver en Métricas', model_calls: 'llamadas al modelo', tools: 'herramientas', claims: 'afirmaciones', facts_stored: 'hechos guardados', audit_tools: 'Auditoría · herramientas', audit_memory: 'Auditoría · memoria', feedback: 'Valoración',
     stored: 'guardado', duplicate: 'duplicado', server_error: 'El servidor no ha respondido: ', remove_q: '¿Quitar «{n}» del índice?', removed: 'Documento quitado', not_removed: 'No se ha podido',
     uploading: 'subiendo', indexing: 'indexando…', indexed: '{n} indexado', reading: 'leyendo…', truncated: 'recortado a 12.000 caracteres',
     kinds: { documents: 'documentos', chat: 'charla', web: 'web', alarms: 'alarmas', project: 'proyecto', review: 'revisión' },
@@ -1120,7 +1120,8 @@ function renderPath(t) {
   const fmt = n => (n ?? 0).toLocaleString(loc());
   let html = `<div class="sum"><span>${T('route')} <b>${esc(t.route || '')}</b></span><span><b>${t.seconds}</b> s</span><span><b>${t.llm_calls}</b> ${T('model_calls')}</span>` +
     `<span><b>${fmt(t.input_tokens)}</b> in · <b>${fmt(t.output_tokens)}</b> out</span><span><b>${t.tool_calls}</b> ${T('tools')}</span>` +
-    (t.claims ? `<span>${T('claims')} <b>${t.claims - t.claims_failed}/${t.claims}</b></span>` : '') + (t.facts_written ? `<span><b>${t.facts_written}</b> ${T('facts_stored')}</span>` : '') + '</div>';
+    (t.claims ? `<span>${T('claims')} <b>${t.claims - t.claims_failed}/${t.claims}</b></span>` : '') + (t.facts_written ? `<span><b>${t.facts_written}</b> ${T('facts_stored')}</span>` : '') +
+    `<button class="btn ghost sm" data-mx-turn="${esc(t.turn_id)}" data-mx-ts="${esc(t.ts)}">${ico('pulse')}${T('see_metrics')}</button></div>`;
   html += `<div class="steps done">${(t.trace || []).map(s => stepRow(s.step, s.title, s.summary, s.items, false, t.nodes && t.nodes[s.step] != null ? t.nodes[s.step] : null)).join('')}</div>`;
   const a = t.audit || {};
   if (a.tool_calls && a.tool_calls.length) html += `<div class="step audit"><div class="st">${T('audit_tools')}</div><ul class="items">` + a.tool_calls.map(c => `<li>${c.ok ? 'ok' : 'FAILED'} · <b>${esc(c.tool)}</b> ${esc(c.arguments)} · ${c.seconds} s · ${esc(c.result_hash)}</li>`).join('') + '</ul></div>';
@@ -1141,6 +1142,7 @@ column.addEventListener('click', async e => {
     if (s && s.kind === 'memory') showMemory(s); else if (s && s.kind === 'attachment') showFragment(s); else if (s) openInspector(s.file, s.quote); return;
   }
   if (b.dataset.edit) { const text = b.closest('.answer').querySelector('.body').innerHTML; openEditor(null, text.replace(/<button[^>]*class="cite[^"]*"[^>]*>(\[\d+\])<\/button>/g, '$1').replace(/<h3>/g, '<h2>').replace(/<\/h3>/g, '</h2>'), ''); return; }
+  if (b.dataset.mxTurn) { openTurnMetrics(b.dataset.mxTurn, b.dataset.mxTs); return; }
   if (b.dataset.path) {
     const box = $('#path-' + b.dataset.path);
     if (box.classList.contains('open')) { box.classList.remove('open'); return; }
@@ -2114,7 +2116,7 @@ $('#memory-body').addEventListener('click', async e => {
 });
 
 /* ── metrics page: activity, time per step, errors and every turn ── */
-const MX = { days: 7, q: '', f: 'all', route: '', open: null, view: 'chart', data: null, detail: {}, at: null, call: null, bodies: {} };
+const MX = { days: 7, q: '', f: 'all', route: '', open: null, reveal: false, view: 'chart', data: null, detail: {}, at: null, call: null, bodies: {} };
 const nfmt = (n, d = 0) => Number(n || 0).toLocaleString(loc(), { maximumFractionDigits: d });
 function compact(n) { n = n || 0; return n >= 1e6 ? nfmt(n / 1e6, 1) + ' M' : n >= 1e4 ? nfmt(n / 1e3) + ' k' : n >= 1e3 ? nfmt(n / 1e3, 1) + ' k' : nfmt(n); }
 function secs(s) { if (s == null) return '–'; return s < 10 ? nfmt(s, 1) + ' s' : s < 90 ? nfmt(s) + ' s' : `${Math.floor(s / 60)} min ${Math.round(s % 60)} s`; }
@@ -2150,6 +2152,19 @@ async function renderMetrics() {
   catch { $('#mx-main').innerHTML = `<div class="panel tempty">${T('unreachable')}</div>`; return; }
   finally { $('#mx-main').classList.remove('loading'); }
   drawMetrics();
+  if (MX.open && !MX.detail[MX.open]) await loadTurnDetail(MX.open);
+  if (MX.reveal) { MX.reveal = false; $(`tr[data-turn="${CSS.escape(MX.open || '')}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+}
+async function loadTurnDetail(id) {
+  try { MX.detail[id] = await (await fetch('/api/turns/' + encodeURIComponent(id))).json(); } catch { MX.open = null; toast(T('unreachable')); }
+  drawTurns();
+}
+// From a reply's path: the metrics page with that turn open, over a range that still includes it.
+function openTurnMetrics(id, ts) {
+  const age = (Date.now() - new Date(ts)) / 864e5;
+  if (age > MX.days) MX.days = [1, 7, 30, 90].find(d => d >= age) || 90;
+  Object.assign(MX, { open: id, reveal: true, f: 'all', route: '', q: '', call: null });
+  show('metrics');
 }
 function drawMetrics() {
   const d = MX.data, s = d.summary, st = d.status, hourly = d.bucket === 'hour';
@@ -2307,10 +2322,7 @@ $('#metrics-body').addEventListener('click', async e => {
   }
   const row = e.target.closest('tr[data-turn]'); if (!row) return;
   const id = row.dataset.turn; MX.open = MX.open === id ? null : id; drawTurns();
-  if (MX.open && !MX.detail[id]) {
-    try { MX.detail[id] = await (await fetch('/api/turns/' + encodeURIComponent(id))).json(); } catch { MX.open = null; toast(T('unreachable')); }
-    drawTurns();
-  }
+  if (MX.open && !MX.detail[id]) loadTurnDetail(id);
 });
 
 /* ── popovers: alarms ───────────────────────── */
