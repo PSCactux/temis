@@ -23,6 +23,10 @@ leave the firm and must not depend on one vendor's dashboard.
 - Page: a metrics page in the UI draws all of the above from the same rows (activity, time per step,
   routes, errors by type, tools, memory writes, and every turn with its path), with a link to the trace
   viewer when one is configured. The JSON and Prometheus endpoints stay for other tools.
+- Model calls: each call of a turn is kept in SQLite (`turns.calls` for step, provider, model, seconds
+  and tokens; `model_calls` for the prompt, parameters and response exactly as the model received and
+  returned them), and the page opens each one. The prompts are pseudonymised, except the call that finds
+  the names, which reads the original message; the file never leaves the machine.
 
 ## Consequences
 

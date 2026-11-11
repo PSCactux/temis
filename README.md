@@ -1,10 +1,12 @@
 # Temis
 
+Named after Themis, the Titaness of law and order.
+
 A law firm's assistant that runs entirely on the firm's own machine. It is built as an explicit
 **LangGraph** state machine with **RAG memory** walled by matter, **pseudonymisation** of personal
 data before any model call, a **policy gate**, **claims verified in code**, and **observability**
 built in (OpenTelemetry traces, per-turn metrics, audit log, a plain-language path for every reply,
-evals). Local models through Ollama or any OpenAI-compatible gateway; Anthropic if you want it.
+evals). Local models through Ollama, llama.cpp, MLX or any OpenAI-compatible gateway; Anthropic if you want it.
 
 ```text
 $ uv run aroa ask -v --matter 2026-014 "El director financiero del cliente es Pedro Sanz, DNI 44556677K, \
@@ -34,7 +36,7 @@ and are never recalled while working on another matter.
 
 | | |
 |---|---|
-| **Converses and remembers** | Facts are extracted from every turn, deduplicated and stored with the matter they were learned in. Recall is hybrid (dense + BM25) over facts, past episodes and documents. |
+| **Converses and remembers** | Facts are extracted from what the user says, deduplicated and stored with the matter they were learned in. Recall is hybrid (dense + BM25) over facts and past episodes, with a relevance floor so that unrelated memory stays out of the prompt. |
 | **Answers from the firm's documents** | Corrective RAG with `[n]` citations and verbatim quotes, both verified in code; abstains when the documents do not answer. Prompt injection inside a document cannot become a cited fact. |
 | **Deadlines are arithmetic, not opinion** | When a term ends is computed in code from the notification date, the jurisdiction and the firm's holiday calendar (working days, August, the Christmas break, months date-to-date, the 15:00 grace of art. 135.5 LEC). The model asks the tool and relays the result; the reply lists every excluded day and the rule behind it. |
 | **Citations are checked before anything is filed** | Every article, law or judgment cited in a draft is extracted with patterns and verified in code against the firm's own archive of the BOE (consolidated legislation, with the date the text was fetched): the norm exists, the article exists, here is its current text and official link, or a plain «no existe». Judgments are flagged as not automatically verifiable. |
@@ -70,7 +72,8 @@ graph TD
     memorize --> END([reply])
 ```
 
-`recall` pseudonymises the message and searches memory (no model). `route` is one structured call
+`recall` pseudonymises the message (identifiers by patterns; names, in `full` privacy mode, by one call
+to the fast model) and searches memory. `route` is one structured call
 that returns the policy verdict, the route and a standalone query. Each route binds only its own
 tools. `verify` extracts the reply's claims with the fast model and checks them in code. `memorize`
 runs after the reply is streamed. Details and the reasons behind them: [docs/SPEC.md](docs/SPEC.md)
@@ -81,6 +84,8 @@ and [docs/adr/](docs/adr/).
 | | Where |
 |---|---|
 | Path of every turn (what was recalled, routed, called, verified, stored) | web UI "path" button, `aroa ask -v`, `GET /api/turns/{id}` |
+| Metrics page: activity, response time, time per step, errors by kind, tools, memory writes, and every turn with its path | web UI "Metrics", reached from the rail or from any reply's path |
+| Every model call of a turn: step, model, seconds, tokens, and the exact prompt, parameters and response | Metrics, a turn, "Model calls"; SQLite `model_calls`, `GET /api/turns/{id}/calls/{n}` |
 | Per-turn metrics: route, latency, per-node seconds, model calls, tokens, tool calls, claims, facts | SQLite `turns`, `GET /metrics` (Prometheus), `aroa report` |
 | Audit: every tool call (arguments, outcome, result hash) and memory write | SQLite `tool_calls`, `memory_writes`, in the turn's path |
 | Traces of model calls, tools and nodes | OpenTelemetry → Phoenix, Langfuse, Tempo... (`OTLP_ENDPOINT`) |
@@ -88,11 +93,13 @@ and [docs/adr/](docs/adr/).
 | Evals by kind, with the real models | `aroa eval`, results in `evals/results/` |
 
 Nothing in the telemetry calls a model. Traces hide contents by default and contain only
-pseudonymised text when they do not.
+pseudonymised text when they do not. The prompts kept for each model call stay in the local SQLite
+file, as the model received them.
 
 ## Models
 
-`LLM_MODEL` and `LLM_FAST_MODEL` take `<provider>:<model>`: `ollama:` (local), `openai:` (any
+`LLM_MODEL` and `LLM_FAST_MODEL` take `<provider>:<model>`: `ollama:` (local), `local:` (an
+OpenAI-compatible server on the same machine: llama.cpp, MLX, LM Studio; ADR 014), `openai:` (any
 OpenAI-compatible gateway), `anthropic:` (API key) or `claude-cli:` (the Claude Code CLI in print mode,
 on a subscription, no key: structured output through its JSON schema, tool calls emulated; meant for
 running the evals from one's own machine, not for a deployment).
