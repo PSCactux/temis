@@ -1,6 +1,6 @@
 # Deploying on the firm's machine
 
-Aroa is one Python process plus the model server you already run. Nothing here needs the internet
+Temis is one Python process plus the model server you already run. Nothing here needs the internet
 once the models are on disk.
 
 ## 1. Models
@@ -39,14 +39,14 @@ point both at a Qdrant server (`QDRANT_URL`).
 ```ini
 # /etc/systemd/system/aroa.service
 [Unit]
-Description=Aroa Assistant
+Description=Temis
 After=network.target
 
 [Service]
 User=aroa
-WorkingDirectory=/opt/aroa-assistant
-EnvironmentFile=/opt/aroa-assistant/.env
-ExecStart=/opt/aroa-assistant/.venv/bin/aroa serve --host 127.0.0.1 --port 8000
+WorkingDirectory=/opt/temis
+EnvironmentFile=/opt/temis/.env
+ExecStart=/opt/temis/.venv/bin/aroa serve --host 127.0.0.1 --port 8000
 Restart=on-failure
 
 [Install]

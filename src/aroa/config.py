@@ -23,7 +23,7 @@ class Settings(BaseSettings):
     # MLX's server has no schema support, so it uses tool calling (function_calling) instead.
     llm_structured: Literal["json_schema", "function_calling", "json_mode"] = "json_schema"
 
-    assistant_name: str = "Aroa"
+    assistant_name: str = "Temis"
     assistant_language: Literal["en", "es"] = "en"  # the texts the code writes and the path of a turn
     persona_dir: Path = Path("data/persona")
     # off: nothing is pseudonymised; identifiers: patterns in code only; full: also names via the fast model
@@ -76,7 +76,7 @@ class Settings(BaseSettings):
     # Observability
     otlp_endpoint: str | None = None  # e.g. http://localhost:6006/v1/traces (Phoenix) or any OTLP/HTTP collector
     trace_content: bool = False
-    service_name: str = "aroa-assistant"
+    service_name: str = "temis"
 
     @property
     def db_path(self) -> Path:

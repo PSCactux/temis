@@ -12,7 +12,7 @@ text, not as fragments.
 
 ## Decision
 
-- Memory is fed only with the user's own words, on every route. What Aroa replied is either document
+- Memory is fed only with the user's own words, on every route. What Temis replied is either document
   content (cited there) or the model's text (not a fact). The extractor is told what a fact is (durable,
   stated as information) and what is not (requests, questions, document content, replies). A fact can be
   forgotten from the UI; the memory list shows text, date, matter and origin.

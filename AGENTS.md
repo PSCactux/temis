@@ -1,4 +1,4 @@
-# Working on Aroa Assistant with an agent
+# Working on Temis with an agent
 
 This file is read by coding agents (Claude Code, Codex, Cursor...) before they touch the repo.
 Humans: it is also the shortest accurate description of how the project is built.

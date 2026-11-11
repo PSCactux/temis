@@ -58,7 +58,7 @@ def workdir(tmp_path, monkeypatch) -> Path:
     monkeypatch.chdir(tmp_path)
     (tmp_path / "data/projects/case-2026-014").mkdir(parents=True)
     (tmp_path / "data/persona").mkdir(parents=True)
-    (tmp_path / "data/persona/10-who.md").write_text("# Who you are\n\nYou are Aroa, a law firm's assistant.")
+    (tmp_path / "data/persona/10-who.md").write_text("# Who you are\n\nYou are Temis, a law firm's assistant.")
     os.environ.pop("OTLP_ENDPOINT", None)
     return tmp_path
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Start a local llama.cpp server for Aroa (provider local:, LLM_STRUCTURED=json_schema).
+# Start a local llama.cpp server for Temis (provider local:, LLM_STRUCTURED=json_schema).
 # The first run downloads the model from Hugging Face (~5 GB) into llama.cpp's cache.
 #   ./scripts/llama-server.sh            # Qwen3-8B, port 8080
 #   MODEL=Qwen/Qwen3-14B-GGUF:Q4_K_M ./scripts/llama-server.sh

@@ -12,7 +12,7 @@ from langchain_core.tools import tool
 
 from .base import ToolContext, ToolError
 
-USER_AGENT = "aroa-assistant/0.1 (+https://github.com/PSCactux/aroa-assistant)"
+USER_AGENT = "temis/0.1 (+https://github.com/PSCactux/temis)"
 MAX_BYTES = 4_000_000
 
 

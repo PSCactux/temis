@@ -32,4 +32,4 @@ reach; a lossy round trip is acceptable if it is honest about what it keeps.
 - What Word layout does not survive: page setup, headers and footers, footnotes, tracked changes,
   images. The export is a clean document in Times New Roman 12 that Word opens and the firm formats.
 - A chat answer and the corrected draft of a review open in the editor with one click, which is how
-  Aroa's text becomes the firm's document.
+  Temis's text becomes the firm's document.

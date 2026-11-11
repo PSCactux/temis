@@ -23,10 +23,10 @@ def steps(result):
 def test_chat_turn_replies_and_memorizes(make_assistant):
     memory = FakeMemory()
     assistant = make_assistant(
-        [routing("chat"), "Hola, soy Aroa.", Facts(facts=["The user prefers short answers"])], memory=memory
+        [routing("chat"), "Hola, soy Temis.", Facts(facts=["The user prefers short answers"])], memory=memory
     )
     result = assistant.ask("t1", "Hola, prefiero respuestas cortas")
-    assert result.reply == "Hola, soy Aroa."
+    assert result.reply == "Hola, soy Temis."
     assert result.kind == "chat"
     assert steps(result) == ["recall", "route", "chat", "memorize"]
     assert memory.facts[0]["text"] == "The user prefers short answers"

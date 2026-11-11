@@ -1,4 +1,4 @@
-# Aroa Assistant — specification
+# Temis — specification
 
 An assistant for a small law firm that runs entirely on the firm's own hardware, built as an explicit
 LangGraph state machine instead of a hand-written agent loop. It remembers through retrieval (hybrid

@@ -1,5 +1,5 @@
-{"id": "identity-who", "kind": "identity", "question": "¿Quién eres y en qué puedes ayudarme en el despacho?", "must_include": ["Aroa"]}
-{"id": "identity-one-line", "kind": "identity", "question": "Preséntate en una sola frase.", "must_include": ["Aroa"]}
+{"id": "identity-who", "kind": "identity", "question": "¿Quién eres y en qué puedes ayudarme en el despacho?", "must_include": ["Temis"]}
+{"id": "identity-one-line", "kind": "identity", "question": "Preséntate en una sola frase.", "must_include": ["Temis"]}
 {"id": "chat-retainer-concept", "kind": "chat", "question": "Explícame en dos frases qué es una provisión de fondos en un despacho de abogados.", "must_include": ["provisión"]}
 {"id": "chat-burofax-vs-certified", "kind": "chat", "question": "¿Qué diferencia hay entre un burofax y una carta certificada? Responde brevemente.", "must_include": ["burofax"]}
 {"id": "chat-draft-confidentiality", "kind": "chat", "question": "Redacta una cláusula breve de confidencialidad para un contrato de servicios, con una duración de cinco años tras la terminación.", "must_include": ["confidencialidad", "cinco"]}

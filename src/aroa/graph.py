@@ -587,7 +587,7 @@ def build_graph(
         turn = turn_messages(state["messages"])
         user, reply = turn[0].content, state["messages"][-1].content
         known = "\n".join(f"- {f['text']}" for f in state["memories"].get("facts", [])) or "- (none)"
-        # Only the user's words are offered to the extractor, on every route. What Aroa replied is either
+        # Only the user's words are offered to the extractor, on every route. What Temis replied is either
         # document content (cited there, never memory) or the model's own text (not a fact). This also keeps a
         # planted sentence in a document or page from becoming a durable fact.
         spoken = strip_attachments(user)  # a file attached to the message is not something the user said

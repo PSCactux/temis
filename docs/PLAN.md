@@ -29,7 +29,7 @@ model), skills for adding a tool and running evals, ADRs.
 
 # Plan v2 — document work
 
-v1 answers questions. v2 makes Aroa work *on* documents: long ones, chosen ones, with every
+v1 answers questions. v2 makes Temis work *on* documents: long ones, chosen ones, with every
 statement backed by a citation that opens where it came from, reviewed in a separate pass, written
 in the firm's style, inside an editor. Same rules as v1: each phase ends with a verifiable "done"
 and a commit; nothing is claimed without a check in code.
@@ -80,7 +80,7 @@ says it should, and a template produces a draft with every section present.
 
 ## Phase 9 — correspondence and matter state
 - Emails and letters of a matter imported as documents with a kind (`correspondence`), direction,
-  date and status (answered / pending). Aroa can say what is pending and draft the answer from the
+  date and status (answered / pending). Temis can say what is pending and draft the answer from the
   thread; status changes are explicit actions, logged in the audit.
 **Done when:** "what is unanswered in matter X?" lists the right items from a sample mailbox and
 marking one as answered is recorded with who and when.

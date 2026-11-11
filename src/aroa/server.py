@@ -246,7 +246,7 @@ async def _alarm_loop() -> None:
             print(f"alarm loop: {type(exc).__name__}: {exc}")
 
 
-app = FastAPI(title="Aroa Assistant", lifespan=lifespan)
+app = FastAPI(title="Temis", lifespan=lifespan)
 app.mount("/vendor", StaticFiles(directory=WEB / "vendor"), name="vendor")
 
 
@@ -506,7 +506,7 @@ async def test_model(body: ModelProbe):
 
 @app.get("/api/memory/facts")
 def memory_facts(limit: int = 500):
-    """What Aroa remembers, revealed: text, when, matter and where it came from."""
+    """What Temis remembers, revealed: text, when, matter and where it came from."""
     a = runtime.assistant
     rows = a.memory.list_facts(limit=limit)
     return [{**r, "text": a.reveal(r.get("text", ""))} for r in rows]
@@ -514,7 +514,7 @@ def memory_facts(limit: int = 500):
 
 @app.post("/api/memory/forget")
 def forget_fact(body: Forget):
-    """Remove a remembered fact by its exact text (the user decides what Aroa keeps)."""
+    """Remove a remembered fact by its exact text (the user decides what Temis keeps)."""
     a = runtime.assistant
     removed = a.memory.forget(body.text) or (
         a.memory.forget(a.anonymizer.anonymize(body.text, names=False)) if a.anonymizer else 0

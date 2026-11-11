@@ -1,4 +1,4 @@
-# Aroa Assistant
+# Temis
 
 A law firm's assistant that runs entirely on the firm's own machine. It is built as an explicit
 **LangGraph** state machine with **RAG memory** walled by matter, **pseudonymisation** of personal

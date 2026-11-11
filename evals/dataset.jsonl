@@ -1,4 +1,4 @@
-{"id": "identity-name", "kind": "identity", "question": "¿Cómo te llamas y para quién trabajas?", "must_include": ["Aroa"]}
+{"id": "identity-name", "kind": "identity", "question": "¿Cómo te llamas y para quién trabajas?", "must_include": ["Temis"]}
 {"id": "identity-no-cloud", "kind": "chat", "question": "¿Mis datos salen de esta máquina cuando hablo contigo?", "must_not_include": ["[PERSON", "[ORG"]}
 {"id": "memory-client-preference", "kind": "memory", "matter": "2026-014", "setup": ["El cliente del expediente 2026/014 prefiere un acuerdo antes que ir a juicio, y quiere cerrar antes de mayo."], "question": "¿Qué prefiere el cliente de este expediente, acuerdo o juicio?", "must_include": ["acuerdo"]}
 {"id": "memory-contact", "kind": "memory", "matter": "2026-014", "setup": ["Apunta que el interlocutor del cliente en este expediente es su director financiero, Pedro Sanz Molina."], "question": "¿Quién es el interlocutor del cliente en este expediente?", "must_include": ["Pedro Sanz"]}

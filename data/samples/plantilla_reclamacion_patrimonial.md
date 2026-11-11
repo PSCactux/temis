@@ -1,7 +1,7 @@
 # Plantilla · Reclamación de responsabilidad patrimonial
 
 > Plantilla del despacho. Los campos entre llaves dobles se rellenan con los datos del expediente; los
-> pasajes entre corchetes dobles los redacta Aroa siguiendo el apartado «Redacción» del procedimiento.
+> pasajes entre corchetes dobles los redacta Temis siguiendo el apartado «Redacción» del procedimiento.
 > Lo que hay encima de la raya no forma parte del documento.
 
 ---
