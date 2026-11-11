@@ -32,6 +32,15 @@ The model saw `[PERSON_2]` and `[ORG_8]`, never "Pedro Sanz" or the DNI; the law
 names because the interface restores them. The facts stored in memory carry the matter `2026-014`
 and are never recalled while working on another matter.
 
+![A reply from the firm's documents: the answer, its verified quote and the path of the turn](docs/img/chat.png)
+
+Every turn can be opened on the metrics page, down to each model call with the exact prompt the model
+received (here the name and the DNI arrive as `[PERSON_3]` and `[DNI_1]`):
+
+![The metrics page](docs/img/metrics.png)
+
+![One model call of a turn: the routing prompt, pseudonymised](docs/img/model-call.png)
+
 ## What it does
 
 | | |
